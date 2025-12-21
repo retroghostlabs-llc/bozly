@@ -1,0 +1,30 @@
+# Dockerfile for running BOZLY tests in isolation
+# Alpine-based Node image for minimal size and fast builds
+
+FROM node:22-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install bash for test runner scripts (apk installs lightweight bash)
+RUN apk add --no-cache bash
+
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
+COPY vitest.config.ts ./
+COPY .eslintrc.json ./
+COPY .prettierrc ./
+
+# Install dependencies
+RUN npm ci --prefer-offline --no-audit
+
+# Copy source code
+COPY src/ ./src/
+COPY tests/ ./tests/
+
+# Build the project
+RUN npm run build
+
+# Default command: run tests with coverage
+CMD ["npm", "run", "test:coverage"]

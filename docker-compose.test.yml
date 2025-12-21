@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: bozly-test
+    environment:
+      - NODE_ENV=test
+      - CI=true
+      - BOZLY_HOME=/app/.bozly-test
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/dist
+    working_dir: /app
+    command: npm run test:coverage

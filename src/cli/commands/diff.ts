@@ -1,0 +1,233 @@
+/**
+ * bozly diff - Compare two sessions
+ *
+ * Usage:
+ *   bozly diff <session-id-1> <session-id-2>  # Compare prompt.txt files
+ *   bozly diff --last 2                         # Compare last 2 sessions
+ *   bozly diff --command daily                  # Compare latest two "daily" executions
+ */
+
+import { Command } from "commander";
+import chalk from "chalk";
+import { logger } from "../../core/logger.js";
+import { getCurrentVault } from "../../core/vault.js";
+import {
+  diffSessions,
+  querySessions,
+  loadSessionFiles,
+  getSessionPath,
+} from "../../core/sessions.js";
+import path from "path";
+
+export const diffCommand = new Command("diff")
+  .description("Compare two session prompts")
+  .argument("[session-id-1]", "First session ID (UUID)")
+  .argument("[session-id-2]", "Second session ID (UUID)")
+  .option("-l, --last <number>", "Compare last N sessions of a command")
+  .option("-c, --command <name>", "Compare prompts from command")
+  .action(async (sessionId1, sessionId2, options) => {
+    try {
+      await logger.debug("bozly diff command started", {
+        sessionId1,
+        sessionId2,
+        last: options.last,
+        command: options.command,
+      });
+
+      const vault = await getCurrentVault();
+
+      if (!vault) {
+        await logger.warn("Not in a vault directory");
+        console.log(chalk.yellow("✗ Not in a vault directory"));
+        console.log("  Run 'bozly diff' from within a vault to compare session prompts.");
+        process.exit(1);
+      }
+
+      const vaultPath = vault.path;
+
+      // Handle --last and --command modes
+      if (options.last || options.command) {
+        // Query latest sessions for a command
+        const command = options.command;
+        if (!command) {
+          console.error(chalk.red("--command is required when using --last"));
+          process.exit(1);
+        }
+
+        const limit = options.last ? parseInt(options.last, 10) : 2;
+        const sessions = await querySessions(vaultPath, { command, limit });
+
+        if (sessions.length < 2) {
+          console.log(chalk.yellow(`Not enough sessions to compare. Found: ${sessions.length}`));
+          process.exit(1);
+        }
+
+        // Compare the most recent two
+        const sess1 = sessions[0];
+        const sess2 = sessions[1];
+
+        console.log(chalk.cyan(`\nComparing last 2 executions of "${command}":\n`));
+        console.log(chalk.gray(`Session 1: ${sess1.timestamp}`));
+        console.log(chalk.gray(`Session 2: ${sess2.timestamp}\n`));
+
+        // Load session files to get prompt.txt
+        const bozlyPath = path.join(vaultPath, ".bozly");
+        const path1 = getSessionPath(bozlyPath, sess1.vaultId, sess1.timestamp, sess1.id);
+        const path2 = getSessionPath(bozlyPath, sess2.vaultId, sess2.timestamp, sess2.id);
+
+        const files1 = await loadSessionFiles(path1);
+        const files2 = await loadSessionFiles(path2);
+
+        if (!files1 || !files2) {
+          console.error(chalk.red("Failed to load session files"));
+          process.exit(1);
+        }
+
+        // Show diff
+        displayPromptDiff(files1.promptTxt, files2.promptTxt, sess1.timestamp, sess2.timestamp);
+
+        // Show statistics
+        const diff = diffSessions(sess1, sess2);
+        console.log(chalk.cyan("\nStatistics:\n"));
+        console.log(
+          chalk.gray(
+            `Context size change: ${diff.differences.prompt.contextSize > 0 ? "+" : ""}${diff.differences.prompt.contextSize}B`
+          )
+        );
+        console.log(
+          chalk.gray(
+            `Total prompt change: ${diff.differences.prompt.total > 0 ? "+" : ""}${diff.differences.prompt.total}B`
+          )
+        );
+        console.log(
+          chalk.gray(
+            `Duration change: ${diff.differences.response.duration > 0 ? "+" : ""}${diff.differences.response.duration}ms`
+          )
+        );
+        console.log(
+          chalk.gray(`Status changed: ${diff.differences.response.status ? "Yes" : "No"}`)
+        );
+
+        return;
+      }
+
+      // Handle explicit session ID mode
+      if (!sessionId1 || !sessionId2) {
+        console.error(chalk.red("Either provide two session IDs or use --command --last"));
+        console.log("\nUsage:");
+        console.log("  bozly diff <id1> <id2>");
+        console.log("  bozly diff --command daily --last 2");
+        process.exit(1);
+      }
+
+      await logger.info("Comparing sessions", {
+        vaultPath,
+        sessionId1,
+        sessionId2,
+      });
+
+      // Query for both sessions
+      const sessions = await querySessions(vaultPath, {});
+      const sess1 = sessions.find((s) => s.id === sessionId1);
+      const sess2 = sessions.find((s) => s.id === sessionId2);
+
+      if (!sess1 || !sess2) {
+        console.error(chalk.red("One or both session IDs not found"));
+        process.exit(1);
+      }
+
+      // Load session files
+      const bozlyPath = path.join(vaultPath, ".bozly");
+      const path1 = getSessionPath(bozlyPath, sess1.vaultId, sess1.timestamp, sess1.id);
+      const path2 = getSessionPath(bozlyPath, sess2.vaultId, sess2.timestamp, sess2.id);
+
+      const files1 = await loadSessionFiles(path1);
+      const files2 = await loadSessionFiles(path2);
+
+      if (!files1 || !files2) {
+        console.error(chalk.red("Failed to load session files"));
+        process.exit(1);
+      }
+
+      console.log(chalk.cyan(`\nComparing sessions:\n`));
+      console.log(chalk.gray(`Session 1 (${sessionId1}):`));
+      console.log(chalk.gray(`  Command: ${sess1.command}`));
+      console.log(chalk.gray(`  Timestamp: ${sess1.timestamp}`));
+      console.log(chalk.gray(`  Provider: ${sess1.provider}`));
+      console.log();
+      console.log(chalk.gray(`Session 2 (${sessionId2}):`));
+      console.log(chalk.gray(`  Command: ${sess2.command}`));
+      console.log(chalk.gray(`  Timestamp: ${sess2.timestamp}`));
+      console.log(chalk.gray(`  Provider: ${sess2.provider}`));
+      console.log();
+
+      // Show diff
+      displayPromptDiff(files1.promptTxt, files2.promptTxt, sess1.timestamp, sess2.timestamp);
+
+      // Show statistics
+      const diff = diffSessions(sess1, sess2);
+      console.log(chalk.cyan("Statistics:\n"));
+      console.log(
+        chalk.gray(
+          `Context size change: ${diff.differences.prompt.contextSize > 0 ? "+" : ""}${diff.differences.prompt.contextSize}B`
+        )
+      );
+      console.log(
+        chalk.gray(
+          `Total prompt change: ${diff.differences.prompt.total > 0 ? "+" : ""}${diff.differences.prompt.total}B`
+        )
+      );
+      console.log(
+        chalk.gray(
+          `Duration change: ${diff.differences.response.duration > 0 ? "+" : ""}${diff.differences.response.duration}ms`
+        )
+      );
+      console.log(chalk.gray(`Status changed: ${diff.differences.response.status ? "Yes" : "No"}`));
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      await logger.error("Failed to compare sessions", {
+        error: errorMsg,
+      });
+
+      if (error instanceof Error) {
+        console.error(chalk.red(error.message));
+      }
+      process.exit(1);
+    }
+  });
+
+/**
+ * Display a simple text diff of two prompts
+ */
+function displayPromptDiff(prompt1: string, prompt2: string, time1: string, time2: string): void {
+  console.log(chalk.cyan(`\n--- Prompt from ${time1}`));
+  console.log(chalk.cyan(`+++ Prompt from ${time2}\n`));
+
+  const lines1 = prompt1.split("\n");
+  const lines2 = prompt2.split("\n");
+
+  const maxLen = Math.max(lines1.length, lines2.length);
+
+  // Simple diff: show lines that differ
+  let diffCount = 0;
+  for (let i = 0; i < maxLen; i++) {
+    const line1 = lines1[i] || "";
+    const line2 = lines2[i] || "";
+
+    if (line1 !== line2) {
+      if (line1) {
+        console.log(chalk.red(`- ${line1.substring(0, 80)}`));
+      }
+      if (line2) {
+        console.log(chalk.green(`+ ${line2.substring(0, 80)}`));
+      }
+      diffCount++;
+    }
+  }
+
+  if (diffCount === 0) {
+    console.log(chalk.gray("(No differences found in prompts)"));
+  } else {
+    console.log(chalk.gray(`\n(${diffCount} lines changed)`));
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "name": "bozly",
+  "version": "0.3.0-beta.1",
+  "description": "Build. Organize. Link. Yield. — AI-agnostic framework for domain-specific workspaces",
+  "keywords": [
+    "ai",
+    "cli",
+    "vault",
+    "workspace",
+    "context",
+    "claude",
+    "gpt",
+    "gemini",
+    "ollama"
+  ],
+  "author": "RetroGhostLabs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/retroghostlabs-llc/bozly.git"
+  },
+  "homepage": "https://github.com/retroghostlabs-llc/bozly",
+  "bugs": {
+    "url": "https://github.com/retroghostlabs-llc/bozly/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "bozly": "./dist/cli/index.js"
+  },
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "scripts": {
+    "prepare": "husky install",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/cli/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "validate": "npm run lint && npm run format:check && npm run build && npm run test:coverage",
+    "clean": "rm -rf dist coverage",
+    "prepublishOnly": "npm run validate"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "js-yaml": "^4.1.1",
+    "ora": "^8.0.1"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.2.0",
+    "@commitlint/config-conventional": "^20.2.0",
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "@vitest/coverage-v8": "^4.0.16",
+    "@vitest/ui": "^4.0.16",
+    "eslint": "^8.55.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.1.0",
+    "typescript": "^5.3.0",
+    "vitest": "^4.0.16"
+  }
+}
