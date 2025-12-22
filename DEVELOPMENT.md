@@ -49,7 +49,7 @@ This prevents common bugs and ensures type safety.
 // ✅ Correct
 import fs from "fs/promises";
 import path from "path";
-import { initVault } from "./vault.js";
+import { initNode } from "./node.js";
 
 // ❌ Avoid
 const fs = require("fs/promises");
@@ -69,8 +69,8 @@ src/
 ├── core/                    # Core library modules
 │   ├── index.ts            # Public API
 │   ├── types.ts            # Type definitions
-│   ├── vault.ts            # Vault operations
-│   ├── registry.ts         # Vault registry
+│   ├── node.ts            # Node operations
+│   ├── registry.ts         # Node registry
 │   ├── config.ts           # Configuration
 │   ├── context.ts          # Context generation
 │   └── commands.ts         # Command loading
@@ -96,8 +96,8 @@ tests/
 
 ### File Naming
 
-- **Source files:** `camelCase.ts` (e.g., `vault.ts`, `loadVault()`)
-- **Test files:** `camelCase.test.ts` (e.g., `vault.test.ts`)
+- **Source files:** `camelCase.ts` (e.g., `node.ts`, `loadNode()`)
+- **Test files:** `camelCase.test.ts` (e.g., `node.test.ts`)
 - **Config files:** `kebab-case.json` (e.g., `.eslintrc.json`)
 
 ---
@@ -109,24 +109,24 @@ tests/
 1. **Named exports for modules, default for index**
 
 ```typescript
-// ✅ vault.ts - use named exports for individual modules
-export async function initVault(options: InitOptions): Promise<VaultInfo> {
+// ✅ node.ts - use named exports for individual modules
+export async function initNode(options: InitOptions): Promise<NodeInfo> {
   // ...
 }
 
-export async function loadVault(id: string): Promise<Vault> {
+export async function loadNode(id: string): Promise<Node> {
   // ...
 }
 
 // ✅ index.ts - re-export as default from main index
-export { initVault, loadVault } from "./vault.js";
+export { initNode, loadNode } from "./node.js";
 ```
 
 2. **Absolute path imports** (via tsconfig paths - not yet configured, use relative for now)
 
 ```typescript
 // Relative imports currently (full path aliases in v1.1)
-import { initVault } from "../core/vault.js";
+import { initNode } from "../core/node.js";
 ```
 
 ### Type Annotations
@@ -135,16 +135,16 @@ import { initVault } from "../core/vault.js";
 
 ```typescript
 // ✅ Good
-export async function initVault(options: InitOptions): Promise<VaultInfo> {
-  const vaultPath: string = path.resolve(options.path);
-  const config: VaultConfig = createConfig(options);
-  return vault;
+export async function initNode(options: InitOptions): Promise<NodeInfo> {
+  const nodePath: string = path.resolve(options.path);
+  const config: NodeConfig = createConfig(options);
+  return node;
 }
 
 // ❌ Avoid implicit types
-export async function initVault(options) {
-  const vaultPath = path.resolve(options.path);
-  return vault;
+export async function initNode(options) {
+  const nodePath = path.resolve(options.path);
+  return node;
 }
 
 // ❌ Don't use `any` unless absolutely necessary
@@ -164,28 +164,28 @@ Use JSDoc for public functions:
 
 ```typescript
 /**
- * Initialize a new vault in the specified directory
+ * Initialize a new node in the specified directory
  *
  * Detailed explanation of what the function does, including edge cases,
  * error conditions, and important behavior notes.
  *
- * @param options - Vault initialization options
- * @param options.path - Directory path for vault (required)
- * @param options.name - Human-readable vault name (optional, defaults to dir name)
- * @param options.type - Vault type (optional, defaults to 'default')
- * @param options.force - Overwrite existing vault (optional, default false)
- * @returns Vault information with ID and metadata
- * @throws {Error} If vault path is invalid or already exists (without force)
+ * @param options - Node initialization options
+ * @param options.path - Directory path for node (required)
+ * @param options.name - Human-readable node name (optional, defaults to dir name)
+ * @param options.type - Node type (optional, defaults to 'default')
+ * @param options.force - Overwrite existing node (optional, default false)
+ * @returns Node information with ID and metadata
+ * @throws {Error} If node path is invalid or already exists (without force)
  *
  * @example
- *   const vault = await initVault({
- *     path: '/home/user/my-vault',
- *     name: 'my-vault',
+ *   const node = await initNode({
+ *     path: '/home/user/my-node',
+ *     name: 'my-node',
  *     type: 'music'
  *   });
- *   console.log(`Created vault: ${vault.id}`);
+ *   console.log(`Created node: ${node.id}`);
  */
-export async function initVault(options: InitOptions): Promise<VaultInfo> {
+export async function initNode(options: InitOptions): Promise<NodeInfo> {
   // ...
 }
 ```
@@ -195,10 +195,10 @@ export async function initVault(options: InitOptions): Promise<VaultInfo> {
 ```typescript
 // ❌ Excessive comments
 // Set the name to the directory name
-const name = options.name || path.basename(vaultPath);
+const name = options.name || path.basename(nodePath);
 
 // ✅ Better: code is self-documenting
-const name = options.name ?? path.basename(vaultPath);
+const name = options.name ?? path.basename(nodePath);
 ```
 
 ### File Documentation
@@ -207,22 +207,22 @@ Every file must have a header comment:
 
 ```typescript
 /**
- * Vault Operations Module
+ * Node Operations Module
  *
- * Provides core functionality for creating, managing, and accessing vaults.
- * Handles vault initialization, file structure creation, and registry updates.
+ * Provides core functionality for creating, managing, and accessing nodes.
+ * Handles node initialization, file structure creation, and registry updates.
  *
  * Key features:
- * - Create new vaults with configurable types
+ * - Create new nodes with configurable types
  * - Automatic directory structure generation
- * - Vault registration and tracking
+ * - Node registration and tracking
  * - Error handling and recovery
  *
  * Usage:
- *   import { initVault } from './vault.js';
- *   const vault = await initVault({ path: '/path/to/vault' });
+ *   import { initNode } from './node.js';
+ *   const node = await initNode({ path: '/path/to/node' });
  *
- * @module core/vault
+ * @module core/node
  */
 ```
 
@@ -233,9 +233,9 @@ Every file must have a header comment:
 ```typescript
 import { logger } from '../core/logger.js';
 
-export async function initVault(options: InitOptions): Promise<VaultInfo> {
+export async function initNode(options: InitOptions): Promise<NodeInfo> {
   // Log function entry with parameters
-  await logger.debug('Initializing vault', {
+  await logger.debug('Initializing node', {
     path: options.path,
     name: options.name,
     type: options.type,
@@ -243,28 +243,28 @@ export async function initVault(options: InitOptions): Promise<VaultInfo> {
 
   try {
     // Log major operations
-    await logger.info('Creating vault directory', { vaultPath });
-    await fs.mkdir(vaultPath, { recursive: true });
+    await logger.info('Creating node directory', { nodePath });
+    await fs.mkdir(nodePath, { recursive: true });
 
     // Log configuration
     const config = createConfig(options);
-    await logger.debug('Vault config created', {
-      vaultName: config.name,
+    await logger.debug('Node config created', {
+      nodeName: config.name,
       providers: config.ai.providers.length,
     });
 
     // Log successful completion
-    const vault = await addVaultToRegistry({ path: vaultPath, name: config.name });
-    await logger.info('Vault initialized successfully', {
-      vaultId: vault.id,
-      vaultName: vault.name,
+    const node = await addNodeToRegistry({ path: nodePath, name: config.name });
+    await logger.info('Node initialized successfully', {
+      nodeId: node.id,
+      nodeName: node.name,
     });
 
-    return vault;
+    return node;
   } catch (error) {
     // Log errors with context
-    await logger.error('Vault initialization failed',
-      { vaultPath, type: options.type },
+    await logger.error('Node initialization failed',
+      { nodePath, type: options.type },
       error as Error
     );
     throw error;
@@ -274,8 +274,8 @@ export async function initVault(options: InitOptions): Promise<VaultInfo> {
 
 **Log Levels:**
 - **DEBUG** - Detailed info for developers (parameter values, internal state)
-- **INFO** - Important events (vault created, operation completed)
-- **WARN** - Unexpected situations (vault exists, retry happening)
+- **INFO** - Important events (node created, operation completed)
+- **WARN** - Unexpected situations (node exists, retry happening)
 - **ERROR** - Error conditions (operation failed, file not found)
 - **FATAL** - Fatal errors (exit process immediately)
 
@@ -292,17 +292,17 @@ See `LOGGING.md` for comprehensive logging guide.
 ```typescript
 // ✅ Good - clear, actionable
 throw new Error(
-  `Vault already exists at ${vaultPath}. Use --force to overwrite.`
+  `Node already exists at ${nodePath}. Use --force to overwrite.`
 );
 
 // ❌ Vague
-throw new Error("Vault exists");
+throw new Error("Node exists");
 
 // ✅ Use Error subclasses for categorization
-class VaultAlreadyExistsError extends Error {
+class NodeAlreadyExistsError extends Error {
   constructor(path: string) {
-    super(`Vault already exists at ${path}. Use --force to overwrite.`);
-    this.name = "VaultAlreadyExistsError";
+    super(`Node already exists at ${path}. Use --force to overwrite.`);
+    this.name = "NodeAlreadyExistsError";
   }
 }
 ```
@@ -311,7 +311,7 @@ class VaultAlreadyExistsError extends Error {
 
 ```typescript
 try {
-  await initVault(options);
+  await initNode(options);
 } catch (error) {
   // ✅ Log with context and error object
   await logger.error('Operation failed', options, error as Error);
@@ -326,16 +326,16 @@ Always use async/await over Promises:
 
 ```typescript
 // ✅ Async/await (modern, readable)
-export async function initVault(options: InitOptions): Promise<VaultInfo> {
-  const vaultPath = path.resolve(options.path);
-  await fs.mkdir(vaultPath, { recursive: true });
-  return vault;
+export async function initNode(options: InitOptions): Promise<NodeInfo> {
+  const nodePath = path.resolve(options.path);
+  await fs.mkdir(nodePath, { recursive: true });
+  return node;
 }
 
 // ❌ Promise chains (legacy)
-export function initVault(options: InitOptions): Promise<VaultInfo> {
-  return fs.mkdir(vaultPath, { recursive: true })
-    .then(() => vault);
+export function initNode(options: InitOptions): Promise<NodeInfo> {
+  return fs.mkdir(nodePath, { recursive: true })
+    .then(() => node);
 }
 ```
 
@@ -345,11 +345,11 @@ Use nullish coalescing and optional chaining:
 
 ```typescript
 // ✅ Modern (2025)
-const name = options.name ?? path.basename(vaultPath);
+const name = options.name ?? path.basename(nodePath);
 const provider = config.ai?.defaultProvider ?? "claude";
 
 // ❌ Legacy style
-const name = options.name || path.basename(vaultPath); // Doesn't handle ""
+const name = options.name || path.basename(nodePath); // Doesn't handle ""
 const provider = config && config.ai && config.ai.defaultProvider || "claude";
 ```
 
@@ -422,7 +422,7 @@ npm run validate        # Runs: lint → format:check → build → test:coverag
 ```
 tests/
 ├── unit/
-│   ├── vault.test.ts       # Test vault.ts module
+│   ├── node.test.ts       # Test node.ts module
 │   ├── registry.test.ts    # Test registry.ts module
 │   ├── config.test.ts      # Test config.ts module
 │   └── context.test.ts     # Test context.ts module
@@ -439,13 +439,13 @@ tests/
 - **Test:** `it("should do something specific")`
 
 ```typescript
-describe("Vault Operations", () => {
-  describe("initVault", () => {
-    it("should create a new vault with default settings", async () => {
+describe("Node Operations", () => {
+  describe("initNode", () => {
+    it("should create a new node with default settings", async () => {
       // test code
     });
 
-    it("should reject if vault already exists", async () => {
+    it("should reject if node already exists", async () => {
       // test code
     });
   });
@@ -585,7 +585,7 @@ See `LIBRARY-VETTING-PROCESS.md` for detailed vetting process.
 Example:
 ```bash
 git commit -m "feat: Add pattern 7 (domain models) support"
-git commit -m "test: Add comprehensive unit tests for vault operations"
+git commit -m "test: Add comprehensive unit tests for node operations"
 git commit -m "fix: Handle missing context.md gracefully"
 ```
 
@@ -618,8 +618,8 @@ Then use VS Code Debugger or Chrome DevTools.
 Run specific test file:
 
 ```bash
-npm run test vault.test.ts
-npm run test:watch vault.test.ts
+npm run test node.test.ts
+npm run test:watch node.test.ts
 ```
 
 Inspect specific test:
@@ -651,14 +651,14 @@ For testing, pass dependencies rather than importing globally:
 
 ```typescript
 // ✅ Testable - receives logger as parameter
-async function initVault(options: InitOptions, logger?: Logger): Promise<VaultInfo> {
-  logger?.log("Creating vault...");
+async function initNode(options: InitOptions, logger?: Logger): Promise<NodeInfo> {
+  logger?.log("Creating node...");
 }
 
 // ❌ Hard to test - hardcoded dependency
 import { globalLogger } from "../logger";
-async function initVault(options: InitOptions): Promise<VaultInfo> {
-  globalLogger.log("Creating vault...");
+async function initNode(options: InitOptions): Promise<NodeInfo> {
+  globalLogger.log("Creating node...");
 }
 ```
 

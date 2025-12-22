@@ -220,7 +220,7 @@ wsl --set-version <distro> 2
 
 Once requirements are met:
 1. Install BOZLY: `npm install -g bozly`
-2. Create your first vault: `bozly init`
+2. Create your first node: `bozly init`
 3. Read [GETTING-STARTED.md](docs/GETTING-STARTED.md)
 
 ---

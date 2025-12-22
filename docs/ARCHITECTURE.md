@@ -14,9 +14,9 @@ BOZLY is an AI-agnostic framework for deploying domain-specific workspaces. It p
 
 ## Core Concepts
 
-### What is a Vault?
+### What is a Node?
 
-A **vault** is a self-contained AI workspace for a specific domain or project. Each vault:
+A **node** is a self-contained AI workspace for a specific domain or project. Each node:
 - Has its own `.bozly/` configuration folder
 - Defines domain-specific commands and workflows
 - Has a `context.md` file explaining the system to AI
@@ -24,9 +24,9 @@ A **vault** is a self-contained AI workspace for a specific domain or project. E
 - Registers with the global BOZLY registry
 
 **Examples:**
-- Music Discovery Vault → Album recommendation system
-- Content Production Vault → Multi-camera video workflow
-- Journal Vault → Daily entries and mood tracking
+- Music Discovery Node → Album recommendation system
+- Content Production Node → Multi-camera video workflow
+- Journal Node → Daily entries and mood tracking
 - Your Domain → Whatever you want to build
 
 ### The Context Provider Model
@@ -38,7 +38,7 @@ BOZLY doesn't execute AI directly. Instead:
 │  USER runs: bozly run daily                                     │
 ├─────────────────────────────────────────────────────────────────┤
 │  BOZLY:                                                         │
-│  1. Loads vault context (.bozly/context.md)                     │
+│  1. Loads node context (.bozly/context.md)                     │
 │  2. Loads command prompt (.bozly/commands/daily.md)             │
 │  3. Combines context + prompt                                   │
 │  4. Pipes to AI CLI (claude/gpt/gemini/ollama)                  │
@@ -68,7 +68,7 @@ BOZLY doesn't execute AI directly. Instead:
 
 ## Three-Tier Architecture
 
-BOZLY uses a three-tier safety model that keeps framework code, user config, and vault data completely separate:
+BOZLY uses a three-tier safety model that keeps framework code, user config, and node data completely separate:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -91,7 +91,7 @@ BOZLY uses a three-tier safety model that keeps framework code, user config, and
 │  BOZLY touches: NEVER (reads only)                              │
 │                                                                 │
 │  Contains:                                                      │
-│  • bozly-registry.json (all vault locations)                    │
+│  • bozly-registry.json (all node locations)                    │
 │  • bozly-config.json (global settings, AI providers)            │
 │  • commands/ (global commands)                                  │
 │  • workflows/ (global workflows)                                │
@@ -100,25 +100,25 @@ BOZLY uses a three-tier safety model that keeps framework code, user config, and
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  TIER 3: VAULT CONFIG (Vault-Owned)                             │
-│  Location: ~/my-vault/.bozly/                                   │
+│  TIER 3: NODE CONFIG (Node-Owned)                              │
+│  Location: ~/music/.bozly/                                   │
 │  Updated by: USER only                                          │
 │  BOZLY touches: NEVER (reads only, writes to sessions/)         │
 │                                                                 │
 │  Contains:                                                      │
-│  • config.json (vault settings)                                 │
+│  • config.json (node settings)                                 │
 │  • context.md (AI context file)                                 │
 │  • index.json (task index)                                      │
 │  • sessions/ (session history)                                  │
 │  • tasks/ (task data)                                           │
-│  • commands/ (vault commands)                                   │
-│  • workflows/ (vault workflows)                                 │
+│  • commands/ (node commands)                                   │
+│  • workflows/ (node workflows)                                 │
 │  • hooks/ (automation triggers)                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 **Why This Matters:**
-- Framework updates NEVER overwrite your config or vault data
+- Framework updates NEVER overwrite your config or node data
 - Your customizations survive any upgrade
 - Clear ownership: you control your data, BOZLY controls its code
 
@@ -130,7 +130,7 @@ BOZLY uses a three-tier safety model that keeps framework code, user config, and
 
 ```
 ~/.bozly/
-├── bozly-registry.json        ← All vault locations
+├── bozly-registry.json        ← All node locations
 ├── bozly-config.json          ← Global settings
 │   └── {
 │         "ai": {
@@ -153,11 +153,11 @@ BOZLY uses a three-tier safety model that keeps framework code, user config, and
     └── content/
 ```
 
-### Per-Vault Config (`~/vault/.bozly/`)
+### Per-Node Config (`~/music/.bozly`)/`)
 
 ```
-~/music-vault/.bozly/
-├── config.json                ← Vault settings
+~/music/.bozly/
+├── config.json                ← Node settings
 │   └── {
 │         "name": "Music Discovery",
 │         "type": "music",
@@ -180,7 +180,7 @@ BOZLY uses a three-tier safety model that keeps framework code, user config, and
 │       ├── session.json       ← AI conversation
 │       ├── context.json       ← Decisions, outcomes
 │       └── changes.json       ← Files modified
-├── commands/                  ← Vault commands
+├── commands/                  ← Node commands
 │   ├── daily.md
 │   ├── weekly-roll.md
 │   └── complete-album.md
@@ -220,7 +220,7 @@ BOZLY stores its own conversation history, not depending on any AI provider:
 // .bozly/sessions/2025-12-16-abc123.json
 {
   "id": "abc123",
-  "vault": "music-discovery",
+  "node": "music-discovery",
   "ai": "claude",
   "model": "sonnet",
   "started": "2025-12-16T10:00:00Z",
@@ -238,14 +238,14 @@ BOZLY stores its own conversation history, not depending on any AI provider:
 - Works with Claude, GPT, Gemini, Ollama, any AI
 - You control your data (not locked to a provider)
 - Can migrate between AIs without losing history
-- Enables cross-vault queries and analytics
+- Enables cross-node queries and analytics
 
 ### Pattern 3: Single Context File
 
-Each vault has ONE context file (`.bozly/context.md`) that works with any AI:
+Each node has ONE context file (`.bozly/context.md`) that works with any AI:
 
 ```markdown
-# Music Discovery Vault
+# Music Discovery Node
 
 ## Purpose
 Rate albums using triple-scoring system (Shaun + Objective + Emotional).
@@ -264,7 +264,7 @@ Rate albums using triple-scoring system (Shaun + Objective + Emotional).
 **Not AI-Specific:**
 - No CLAUDE.md, GEMINI.md, etc.
 - BOZLY prepares context, pipes to your chosen AI
-- Same vault works with any provider
+- Same node works with any provider
 - Switch AIs: `bozly run daily --ai gpt`
 
 ### Pattern 4: Commands, Workflows, Hooks
@@ -290,28 +290,28 @@ BOZLY organizes automation into three types:
 
 When you run `bozly run daily`, BOZLY looks for commands in this order:
 
-1. **Vault commands** (`.bozly/commands/daily.md`) — highest priority
+1. **Node commands** (`.bozly/commands/daily.md`) — highest priority
 2. **Global commands** (`~/.bozly/commands/daily.md`) — fallback
 
 This allows:
-- Vault-specific commands to override global ones
-- Shared commands across all vaults
+- Node-specific commands to override global ones
+- Shared commands across all nodes
 - Customization where needed
 
 ---
 
 ## Registry System
 
-BOZLY maintains a registry of all vaults:
+BOZLY maintains a registry of all nodes:
 
 ```json
 // ~/.bozly/bozly-registry.json
 {
-  "vaults": [
+  "nodes": [
     {
       "id": "music-discovery",
       "name": "Music Discovery",
-      "path": "/Users/you/music-vault",
+      "path": "/Users/you/music",
       "type": "music",
       "status": "active",
       "lastActivity": "2025-12-16T10:30:00Z"
@@ -319,7 +319,7 @@ BOZLY maintains a registry of all vaults:
     {
       "id": "journal",
       "name": "Daily Journal",
-      "path": "/Users/you/journal-vault",
+      "path": "/Users/you/journal",
       "type": "journal",
       "status": "active",
       "lastActivity": "2025-12-16T08:00:00Z"
@@ -329,9 +329,9 @@ BOZLY maintains a registry of all vaults:
 ```
 
 **Commands:**
-- `bozly list` — Show all registered vaults
-- `bozly add <path>` — Register existing vault
-- `bozly status` — Show vault status and activity
+- `bozly list` — Show all registered nodes
+- `bozly add <path>` — Register existing node
+- `bozly status` — Show node status and activity
 
 ---
 
@@ -350,7 +350,7 @@ Hooks automate actions at key moments:
 // .bozly/hooks/session-start.ts
 export default async function onSessionStart(vault: Vault) {
   // Load recent tasks
-  const tasks = await vault.getTasks({ limit: 5, status: 'active' });
+  const tasks = await node.getTasks({ limit: 5, status: 'active' });
 
   // Show context
   console.log(`Recent tasks: ${tasks.map(t => t.name).join(', ')}`);
@@ -378,7 +378,7 @@ $ bozly run journal --ai ollama
 ```
 
 **What's Shared:**
-- Same vault context (`.bozly/context.md`)
+- Same node context (`.bozly/context.md`)
 - Same commands (`.bozly/commands/`)
 - Same session storage (`.bozly/sessions/`)
 
@@ -396,8 +396,8 @@ $ bozly run journal --ai ollama
 | Architecture | Proven | Same patterns |
 | AI Lock-in | Some | None |
 
-### vs. Single-Vault Tools
-| Feature | Single-Vault | BOZLY |
+### vs. Single-Node Tools
+| Feature | Single-Node | BOZLY |
 |---------|--------------|-------|
 | Vaults | One | Unlimited |
 | Shared Commands | No | Yes (global layer) |
@@ -416,20 +416,20 @@ $ bozly run journal --ai ollama
 
 ### Phase 1: Beta
 - TypeScript CLI (`bozly` command)
-- Vault initialization and management
+- Node initialization and management
 - Context generation and AI piping
 - JSON storage
 
 ### Phase 2: Polish
 - Hooks system
 - Workflows (multi-step)
-- Cross-vault queries
+- Cross-node queries
 - Session history viewer
 
 ### Phase 3: Ecosystem
-- Community vault registry
+- Community node registry
 - `bozly search` / `bozly install`
-- Vault publishing
+- Node publishing
 
 ### Phase 4: Advanced
 - Shadow Git checkpoints (undo/rollback)
@@ -450,7 +450,7 @@ Use proven patterns from Cline/Cursor. Don't rebuild session management — focu
 Never lock users to a provider. BOZLY prepares context, any AI executes.
 
 ### 3. User Owns Data
-Three-tier safety: framework code, user config, and vault data are completely separate. Your data survives any upgrade.
+Three-tier safety: framework code, user config, and node data are completely separate. Your data survives any upgrade.
 
 ### 4. CLI-First
 No GUI required. Everything works from the command line. GUI is optional later.
@@ -492,7 +492,7 @@ One-sentence description of what this vault does.
 ```json
 {
   "id": "session-id",
-  "vault": "vault-id",
+  "node": "node-id",
   "ai": "claude",
   "model": "sonnet",
   "started": "ISO-timestamp",
@@ -533,7 +533,7 @@ One-sentence description of what this vault does.
 BOZLY is open-source (MIT License). Contributions welcome:
 
 - **Report bugs** — [GitHub Issues](https://github.com/RetroGhostLabs/bozly/issues)
-- **Share vaults** — Create repos and share in Discussions
+- **Share nodes** — Create repos and share in Discussions
 - **Improve docs** — Submit PRs
 - **Contribute code** — See CONTRIBUTING.md
 

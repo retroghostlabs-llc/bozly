@@ -1,13 +1,13 @@
-# BOZLY Example Vaults
+# BOZLY Example Nodes
 
-This folder contains example vaults demonstrating how to use BOZLY for different domains.
+This folder contains example nodes demonstrating how to use BOZLY for different domains.
 
 ---
 
 ## Available Examples
 
-### Music Discovery Vault
-**Location:** `music-vault/`
+### Music Discovery Node
+**Location:** `music-node/`
 
 A complete music discovery and review system:
 - Triple-scoring methodology (Shaun + Objective + Emotional)
@@ -20,8 +20,8 @@ A complete music discovery and review system:
 - `/weekly-roll` — Select album for the week
 - `/complete-album` — Finalize album review
 
-### Journal Vault
-**Location:** `journal-vault/`
+### Journal Node
+**Location:** `journal-node/`
 
 Daily journaling with mood tracking:
 - Daily entry templates
@@ -40,9 +40,9 @@ Daily journaling with mood tracking:
 ### Option 1: Clone and Customize
 
 ```bash
-# Copy an example vault
-cp -r examples/music-vault ~/my-music-vault
-cd ~/my-music-vault
+# Copy an example node
+cp -r examples/music-node ~/my-music-node
+cd ~/my-music-node
 
 # Register with BOZLY
 bozly add .
@@ -62,18 +62,18 @@ bozly init --type journal
 
 ---
 
-## Vault Structure
+## Node Structure
 
 Each example follows the BOZLY structure:
 
 ```
-example-vault/
+example-node/
 ├── .bozly/                 ← BOZLY configuration
-│   ├── config.json         ← Vault settings
+│   ├── config.json         ← Node settings
 │   ├── context.md          ← AI context
-│   ├── commands/           ← Vault commands
+│   ├── commands/           ← Node commands
 │   └── ...
-├── README.md               ← Vault documentation
+├── README.md               ← Node documentation
 ├── SETUP-GUIDE.md          ← Setup instructions
 └── [domain-specific files]
 ```
@@ -92,17 +92,17 @@ example-vault/
 
 ## Creating Your Own
 
-See [BUILDING-YOUR-VAULT.md](../docs/BUILDING-YOUR-VAULT.md) for a complete guide to creating custom vaults.
+See [BUILDING-YOUR-VAULT.md](../docs/BUILDING-YOUR-VAULT.md) for a complete guide to creating custom nodes.
 
 ---
 
 ## Contributing Examples
 
-Want to share your vault?
+Want to share your node?
 
 1. Create a clean version (remove personal data)
 2. Include documentation:
-   - README.md explaining the vault
+   - README.md explaining the node
    - SETUP-GUIDE.md for installation
    - Example content
 3. Submit a PR or share in [Discussions](https://github.com/RetroGhostLabs/bozly/discussions)

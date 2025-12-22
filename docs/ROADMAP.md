@@ -19,8 +19,8 @@
 - package.json with npm/bin configuration
 - CLI entry point and 11 command implementations
 - Core modules (vault, registry, context, commands, config, types, logging)
-- 4 vault templates (default, music, journal, content)
-- 2 example vaults with .bozly/ structure
+- 4 node templates (default, music, journal, content)
+- 2 example nodes with .bozly/ structure
 - Comprehensive logging system (BOZLY_DEBUG support)
 
 **Sprint 2 (Sessions 44-52): Execution**
@@ -43,11 +43,11 @@
 
 ### What's Next (Phase 2+)
 
-- **Vault Server UI** (`bozly serve`) — Local web dashboard for visual vault management
+- **Vault Server UI** (`bozly serve`) — Local web dashboard for visual node management
 - **Smart Routing** — Per-vault/per-command AI provider routing with fallbacks
 - **Auto-Cleanup** — Session retention, archival, and disk management
 - **n8n Integration** — Workflow orchestration with 5 integration patterns
-- **Session Memory** — Claude-style auto-extraction and cross-vault knowledge
+- **Session Memory** — Claude-style auto-extraction and cross-node knowledge
 
 ---
 
@@ -90,11 +90,11 @@ BOZLY is an AI-agnostic framework for deploying domain-specific workspaces. It p
 
 ```bash
 # Core
-bozly init                    # Initialize vault in current directory
-bozly list                    # List registered vaults
-bozly add <path>              # Register existing vault
+bozly init # Initialize node in current directory
+bozly list                    # List registered nodes
+bozly add <path>              # Register existing node
 bozly remove <vault>          # Remove vault (with backup)
-bozly status                  # Show vault status
+bozly status                  # Show node status
 
 # Context
 bozly context                 # Generate context for AI
@@ -153,7 +153,7 @@ bozly version                 # Show version info
 
 ### Vault Server UI (`bozly serve`)
 
-Local web dashboard for visual vault management:
+Local web dashboard for visual node management:
 
 ```bash
 bozly serve                   # Start local server (http://localhost:3847)
@@ -226,7 +226,7 @@ External workflow automation:
 
 - Hooks system (session-start, session-end, post-execution)
 - Workflows (multi-step processes with conditional logic)
-- Cross-vault queries (`bozly search --all`)
+- Cross-node queries (`bozly search --all`)
 - Session history viewer (`bozly history`)
 - Task tracking (`bozly tasks`)
 
@@ -253,7 +253,7 @@ External workflow automation:
 ### Features
 
 - **Community Registry (GitHub-only)** — JSON file + GitHub repos
-- `bozly search <query>` — Search community vaults
+- `bozly search <query>` — Search community nodes
 - `bozly install <vault>` — Install vault template
 - `bozly publish` — Publish vault to registry (via PR)
 - `bozly update` — Check for template updates (selective merge)
@@ -270,11 +270,11 @@ External workflow automation:
 
 ```json
 {
-  "vaults": [
+  "nodes": [
     {
       "name": "music-discovery",
       "description": "Album discovery and review system",
-      "repo": "github.com/user/music-vault-bozly",
+      "repo": "github.com/user/music-bozly",
       "author": "retroghostlabs",
       "tags": ["music", "reviews", "discovery"],
       "version": "1.0.0"
@@ -310,13 +310,13 @@ External workflow automation:
 
 ```
 ~/.bozly/                              <- GLOBAL
-├── bozly-registry.json                <- All vault locations
+├── bozly-registry.json                <- All node locations
 ├── bozly-config.json                  <- Global settings
 ├── commands/                          <- Global commands
 └── templates/                         <- Starter templates
 
-~/my-vault/.bozly/                     <- PER-VAULT
-├── config.json                        <- Vault settings
+~/music/.bozly/                     <- PER-NODE
+├── config.json                        <- Node settings
 ├── context.md                         <- AI context file
 ├── index.json                         <- Task index
 ├── sessions/{vault}/{year}/{month}/{day}/{uuid}/
@@ -327,7 +327,7 @@ External workflow automation:
 │   ├── results.md                     <- AI output
 │   └── changes.json                   <- File modifications
 ├── models/                            <- Domain models (Pattern 7)
-├── commands/                          <- Vault commands
+├── commands/                          <- Node commands
 ├── workflows/                         <- Multi-step processes
 └── hooks/                             <- Automation triggers
 ```
@@ -338,7 +338,7 @@ External workflow automation:
 
 ### Phase 1 (Beta) - ACHIEVED
 - [x] 10+ beta testers
-- [x] 3 working example vaults
+- [x] 3 working example nodes
 - [x] <5 min to first vault
 - [x] Works with 3+ AI providers
 - [x] 350+ tests passing
@@ -346,13 +346,13 @@ External workflow automation:
 
 ### Phase 2 (Polish)
 - [ ] 100+ users
-- [ ] 5+ community vaults
+- [ ] 5+ community nodes
 - [ ] 90%+ test coverage
 - [ ] <2s context generation
 
 ### Phase 3 (Ecosystem)
 - [ ] 1,000+ users
-- [ ] 50+ community vaults
+- [ ] 50+ community nodes
 - [ ] 10+ contributors
 - [ ] Active community
 

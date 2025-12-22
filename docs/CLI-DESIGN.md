@@ -35,7 +35,7 @@ cd bozly && npm install && npm link
 
 ### `bozly init`
 
-Initialize a new BOZLY vault in the current directory.
+Initialize a new BOZLY node in the current directory.
 
 ```bash
 bozly init                          # Interactive setup
@@ -50,7 +50,7 @@ bozly init --ai claude              # Set default AI
 ├── config.json       ← Vault configuration
 ├── context.md        ← AI context file
 ├── index.json        ← Task index (empty)
-├── commands/         ← Vault-specific commands
+├── commands/         ← Node-specific commands
 ├── workflows/        ← Multi-step processes
 └── hooks/            ← Automation triggers
 ```
@@ -59,10 +59,10 @@ bozly init --ai claude              # Set default AI
 
 ### `bozly list`
 
-List all registered vaults.
+List all registered nodes.
 
 ```bash
-bozly list                          # All vaults
+bozly list                          # All nodes
 bozly list --json                   # JSON output
 bozly list --status                 # Include last activity
 ```
@@ -71,16 +71,16 @@ bozly list --status                 # Include last activity
 ```
 Registered Vaults (3):
 
-  music-vault       ~/vaults/music         active    2h ago
-  journal-vault     ~/vaults/journal       active    1d ago
-  content-vault     ~/vaults/content       inactive  5d ago
+  music       ~/nodes/music         active    2h ago
+  journal     ~/nodes/journal       active    1d ago
+  content-vault     ~/nodes/content       inactive  5d ago
 ```
 
 ---
 
 ### `bozly add <path>`
 
-Register an existing vault with BOZLY.
+Register an existing node with BOZLY.
 
 ```bash
 bozly add ~/my-vault                # Register vault
@@ -92,31 +92,31 @@ bozly add . --current               # Register current directory
 
 ### `bozly remove <name>`
 
-Remove a vault from the registry and optionally backup/delete files.
+Remove a node from the registry and optionally backup/delete files.
 
 ```bash
-# Remove vault with confirmation
-bozly remove music-vault            # Remove by name (with prompt)
+# Remove node with confirmation
+bozly remove music            # Remove by name (with prompt)
 
 # Remove with specific options
-bozly remove music-vault --backup    # Create timestamped backup first
-bozly remove music-vault --force     # Skip confirmation prompt
-bozly remove music-vault --keep-files # Remove from registry only, keep files
-bozly remove music-vault --backup --force # Backup + remove without prompt
+bozly remove music --backup    # Create timestamped backup first
+bozly remove music --force     # Skip confirmation prompt
+bozly remove music --keep-files # Remove from registry only, keep files
+bozly remove music --backup --force # Backup + remove without prompt
 ```
 
 **Flags:**
 - `--backup, -b` — Create timestamped backup in `~/.bozly/backups/` before removing
 - `--force, -f` — Skip confirmation prompt (use with caution)
-- `--keep-files, -k` — Remove vault from registry only, keep files on disk
-- `--path` — Remove by file path instead of vault name
+- `--keep-files, -k` — Remove node from registry only, keep files on disk
+- `--path` — Remove by file path instead of node name
 
 **Backups:**
-Backup files are stored in `~/.bozly/backups/` with format: `{vault-name}-{ISO-timestamp}.tar.gz`
+Backup files are stored in `~/.bozly/backups/` with format: `{node-name}-{ISO-timestamp}.tar.gz`
 
 **Examples:**
 ```bash
-# Remove vault with confirmation prompt
+# Remove node with confirmation prompt
 bozly remove my-vault
 
 # Backup then remove without prompt
@@ -133,18 +133,18 @@ bozly remove --path ~/my-vault --backup
 
 ### `bozly status`
 
-Show status of current vault or all vaults.
+Show status of current node or all nodes.
 
 ```bash
-bozly status                        # Current vault
-bozly status --all                  # All vaults
-bozly status music-vault            # Specific vault
+bozly status                        # Current node
+bozly status --all                  # All nodes
+bozly status music            # Specific node
 ```
 
 **Output:**
 ```
-Vault: music-vault
-Path:  ~/vaults/music
+Vault: music
+Path:  ~/nodes/music
 AI:    claude (default)
 Tasks: 42 total, 3 active
 
@@ -194,7 +194,7 @@ bozly context edit --vscode         # Open in VS Code
 
 ### `bozly run <command>`
 
-Run a vault command with AI.
+Run a node command with AI.
 
 ```bash
 bozly run daily                     # Run /daily with default AI
@@ -205,7 +205,7 @@ bozly run daily --verbose           # Show full context + prompt
 ```
 
 **How it works:**
-1. Loads vault context
+1. Loads node context
 2. Loads command prompt from `.bozly/commands/daily.md`
 3. Combines context + prompt
 4. Pipes to AI CLI
@@ -227,7 +227,7 @@ bozly run complete-album --dry      # Show all steps
 
 ### `bozly pipe <prompt>`
 
-Pipe a custom prompt with vault context to AI.
+Pipe a custom prompt with node context to AI.
 
 ```bash
 # Quick questions
@@ -239,7 +239,7 @@ bozly pipe "Summarize my journal entries" --ai gpt
 # From file
 bozly pipe --file prompt.txt
 
-# With context only (no vault commands)
+# With context only (no node commands)
 bozly pipe "Help me with this" --context-only
 ```
 
@@ -372,23 +372,23 @@ bozly config ai default claude      # Set default
 
 ### `bozly search <query>`
 
-Search community vault templates.
+Search community node templates.
 
 ```bash
-bozly search music                  # Search for music vaults
+bozly search music                  # Search for music nodes
 bozly search --tag productivity     # By tag
 bozly search --author retroghostlabs # By author
 ```
 
 ---
 
-### `bozly install <vault>`
+### `bozly install node>`
 
 Install a vault template.
 
 ```bash
 bozly install music-discovery       # Install template
-bozly install music-discovery ~/new-vault  # Custom path
+bozly install node  # Custom path
 bozly install --list                # List available templates
 ```
 
@@ -422,11 +422,11 @@ BOZLY Health Check
 
 ✓ BOZLY installed correctly
 ✓ Global config found (~/.bozly/bozly-config.json)
-✓ 3 vaults registered
+✓ 3 nodes registered
 ✓ AI CLI found: claude (v2.0.70)
 
 Warnings:
-⚠ music-vault: Last session 30+ days ago
+⚠ music: Last session 30+ days ago
 ⚠ No default AI configured (using claude)
 
 Run 'bozly doctor --fix' to resolve issues.
@@ -505,7 +505,7 @@ bozly help --all                    # All commands
 ### Morning Workflow
 
 ```bash
-# Check vault status
+# Check node status
 bozly status --all
 
 # Run daily planning
@@ -518,9 +518,9 @@ bozly pipe "What's my priority today based on recent tasks?"
 ### Setting Up New Vault
 
 ```bash
-# Create vault directory
-mkdir ~/vaults/project-vault
-cd ~/vaults/project-vault
+# Create node directory
+mkdir ~/nodes/project-vault
+cd ~/nodes/project-vault
 
 # Initialize with BOZLY
 bozly init --name "Project Vault" --type journal

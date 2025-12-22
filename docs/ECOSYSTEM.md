@@ -20,7 +20,7 @@ BOZLY can integrate with external services to enable powerful automation workflo
 
 ## n8n (Workflow Automation Platform)
 
-**Purpose:** Orchestrate BOZLY vaults, trigger commands from external events, monitor sessions, automate multi-vault workflows
+**Purpose:** Orchestrate BOZLY nodes, trigger commands from external events, monitor sessions, automate multi-node workflows
 
 **Integration Level:** Medium (requires Docker, basic n8n knowledge)
 
@@ -38,13 +38,13 @@ BOZLY can integrate with external services to enable powerful automation workflo
 **Key Capabilities:**
 - Trigger `bozly run` via webhooks (Discord, APIs, crons)
 - Monitor vault sessions in real-time
-- Chain commands across multiple vaults
-- Inject external data into vault context
+- Chain commands across multiple nodes
+- Inject external data into node context
 - Automate multi-step workflows
 
 **Example Workflows:**
-- Discord command → n8n → bozly run music-vault
-- Daily cron → chain journal + content + music vaults
+- Discord command → n8n → bozly run music
+- Daily cron → chain journal + content + music nodes
 - API webhook → n8n → bozly run analysis → return results
 
 **Documentation:**
@@ -81,7 +81,7 @@ BOZLY can integrate with external services to enable powerful automation workflo
 **Commands:**
 ```bash
 bozly logs                          # Show recent sessions (last 20)
-bozly logs --vault music-vault      # Filter by vault
+bozly logs --node music      # Filter by vault
 bozly logs --status failed          # Show only failures
 bozly logs --limit 5 --verbose      # Show 5 with details
 
@@ -92,7 +92,7 @@ bozly diff session-id-1 session-id-2 # Compare two session prompts
 - n8n workflow monitoring (Pattern 2: watch `.bozly/sessions/`)
 - Claude memory extraction (auto-summary generation)
 - Session archival by date
-- Cross-vault session analysis
+- Cross-node session analysis
 
 **Reference:** [SESSION-44-SESSIONS-REFACTORING-DESIGN.md](../planning/SESSION-44-SESSIONS-REFACTORING-DESIGN.md)
 
@@ -145,7 +145,7 @@ bozly run network-vault health-check \
 ```
 
 BOZLY would:
-1. Load vault context
+1. Load node context
 2. Load command prompt
 3. Inject available MCP tools
 4. Pipe to AI with tool access
@@ -220,7 +220,7 @@ Return results to API consumer
 ### Phase 4: Distribution (PLANNED)
 - npm/Homebrew packages
 - Obsidian plugin
-- Community vault registry
+- Community node registry
 
 ---
 

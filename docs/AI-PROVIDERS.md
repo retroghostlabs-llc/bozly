@@ -192,7 +192,7 @@ cat vault/.bozly/config.json
 }
 ```
 
-**Per-Vault:**
+**Per-Node:**
 ```bash
 # Edit vault/.bozly/config.json
 {
@@ -220,7 +220,7 @@ bozly run daily --ai claude --dry
 
 Use this to:
 - See context size
-- Verify vault context is loaded
+- Verify node context is loaded
 - Check model is included (if referenced in command)
 - Preview exact prompt that will be sent
 
@@ -435,7 +435,7 @@ BOZLY is AI-agnostic. If BOZLY depended on Claude's `/memory` command, it wouldn
 ### Session Isolation (By Design)
 
 Each `bozly run` starts fresh. The AI receives:
-1. Your vault context (`.bozly/context.md`)
+1. Your node context (`.bozly/context.md`)
 2. The command prompt (`.bozly/commands/<command>.md`)
 3. Referenced models (if any)
 

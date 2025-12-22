@@ -10,11 +10,6 @@ export default defineConfig({
 
     // Thread pool configuration (v4.0)
     pool: "threads",
-    poolOptions: {
-      threads: {
-        singleThread: false,
-      },
-    },
 
     // TypeScript type checking in tests (v4.0)
     typecheck: {
@@ -66,6 +61,12 @@ export default defineConfig({
 
     // Better test retry logic (v4.0)
     retry: 0,
+  },
+  // Thread pool options (Vitest 4.0 - moved to top level)
+  poolOptions: {
+    threads: {
+      singleThread: false,
+    },
   },
   resolve: {
     alias: {

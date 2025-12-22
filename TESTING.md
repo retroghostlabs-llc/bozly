@@ -14,13 +14,13 @@ Comprehensive testing guide for BOZLY contributors.
 | Type | Purpose | Location | Tools |
 |------|---------|----------|-------|
 | **Unit Tests** | Test individual functions in isolation | `tests/unit/` | Vitest + fixtures |
-| **Integration Tests** | Test CLI commands end-to-end | `tests/integration/` | Vitest + mock vault |
+| **Integration Tests** | Test CLI commands end-to-end | `tests/integration/` | Vitest + mock node |
 | **Manual Tests** | Verify behavior manually | `MANUAL-TESTING.md` | CLI + text editor |
 
 ### Coverage Goals
 
 - **Overall:** 80%+ code coverage
-- **Core modules:** 85%+ (vault, registry, config, context)
+- **Core modules:** 85%+ (node, registry, config, context)
 - **CLI commands:** 75%+ (integration tests)
 - **Type files:** Excluded from coverage
 
@@ -50,13 +50,13 @@ npm run test:ui
 
 ```bash
 # Run specific test file
-npm run test vault.test.ts
+npm run test node.test.ts
 
 # Run tests matching pattern
-npm run test -- --grep "initVault"
+npm run test -- --grep "initNode"
 
 # Run single test (use .only)
-it.only("should initialize vault", async () => {
+it.only("should initialize node", async () => {
   // Only this test runs
 });
 ```
@@ -79,9 +79,9 @@ npm run test:watch
 
 ```typescript
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { initVault } from "../../src/core/vault";
+import { initNode } from "../../src/core/node";
 
-describe("Vault Operations", () => {
+describe("Node Operations", () => {
   beforeEach(async () => {
     // Setup before each test
   });
@@ -90,21 +90,21 @@ describe("Vault Operations", () => {
     // Cleanup after each test
   });
 
-  describe("initVault", () => {
-    it("should create a new vault", async () => {
+  describe("initNode", () => {
+    it("should create a new node", async () => {
       // Arrange
-      const options = { path: "/tmp/vault", name: "test" };
+      const options = { path: "/tmp/node", name: "test" };
 
       // Act
-      const vault = await initVault(options);
+      const node = await initNode(options);
 
       // Assert
-      expect(vault.name).toBe("test");
+      expect(node.name).toBe("test");
     });
 
-    it("should reject if vault exists", async () => {
+    it("should reject if node exists", async () => {
       // Test error case
-      await expect(initVault(options)).rejects.toThrow();
+      await expect(initNode(options)).rejects.toThrow();
     });
   });
 });
@@ -121,8 +121,8 @@ const tempDir = await createTempDir();
 // Get current temp directory
 const dir = getTempDir();
 
-// Create mock vault with all subdirectories
-const vaultPath = await createMockVault(tempDir);
+// Create mock node with all subdirectories
+const nodePath = await createMockNode(tempDir);
 
 // Create mock registry
 await createMockRegistry(tempDir);
@@ -137,36 +137,36 @@ await writeJSON<T>(filePath, data);
 ### Example Unit Test
 
 ```typescript
-describe("Vault Initialization", () => {
+describe("Node Initialization", () => {
   it("should create .bozly directory structure", async () => {
     // Arrange
     await createTempDir();
     const tempDir = getTempDir();
-    const vaultPath = path.join(tempDir, "my-vault");
+    const nodePath = path.join(tempDir, "my-node");
 
     // Act
-    await initVault({ path: vaultPath, name: "my-vault" });
+    await initNode({ path: nodePath, name: "my-node" });
 
     // Assert
-    expect(await dirExists(path.join(vaultPath, ".bozly"))).toBe(true);
-    expect(await dirExists(path.join(vaultPath, ".bozly", "sessions"))).toBe(true);
-    expect(await dirExists(path.join(vaultPath, ".bozly", "tasks"))).toBe(true);
+    expect(await dirExists(path.join(nodePath, ".bozly"))).toBe(true);
+    expect(await dirExists(path.join(nodePath, ".bozly", "sessions"))).toBe(true);
+    expect(await dirExists(path.join(nodePath, ".bozly", "tasks"))).toBe(true);
   });
 
   it("should create config.json with correct structure", async () => {
     // Arrange
     await createTempDir();
     const tempDir = getTempDir();
-    const vaultPath = path.join(tempDir, "vault");
+    const nodePath = path.join(tempDir, "node");
 
     // Act
-    await initVault({ path: vaultPath, name: "test-vault", type: "music" });
+    await initNode({ path: nodePath, name: "test-node", type: "music" });
 
     // Assert
-    const configPath = path.join(vaultPath, ".bozly", "config.json");
+    const configPath = path.join(nodePath, ".bozly", "config.json");
     const config = await readJSON(configPath);
 
-    expect(config.name).toBe("test-vault");
+    expect(config.name).toBe("test-node");
     expect(config.type).toBe("music");
     expect(config.ai.defaultProvider).toBe("claude");
   });
@@ -199,7 +199,7 @@ describe("Vault Initialization", () => {
 
 ```typescript
 describe("bozly list command", () => {
-  it("should list all registered vaults", async () => {
+  it("should list all registered nodes", async () => {
     // Arrange
     await createTempDir();
     const tempDir = getTempDir();
@@ -207,45 +207,45 @@ describe("bozly list command", () => {
     await createMockRegistry(tempDir);
 
     // Act
-    const { vaults } = await listVaults();
+    const { nodes } = await listNodes();
 
     // Assert
-    expect(vaults).toHaveLength(1);
-    expect(vaults[0].name).toBe("test-vault");
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0].name).toBe("test-node");
   });
 });
 ```
 
-### Mock Vault Creation
+### Mock Node Creation
 
-All integration tests should use mock vaults:
+All integration tests should use mock nodes:
 
 ```typescript
-// Create a complete test vault
-const vaultPath = await createMockVault(tempDir);
+// Create a complete test node
+const nodePath = await createMockNode(tempDir);
 
-// Now test commands against this vault
-const vault = await getVault("test-vault");
-expect(vault).toBeDefined();
+// Now test commands against this node
+const node = await getNode("test-node");
+expect(node).toBeDefined();
 ```
 
 ### Testing Error Handling
 
 ```typescript
 describe("Error Handling", () => {
-  it("should reject if vault path is invalid", async () => {
+  it("should reject if node path is invalid", async () => {
     await expect(
-      initVault({ path: "/invalid/path/that/doesnt/exist" })
+      initNode({ path: "/invalid/path/that/doesnt/exist" })
     ).rejects.toThrow("Permission denied");
   });
 
   it("should reject if config is malformed", async () => {
-    // Create vault with invalid JSON
-    const configPath = path.join(vaultPath, ".bozly", "config.json");
+    // Create node with invalid JSON
+    const configPath = path.join(nodePath, ".bozly", "config.json");
     await fs.writeFile(configPath, "{ invalid }");
 
     await expect(
-      loadVaultConfig(vaultPath)
+      loadNodeConfig(nodePath)
     ).rejects.toThrow("SyntaxError");
   });
 });
@@ -255,14 +255,14 @@ describe("Error Handling", () => {
 
 ## Mocking & Fixtures
 
-### Mock Vault Structure
+### Mock Node Structure
 
-`createMockVault()` creates:
+`createMockNode()` creates:
 
 ```
-test-vault/
+test-node/
 └── .bozly/
-    ├── config.json          # Valid vault config
+    ├── config.json          # Valid node config
     ├── context.md           # Default context
     ├── index.json           # Task index
     ├── sessions/            # Empty directory
@@ -279,11 +279,11 @@ test-vault/
 ```json
 {
   "version": "0.3.0",
-  "vaults": [
+  "nodes": [
     {
-      "id": "test-vault-1",
-      "name": "test-vault",
-      "path": "/tmp/test-vault",
+      "id": "test-node-1",
+      "name": "test-node",
+      "path": "/tmp/test-node",
       "type": "default",
       "active": true,
       "created": "2024-01-01T00:00:00Z"
@@ -298,7 +298,7 @@ test-vault/
 
 ```typescript
 // Use readJSON/writeJSON helpers
-const config = await readJSON<VaultConfig>(configPath);
+const config = await readJSON<NodeConfig>(configPath);
 config.name = "updated";
 await writeJSON(configPath, config);
 
@@ -326,7 +326,7 @@ Generates:
 
 **Terminal output:**
 ```
-src/core/vault.ts          │ 85% │ 90% │ 80% │ 85%
+src/core/node.ts          │ 85% │ 90% │ 80% │ 85%
 src/core/registry.ts       │ 78% │ 75% │ 70% │ 78%
 src/core/config.ts         │ 92% │ 95% │ 88% │ 92%
 ```
@@ -346,13 +346,13 @@ Example:
 ```typescript
 // This line is uncovered (red in HTML report)
 if (error.code === "ENOENT") {
-  throw new VaultNotFoundError();
+  throw new NodeNotFoundError();
 }
 
 // Add test to cover it
-it("should throw VaultNotFoundError if vault doesn't exist", async () => {
+it("should throw NodeNotFoundError if node doesn't exist", async () => {
   // This test exercises the uncovered branch
-  await expect(loadVault("/nonexistent")).rejects.toThrow(VaultNotFoundError);
+  await expect(loadNode("/nonexistent")).rejects.toThrow(NodeNotFoundError);
 });
 ```
 
@@ -364,7 +364,7 @@ it("should throw VaultNotFoundError if vault doesn't exist", async () => {
 
 ```
 tests/unit/
-├── vault.test.ts        # 9+ tests for vault operations
+├── node.test.ts        # 9+ tests for node operations
 ├── registry.test.ts     # 10+ tests for registry management
 ├── config.test.ts       # 8+ tests for config handling
 ├── context.test.ts      # 10+ tests for context generation
@@ -394,7 +394,7 @@ Total: 73+ tests (target: 80%+ coverage)
 
 ```bash
 # Run with extra logging
-npm run test:watch vault.test.ts
+npm run test:watch node.test.ts
 
 # Use .only to isolate test
 it.only("should handle this", async () => {
@@ -405,10 +405,10 @@ it.only("should handle this", async () => {
 ### Add Console Output
 
 ```typescript
-it("should process vault", async () => {
-  const vault = await initVault(options);
-  console.log("Vault created:", vault);  // Shows in test output
-  expect(vault.name).toBe("test");
+it("should process node", async () => {
+  const node = await initNode(options);
+  console.log("Node created:", node);  // Shows in test output
+  expect(node.name).toBe("test");
 });
 ```
 
@@ -485,7 +485,7 @@ Must pass all checks before merging.
 
 ```typescript
 it("should load config asynchronously", async () => {
-  const config = await loadVaultConfig(vaultPath);
+  const config = await loadNodeConfig(nodePath);
   expect(config.name).toBe("test");
 });
 ```
@@ -495,7 +495,7 @@ it("should load config asynchronously", async () => {
 ```typescript
 it("should throw error on invalid input", async () => {
   await expect(
-    initVault({ path: null })  // Invalid
+    initNode({ path: null })  // Invalid
   ).rejects.toThrow("Invalid path");
 });
 ```
@@ -504,7 +504,7 @@ it("should throw error on invalid input", async () => {
 
 ```typescript
 it("should create files with correct content", async () => {
-  await createVault(vaultPath);
+  await createNode(nodePath);
 
   const config = await readJSON(configPath);
   expect(config.version).toBe("0.3.0");
@@ -522,7 +522,7 @@ it("should not pollute filesystem", async () => {
   const tempDir = getTempDir();
 
   // Test operations in isolated temp dir
-  const vault = await initVault({ path: path.join(tempDir, "vault") });
+  const node = await initNode({ path: path.join(tempDir, "node") });
 
   // Cleanup happens automatically in afterEach
   // No manual cleanup needed!

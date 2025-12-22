@@ -6,8 +6,8 @@
 
 ## Overview
 
-n8n is a workflow automation platform that can orchestrate BOZLY vaults, enabling:
-- **Multi-vault coordination** — Chain commands across multiple BOZLY vaults
+n8n is a workflow automation platform that can orchestrate BOZLY nodes, enabling:
+- **Multi-vault coordination** — Chain commands across multiple BOZLY nodes
 - **External event triggers** — Discord, webhooks, APIs → trigger `bozly run` commands
 - **Session automation** — Monitor `.bozly/sessions/` and process results
 - **Data pipelines** — External data → BOZLY context → AI processing → external services
@@ -92,9 +92,9 @@ cd /Users/sbevere/my-obsidian/02-Areas/Ready-to-Build/n8n-bozly-integration/
 ```
 n8n Execute Command node
   ↓
-bozly run music-vault complete-album
+bozly run music complete-album
   ↓
-BOZLY loads vault context + command
+BOZLY loads node context + command
   ↓
 Pipes to Claude/GPT/Ollama
   ↓
@@ -108,7 +108,7 @@ Session saved to .bozly/sessions/
 Discord message "Analyze this album"
   → n8n webhook trigger
   → Parse message text
-  → bozly run music-vault analyze --input "message text"
+  → bozly run music analyze --input "message text"
   → Save session
   → Reply in Discord with session results
 ```
@@ -130,7 +130,7 @@ Discord message "Analyze this album"
 
 **How It Works:**
 ```
-n8n File Watcher monitors ~/.bozly/sessions/ (or specific vault path)
+n8n File Watcher monitors ~/.bozly/sessions/ (or specific node path)
   ↓
 Detects new directory: vault_id/YYYY/MM/DD/uuid/
   ↓
@@ -167,7 +167,7 @@ Chains to next bozly command
 Passes previous output as context
 ```
 
-**Best for:** Multi-vault workflows, sequential processing
+**Best for:** Multi-node workflows, sequential processing
 
 ### Pattern 5: Context Injection
 ```
@@ -180,7 +180,7 @@ Triggers bozly run
 BOZLY context now includes fresh external data
 ```
 
-**Best for:** Data-driven vaults, real-time updates, dynamic context
+**Best for:** Data-driven nodes, real-time updates, dynamic context
 
 ---
 
@@ -202,9 +202,9 @@ BOZLY context now includes fresh external data
 ```
 Morning trigger (n8n cron)
   ↓
-1. bozly run journal-vault morning-entry
+1. bozly run journal morning-entry
   ↓
-2. bozly run music-vault album-discovery
+2. bozly run music album-discovery
   ↓
 3. bozly run content-vault daily-plan
   ↓

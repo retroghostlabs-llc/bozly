@@ -19,11 +19,11 @@ Have an idea? [Start a discussion](https://github.com/RetroGhostLabs/bozly/discu
 - Proposed solution
 - Alternatives considered
 
-### Share Your Vault
+### Share Your Node
 Built something cool? Share it:
-- Create a GitHub repo with your vault structure
+- Create a GitHub repo with your node structure
 - Post in [Discussions](https://github.com/RetroGhostLabs/bozly/discussions)
-- We'll feature interesting vaults in the docs
+- We'll feature interesting nodes in the docs
 
 ### Improve Documentation
 - Fix typos or unclear explanations
@@ -73,7 +73,7 @@ bozly/
 │   └── utils/              # Utilities
 ├── dist/                   # Compiled JavaScript
 ├── docs/                   # Documentation
-├── examples/               # Example vaults
+├── examples/               # Example nodes
 ├── tests/                  # Test files
 ├── package.json
 └── tsconfig.json
@@ -123,7 +123,7 @@ feat: add new command
 fix: resolve config parsing issue
 docs: update getting started guide
 test: add init command tests
-refactor: simplify vault loading
+refactor: simplify node loading
 ```
 
 ### Pull Requests
@@ -153,7 +153,7 @@ Before submitting:
 
 ### Core Concepts
 
-**Vault:** Self-contained workspace with `.bozly/` folder
+**Node:** Self-contained workspace with `.bozly/` folder
 **Context:** AI context file (`.bozly/context.md`)
 **Command:** User-invoked action (`.bozly/commands/*.md`)
 **Session:** Conversation history (`.bozly/sessions/*.json`)
@@ -163,7 +163,7 @@ Before submitting:
 | File | Purpose |
 |------|---------|
 | `src/cli/index.ts` | CLI entry point |
-| `src/core/vault.ts` | Vault operations |
+| `src/core/node.ts` | Node operations |
 | `src/core/context.ts` | Context management |
 | `src/core/session.ts` | Session handling |
 

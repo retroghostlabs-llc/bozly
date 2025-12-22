@@ -441,7 +441,7 @@ Run with `--dry` to verify the model appears correctly.
 - risk-assessment.yaml (classification)
 ```
 
-### Journal Vault
+### Journal Node
 
 ```yaml
 # Models for mood/reflection analysis

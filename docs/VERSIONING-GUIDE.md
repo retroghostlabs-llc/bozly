@@ -11,7 +11,7 @@ A guide to version tracking, history management, and model versioning in BOZLY.
 BOZLY implements **Pattern 4 (Versioning Over Mutation)** from LogicFlows design principles: Never change existing work, always version it instead.
 
 This guide covers:
-- Semantic versioning for models and vaults
+- Semantic versioning for models and nodes
 - Automatic version tracking for context and commands
 - Viewing and managing version history
 - Model changelog tracking
@@ -126,7 +126,7 @@ Each vault maintains `.bozly/.versions.json` which contains:
 
 ```json
 {
-  "vaultId": "music-vault",
+  "nodeId": "music",
   "vaultVersion": "0.1.0",
   "created": "2025-12-20T23:58:22.393Z",
   "lastUpdated": "2025-12-20T23:58:22.393Z",
@@ -313,7 +313,7 @@ bozly run daily
 ### Workflow 3: Monitoring Vault Versions
 
 ```bash
-# Check vault status
+# Check node status
 bozly version --vault
 
 # See all information
@@ -331,7 +331,7 @@ bozly version --model scoring --history
 
 ```typescript
 interface VaultVersionHistory {
-  vaultId: string;              // Machine-readable vault ID
+  nodeId: string;              // Machine-readable node ID
   vaultVersion: string;         // Semantic version (e.g., "0.1.0")
   created: string;              // ISO 8601 timestamp
   lastUpdated: string;          // ISO 8601 timestamp
@@ -401,7 +401,7 @@ bozly version --model scoring --history
 
 ### Use Case 2: Context Stability
 
-Ensure your vault context doesn't accidentally change:
+Ensure your node context doesn't accidentally change:
 
 ```bash
 # Check context version
@@ -416,10 +416,10 @@ bozly version --vault
 Share model versions across the team:
 
 ```bash
-# Your vault: model v1.2.0
+# Your node: model v1.2.0
 bozly version --model scoring
 
-# Team member's vault: model v1.1.0
+# Team member's node: model v1.1.0
 # Understand version difference and compatibility
 ```
 
@@ -484,7 +484,7 @@ Ensures you're aware of vault evolution.
 
 ### 5. Share Version Info in Backups
 
-When backing up vaults:
+When backing up nodes:
 
 ```bash
 # Capture version info
@@ -589,7 +589,7 @@ bozly run any-command
 - **Automatic Version Bumping** — CLI flag to auto-bump version on changes
 - **Version Diff** — Show what changed between versions
 - **Version Rollback** — Revert to previous version (with safeguards)
-- **Cross-Vault Version Tracking** — Monitor model versions across vaults
+- **Cross-Vault Version Tracking** — Monitor model versions across nodes
 
 ### Contributing Versions
 

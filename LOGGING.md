@@ -49,13 +49,13 @@ Format: JSON (one entry per line, machine-readable)
 {
   "timestamp": "2025-12-18T19:30:45.123Z",
   "level": "INFO",
-  "message": "Initializing vault",
+  "message": "Initializing node",
   "context": {
-    "vaultName": "my-vault",
-    "vaultType": "music"
+    "nodeName": "my-node",
+    "nodeType": "music"
   },
-  "file": "vault.ts",
-  "function": "initVault",
+  "file": "node.ts",
+  "function": "initNode",
   "line": 42
 }
 ```
@@ -81,14 +81,14 @@ await logger.init('.bozly/logs', {
 
 ```typescript
 // Info level
-await logger.info('Vault initialized', {
-  vaultName: 'my-vault',
-  vaultPath: '/home/user/my-vault',
+await logger.info('Node initialized', {
+  nodeName: 'my-node',
+  nodePath: '/home/user/my-node',
 });
 
 // Warning level
-await logger.warn('Vault already exists', {
-  vaultPath: '/home/user/vault',
+await logger.warn('Node already exists', {
+  nodePath: '/home/user/node',
   action: 'overwriting with --force',
 });
 
@@ -101,7 +101,7 @@ await logger.error('Failed to load config', {
 // Debug level (verbose)
 await logger.debug('Internal state', {
   registrySize: 5,
-  activeVaults: 2,
+  activeNodes: 2,
 });
 ```
 
@@ -111,15 +111,15 @@ Pass Error objects for full stack traces:
 
 ```typescript
 try {
-  await initVault(options);
+  await initNode(options);
 } catch (error) {
   // Error passed directly
-  await logger.error('Vault initialization failed', error);
+  await logger.error('Node initialization failed', error);
 
   // Or with context
   if (error instanceof Error) {
-    await logger.error('Vault initialization failed', {
-      vaultPath: options.path,
+    await logger.error('Node initialization failed', {
+      nodePath: options.path,
       errorType: error.constructor.name,
     }, error);
   }
@@ -129,15 +129,15 @@ try {
 ### Performance Tracking
 
 ```typescript
-await logger.markStart('vault-init');
+await logger.markStart('node-init');
 // ... do work ...
-await logger.markEnd('vault-init', 'Vault initialized');
+await logger.markEnd('node-init', 'Node initialized');
 
 // Output:
-// [INFO] 2025-12-18T19:30:45.456Z Vault initialized (vault.ts:50)
+// [INFO] 2025-12-18T19:30:45.456Z Node initialized (node.ts:50)
 // {
 //   "duration": "234ms",
-//   "label": "vault-init"
+//   "label": "node-init"
 // }
 ```
 
@@ -187,7 +187,7 @@ import { logger } from './logger.js';
  * @throws {Error} If path is invalid
  *
  * @example
- *   const result = await functionA({ path: '/home/user/vault' });
+ *   const result = await functionA({ path: '/home/user/node' });
  *   console.log(result.id);
  */
 export async function functionA(options: Options): Promise<Result> {
@@ -208,51 +208,51 @@ export async function functionA(options: Options): Promise<Result> {
 
 ## Logging in Core Modules
 
-### Vault Operations
+### Node Operations
 
 ```typescript
-// src/core/vault.ts
+// src/core/node.ts
 import { logger } from './logger.js';
 
-export async function initVault(options: InitOptions): Promise<VaultInfo> {
-  await logger.debug('Initializing vault', {
+export async function initNode(options: InitOptions): Promise<NodeInfo> {
+  await logger.debug('Initializing node', {
     path: options.path,
     type: options.type
   });
 
-  const vaultPath = path.resolve(options.path);
+  const nodePath = path.resolve(options.path);
 
   try {
-    await fs.mkdir(vaultPath, { recursive: true });
-    await logger.info('Vault directory created', { vaultPath });
+    await fs.mkdir(nodePath, { recursive: true });
+    await logger.info('Node directory created', { nodePath });
 
     // Create subdirectories with logging
     const dirs = ['sessions', 'tasks', 'commands', 'workflows', 'hooks'];
     for (const dir of dirs) {
-      const dirPath = path.join(vaultPath, '.bozly', dir);
+      const dirPath = path.join(nodePath, '.bozly', dir);
       await fs.mkdir(dirPath, { recursive: true });
       await logger.debug('Directory created', { dir: dirPath });
     }
 
     // Create configuration
     const config = createConfig(options);
-    await logger.info('Vault configuration created', {
-      vaultName: config.name,
-      vaultType: config.type,
+    await logger.info('Node configuration created', {
+      nodeName: config.name,
+      nodeType: config.type,
       providers: config.ai.providers
     });
 
-    // Register vault
-    const vault = await addVaultToRegistry({ path: vaultPath, name: config.name });
-    await logger.info('Vault registered', {
-      vaultId: vault.id,
-      vaultName: vault.name
+    // Register node
+    const node = await addNodeToRegistry({ path: nodePath, name: config.name });
+    await logger.info('Node registered', {
+      nodeId: node.id,
+      nodeName: node.name
     });
 
-    return vault;
+    return node;
   } catch (error) {
-    await logger.error('Vault initialization failed',
-      { vaultPath, type: options.type },
+    await logger.error('Node initialization failed',
+      { nodePath, type: options.type },
       error as Error
     );
     throw error;
@@ -266,20 +266,20 @@ export async function initVault(options: InitOptions): Promise<VaultInfo> {
 // src/core/registry.ts
 import { logger } from './logger.js';
 
-export async function addVaultToRegistry(options: AddVaultOptions): Promise<VaultInfo> {
-  await logger.debug('Adding vault to registry', {
-    vaultPath: options.path,
-    vaultName: options.name
+export async function addNodeToRegistry(options: AddNodeOptions): Promise<NodeInfo> {
+  await logger.debug('Adding node to registry', {
+    nodePath: options.path,
+    nodeName: options.name
   });
 
   try {
     const registry = await loadRegistry();
     await logger.debug('Registry loaded', {
-      vaultCount: registry.vaults.length
+      nodeCount: registry.nodes.length
     });
 
-    const vault: VaultInfo = {
-      id: generateVaultId(),
+    const node: NodeInfo = {
+      id: generateNodeId(),
       name: options.name,
       path: options.path,
       type: 'default',
@@ -287,19 +287,19 @@ export async function addVaultToRegistry(options: AddVaultOptions): Promise<Vaul
       created: new Date().toISOString(),
     };
 
-    registry.vaults.push(vault);
+    registry.nodes.push(node);
     await saveRegistry(registry);
 
-    await logger.info('Vault added to registry', {
-      vaultId: vault.id,
-      vaultName: vault.name,
-      totalVaults: registry.vaults.length
+    await logger.info('Node added to registry', {
+      nodeId: node.id,
+      nodeName: node.name,
+      totalNodes: registry.nodes.length
     });
 
-    return vault;
+    return node;
   } catch (error) {
-    await logger.error('Failed to add vault to registry',
-      { vaultPath: options.path },
+    await logger.error('Failed to add node to registry',
+      { nodePath: options.path },
       error as Error
     );
     throw error;
@@ -313,25 +313,25 @@ export async function addVaultToRegistry(options: AddVaultOptions): Promise<Vaul
 // src/core/config.ts
 import { logger } from './logger.js';
 
-export async function loadVaultConfig(vaultPath: string): Promise<VaultConfig> {
-  const configPath = path.join(vaultPath, '.bozly', 'config.json');
+export async function loadNodeConfig(nodePath: string): Promise<NodeConfig> {
+  const configPath = path.join(nodePath, '.bozly', 'config.json');
 
-  await logger.debug('Loading vault configuration', { configPath });
+  await logger.debug('Loading node configuration', { configPath });
 
   try {
     const content = await fs.readFile(configPath, 'utf-8');
-    const config = JSON.parse(content) as VaultConfig;
+    const config = JSON.parse(content) as NodeConfig;
 
-    await logger.info('Vault configuration loaded', {
-      vaultName: config.name,
-      vaultType: config.type,
+    await logger.info('Node configuration loaded', {
+      nodeName: config.name,
+      nodeType: config.type,
       defaultProvider: config.ai.defaultProvider
     });
 
     return config;
   } catch (error) {
-    await logger.error('Failed to load vault configuration',
-      { vaultPath, configPath },
+    await logger.error('Failed to load node configuration',
+      { nodePath, configPath },
       error as Error
     );
     throw error;
@@ -354,28 +354,28 @@ export async function handleInit(
   options: Partial<CliOptions>
 ): Promise<void> {
   await logger.info('Init command started', {
-    vaultPath: options.path,
-    vaultName: options.name,
+    nodePath: options.path,
+    nodeName: options.name,
     force: options.force
   });
 
   try {
-    await logger.markStart('init-vault');
+    await logger.markStart('init-node');
 
-    const vault = await initVault({
+    const node = await initNode({
       path: options.path,
       name: options.name,
       type: options.type,
       force: options.force,
     });
 
-    await logger.markEnd('init-vault', 'Vault initialized successfully');
-    await logger.info('Init command completed', { vaultId: vault.id });
+    await logger.markEnd('init-node', 'Node initialized successfully');
+    await logger.info('Init command completed', { nodeId: node.id });
 
-    console.log(`✓ Vault created: ${vault.name}`);
+    console.log(`✓ Node created: ${node.name}`);
   } catch (error) {
     await logger.error('Init command failed', options, error as Error);
-    console.error(`✗ Failed to initialize vault: ${(error as Error).message}`);
+    console.error(`✗ Failed to initialize node: ${(error as Error).message}`);
     process.exit(1);
   }
 }
@@ -404,41 +404,41 @@ cat .bozly/logs/bozly-*.log | jq 'select(.level == "ERROR")'
 {
   "timestamp": "2025-12-18T19:30:45.123Z",
   "level": "INFO",
-  "message": "Initializing vault",
+  "message": "Initializing node",
   "context": {
-    "path": "/home/user/my-vault",
-    "name": "my-vault",
+    "path": "/home/user/my-node",
+    "name": "my-node",
     "type": "music"
   },
-  "file": "vault.ts",
-  "function": "initVault",
+  "file": "node.ts",
+  "function": "initNode",
   "line": 42
 }
 
 {
   "timestamp": "2025-12-18T19:30:45.456Z",
   "level": "INFO",
-  "message": "Vault directory created",
+  "message": "Node directory created",
   "context": {
-    "vaultPath": "/home/user/my-vault"
+    "nodePath": "/home/user/my-node"
   },
-  "file": "vault.ts",
-  "function": "initVault",
+  "file": "node.ts",
+  "function": "initNode",
   "line": 50
 }
 
 {
   "timestamp": "2025-12-18T19:30:45.789Z",
   "level": "ERROR",
-  "message": "Vault initialization failed",
+  "message": "Node initialization failed",
   "context": {
-    "vaultPath": "/home/user/my-vault",
+    "nodePath": "/home/user/my-node",
     "type": "music"
   },
   "error": "EACCES: permission denied",
-  "stack": "Error: EACCES: permission denied\n    at Object.mkdirSync [as mkdir]\n    at vault.ts:50:20",
-  "file": "vault.ts",
-  "function": "initVault",
+  "stack": "Error: EACCES: permission denied\n    at Object.mkdirSync [as mkdir]\n    at node.ts:50:20",
+  "file": "node.ts",
+  "function": "initNode",
   "line": 68
 }
 ```
@@ -484,13 +484,13 @@ async function main(): Promise<void> {
 
 ```bash
 # Production - INFO level only
-NODE_ENV=production bozly init my-vault
+NODE_ENV=production bozly init my-node
 
 # Development - DEBUG level for detailed output
-BOZLY_DEBUG=true bozly init my-vault
+BOZLY_DEBUG=true bozly init my-node
 
 # Silent mode - WARN level only
-BOZLY_LOG_LEVEL=WARN bozly init my-vault
+BOZLY_LOG_LEVEL=WARN bozly init my-node
 ```
 
 ---
@@ -500,9 +500,9 @@ BOZLY_LOG_LEVEL=WARN bozly init my-vault
 ### Test-Friendly Logging
 
 ```typescript
-// tests/unit/vault.test.ts
-describe('Vault Operations', () => {
-  it('should log vault initialization', async () => {
+// tests/unit/node.test.ts
+describe('Node Operations', () => {
+  it('should log node initialization', async () => {
     // Setup test logger
     const logs: LogEntry[] = [];
     const testLogger = new Logger({
@@ -514,13 +514,13 @@ describe('Vault Operations', () => {
     testLogger.on('log', (entry) => logs.push(entry));
 
     // Run operation
-    const vault = await initVault({ path: tempPath, name: 'test' });
+    const node = await initNode({ path: tempPath, name: 'test' });
 
     // Verify logging
     expect(logs).toContainEqual(
       expect.objectContaining({
         level: 'INFO',
-        message: 'Vault initialized',
+        message: 'Node initialized',
       })
     );
   });
@@ -559,13 +559,13 @@ describe('Vault Operations', () => {
 - Personal information (SSNs, emails)
 - Credit card numbers
 - Access tokens or session IDs
-- Private vault content
+- Private node content
 
 ✅ **Always log:**
 - Operation names and parameters (safe ones)
 - Error types and messages
 - Timing information
-- User actions (vault creation, etc.)
+- User actions (node creation, etc.)
 
 ---
 

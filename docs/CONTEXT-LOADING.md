@@ -112,7 +112,7 @@ Albums are rated on:
 
 **Command:** `bozly run daily`
 **What Happens:**
-1. Loads vault context (your music domain knowledge)
+1. Loads node context (your music domain knowledge)
 2. Lists available commands (`/daily`, `/weekly-roll`, `/complete-album`)
 3. Sends command prompt to Claude
 4. Returns album logging suggestions
@@ -127,15 +127,15 @@ Context size: 633 chars
 
 Prompt:
 ---
-vault: music-vault
+vault: music
 type: music
-path: ~/music-vault
+path: ~/music
 provider: claude
 ---
 
 # Music Vault
 
-[vault context...]
+[node context...]
 
 ## Available Commands
 
@@ -162,7 +162,7 @@ $ bozly run daily --ai gpt
 ```bash
 $ bozly run daily --no-context
 
-# Just the command, no vault context
+# Just the command, no node context
 # Useful for generic commands
 ```
 
@@ -271,7 +271,7 @@ $ head -5 .bozly/commands/daily.md
  * 3. Available commands (if includeCommands option is true)
  */
 export async function generateContext(
-  vault: VaultInfo,
+  node: VaultInfo,
   options?: ContextOptions
 ): Promise<string>
 ```
@@ -311,7 +311,7 @@ function extractDescription(content: string): string
 ## Session 41 Summary
 
 ✅ **Context Loading Implementation:**
-- `context.ts` generates vault context by combining metadata + context.md + commands
+- `context.ts` generates node context by combining metadata + context.md + commands
 - Full integration with `runVaultCommand()` in commands.ts
 - Options for including/excluding context (--no-context flag)
 - Comprehensive logging for debugging
@@ -324,7 +324,7 @@ function extractDescription(content: string): string
 
 ✅ **Key Features:**
 - Automatic vault discovery
-- Metadata injection (vault name, type, path, provider)
+- Metadata injection (node name, type, path, provider)
 - Command list generation with descriptions
 - YAML frontmatter and markdown parsing
 

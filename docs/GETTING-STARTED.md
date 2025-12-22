@@ -61,7 +61,7 @@ bozly --version
 
 ## Step 2: Create Your First Vault
 
-BOZLY organizes your work into **vaults** — domain-specific workspaces with their own commands and context.
+BOZLY organizes your work into **nodes** — domain-specific workspaces with their own commands and context.
 
 ### Quick Start
 
@@ -75,8 +75,8 @@ bozly init
 ```
 
 BOZLY will ask you:
-1. **Vault name** — What do you want to call this vault?
-2. **Vault type** — What's it for? (journal, music, content, research, etc.)
+1. **Node name** — What do you want to call this vault?
+2. **Node type** — What's it for? (journal, music, content, research, etc.)
 3. **Default AI** — Which AI CLI to use? (claude, gpt, ollama)
 
 ### What Gets Created
@@ -84,7 +84,7 @@ BOZLY will ask you:
 ```
 ~/my-first-vault/
 └── .bozly/
-    ├── config.json         ← Vault settings
+    ├── config.json         ← Node settings
     ├── context.md          ← AI context file
     ├── index.json          ← Task index
     ├── sessions/           ← Session history
@@ -101,10 +101,10 @@ BOZLY will ask you:
 BOZLY comes with built-in commands. Try them:
 
 ```bash
-# Check vault status
+# Check node status
 bozly status
 
-# List all vaults
+# List all nodes
 bozly list
 
 # Generate AI context
@@ -124,7 +124,7 @@ bozly run daily
 ```
 
 BOZLY will:
-1. Load your vault context (`.bozly/context.md`)
+1. Load your node context (`.bozly/context.md`)
 2. Load the command prompt (`.bozly/commands/daily.md`)
 3. Pipe everything to your AI CLI
 4. Save the session to `.bozly/sessions/`
@@ -161,7 +161,7 @@ bozly run daily --ai ollama  # Use local Ollama
 
 ### Edit the Context File
 
-The context file tells AI about your vault:
+The context file tells AI about your node:
 
 ```bash
 bozly context edit
@@ -213,9 +213,9 @@ BOZLY includes starter templates for common use cases:
 
 ```bash
 # Initialize with a template
-bozly init --type music        # Music discovery vault
-bozly init --type journal      # Daily journal vault
-bozly init --type content      # Content production vault
+bozly init # Initialize node
+bozly init # Initialize node
+bozly init # Initialize node
 ```
 
 Templates include:
@@ -230,12 +230,12 @@ Templates include:
 
 ### Learn More
 - [ARCHITECTURE.md](ARCHITECTURE.md) — How BOZLY works
-- [BUILDING-YOUR-VAULT.md](BUILDING-YOUR-VAULT.md) — Create custom vaults
+- [BUILDING-YOUR-VAULT.md](BUILDING-YOUR-VAULT.md) — Create custom nodes
 - [CLI Reference](CLI-DESIGN.md) — All BOZLY commands
 
 ### Explore Examples
-- [Music Discovery Vault](../examples/music-vault/)
-- [Journal Vault](../examples/journal-vault/)
+- [Music Discovery Node](../examples/music/)
+- [Journal Node](../examples/journal/)
 
 ### Get Help
 - [GitHub Issues](https://github.com/RetroGhostLabs/bozly/issues)
@@ -249,12 +249,12 @@ Templates include:
 
 ```bash
 # Setup
-bozly init                    # Initialize new vault
+bozly init # Initialize node
 bozly init --type music       # Initialize from template
 
 # Status
-bozly status                  # Current vault status
-bozly list                    # All registered vaults
+bozly status                  # Current node status
+bozly list                    # All registered nodes
 bozly doctor                  # Health check
 
 # Running
@@ -272,14 +272,14 @@ bozly context edit            # Edit context file
 
 ```
 ~/.bozly/                     # Global config
-├── bozly-registry.json       # All vault locations
+├── bozly-registry.json       # All node locations
 ├── bozly-config.json         # Global settings
 └── commands/                 # Global commands
 
-~/my-vault/.bozly/            # Per-vault config
-├── config.json               # Vault settings
+~/music/.bozly/            # Per-vault config
+├── config.json               # Node settings
 ├── context.md                # AI context
-├── commands/                 # Vault commands
+├── commands/                 # Node commands
 └── sessions/                 # Session history
 ```
 

@@ -53,7 +53,27 @@ export async function getRegistry(): Promise<Registry> {
 
   try {
     const content = await fs.readFile(registryPath, "utf-8");
-    const registry = JSON.parse(content) as Registry;
+    const data = JSON.parse(content);
+
+    // Handle backward compatibility: old format used "vaults", new format uses "nodes"
+    let registry: Registry;
+    if (data.nodes !== undefined) {
+      // New format
+      registry = data as Registry;
+    } else if (data.vaults !== undefined) {
+      // Old format - migrate to new format
+      registry = {
+        version: data.version || "0.3.0",
+        nodes: data.vaults || [],
+        created: data.created || new Date().toISOString(),
+        lastUpdated: data.lastUpdated || new Date().toISOString(),
+      };
+      // Save migrated format
+      await saveRegistry(registry);
+    } else {
+      throw new Error("Registry is malformed: missing nodes or vaults array");
+    }
+
     await logger.debug("Loaded node registry", {
       nodeCount: registry.nodes.length,
       registryPath,

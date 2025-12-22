@@ -35,7 +35,7 @@ Everyone's using AI coding assistants like Cursor and Cline for software develop
 ## Key Features
 
 - **AI-Agnostic** — Works with Claude, GPT, Gemini, Ollama, any AI CLI
-- **Multi-Vault** — Orchestrate multiple domain-specific workspaces
+- **Multi-Node** — Orchestrate multiple domain-specific workspaces
 - **Non-Code Domains** — Music, journaling, content production, research
 - **Cline/Cursor Patterns** — Task folders, session storage, hooks
 - **Context Provider** — BOZLY prepares prompts, your AI executes
@@ -50,7 +50,7 @@ Everyone's using AI coding assistants like Cursor and Cline for software develop
 │  USER runs: bozly run daily                                     │
 ├─────────────────────────────────────────────────────────────────┤
 │  BOZLY:                                                         │
-│  1. Loads vault context (.bozly/context.md)                     │
+│  1. Loads node context (.bozly/context.md)                      │
 │  2. Loads command prompt (.bozly/commands/daily.md)             │
 │  3. Combines context + prompt                                   │
 │  4. Pipes to AI CLI (claude/gpt/gemini/ollama)                  │
@@ -68,18 +68,18 @@ Everyone's using AI coding assistants like Cursor and Cline for software develop
 
 ```
 ~/.bozly/                              ← GLOBAL
-├── bozly-registry.json                ← All vault locations
+├── bozly-registry.json                ← All node locations
 ├── bozly-config.json                  ← Global settings
 ├── commands/                          ← Global commands
 └── templates/                         ← Starter templates
 
-~/music-vault/.bozly/                  ← PER-VAULT
-├── config.json                        ← Vault settings
+~/music/.bozly/                        ← PER-NODE
+├── config.json                        ← Node settings
 ├── context.md                         ← AI context file
 ├── index.json                         ← Task index
 ├── sessions/                          ← Session history
 ├── tasks/                             ← Task data (Cline-style)
-├── commands/                          ← Vault commands
+├── commands/                          ← Node commands
 ├── workflows/                         ← Multi-step processes
 └── hooks/                             ← Automation triggers
 ```
@@ -93,8 +93,8 @@ TIER 1: BOZLY CORE (Framework-Owned)
 TIER 2: GLOBAL USER CONFIG (User-Owned)
 └── ~/.bozly/ — User edits, BOZLY never touches
 
-TIER 3: VAULT CONFIG (Vault-Owned)
-└── ~/vault/.bozly/ — User edits, BOZLY never touches
+TIER 3: NODE CONFIG (Node-Owned)
+└── ~/music/.bozly/ — User edits, BOZLY never touches
 ```
 
 ---
@@ -130,12 +130,12 @@ git clone https://github.com/RetroGhostLabs/bozly.git
 cd bozly && npm install && npm link
 ```
 
-### Create Your First Vault
+### Create Your First Node
 
 ```bash
-# Create a vault directory
-mkdir ~/music-vault
-cd ~/music-vault
+# Create a node directory
+mkdir ~/music
+cd ~/music
 
 # Initialize with BOZLY
 bozly init --name "Music Discovery" --type music
@@ -163,23 +163,23 @@ bozly run daily --ai gpt           # OpenAI (requires OPENAI_API_KEY env var)
 
 ---
 
-## Example Vaults
+## Example Nodes
 
-BOZLY includes example vaults to get you started:
+BOZLY includes example nodes to get you started:
 
-### Music Discovery Vault
+### Music Discovery Node
 - Album reviews with custom scoring
 - TRIPLE search strategy (Influence + Year + All-time)
 - Weekly album selection
 - **Commands:** `/daily`, `/weekly-roll`, `/complete-album`
 
-### Journal Vault
+### Journal Node
 - Daily entries with mood tracking
 - Weekly reviews and reflection
 - Template-based workflows
 - **Commands:** `/daily-entry`, `/log-mood`, `/weekly-review`
 
-### Content Production Vault
+### Content Production Node
 - Video production pipeline
 - Script writing workflows
 - Multi-camera recording notes
@@ -189,24 +189,24 @@ BOZLY includes example vaults to get you started:
 
 ## Commands
 
-### Vault Management
+### Node Management
 
 ```bash
-bozly init                    # Initialize vault in current directory
-bozly add <path>              # Register an existing vault
-bozly remove <name>           # Remove and optionally backup vault
-bozly list                    # List all registered vaults
-bozly status                  # Show current vault status
+bozly init                    # Initialize node in current directory
+bozly add <path>              # Register an existing node
+bozly remove <name>           # Remove and optionally backup node
+bozly list                    # List all registered nodes
+bozly status                  # Show current node status
 ```
 
 #### Remove Command Options
 
 ```bash
-bozly remove my-vault                 # Remove vault (with confirmation)
-bozly remove my-vault --force          # Skip confirmation prompt
-bozly remove my-vault --backup         # Create backup before removing
-bozly remove my-vault --keep-files     # Remove from registry only, keep files
-bozly remove my-vault --backup --force # Backup + remove without confirmation
+bozly remove my-node                 # Remove node (with confirmation)
+bozly remove my-node --force          # Skip confirmation prompt
+bozly remove my-node --backup         # Create backup before removing
+bozly remove my-node --keep-files     # Remove from registry only, keep files
+bozly remove my-node --backup --force # Backup + remove without confirmation
 ```
 
 Backups are created in `~/.bozly/backups/` with timestamps.
@@ -214,7 +214,7 @@ Backups are created in `~/.bozly/backups/` with timestamps.
 ### Core Commands
 
 ```bash
-bozly context                 # Generate AI context from vault
+bozly context                 # Generate AI context from node
 bozly run <command>           # Run command with AI
 bozly logs                    # View session history
 bozly diff                    # Compare session executions
@@ -268,9 +268,9 @@ See [CLI-DESIGN.md](docs/CLI-DESIGN.md) for full command reference.
 ```
 Sprint 1: Foundation           ✅ COMPLETE (Sessions 37-40)
   ✅ 11 CLI commands fully working
-  ✅ Core modules: vault, registry, config, context (3,000+ lines)
+  ✅ Core modules: node, registry, config, context (3,000+ lines)
   ✅ Comprehensive logging system with BOZLY_DEBUG
-  ✅ 4 vault templates + 2 example vaults
+  ✅ 4 node templates + 2 example nodes
   ✅ 59/60 unit tests passing (98% success rate)
 
 Sprint 2: Execution            ✅ COMPLETE (Sessions 44-52)
@@ -298,20 +298,20 @@ Sprint 4: Release              ✅ COMPLETE (Sessions 56-59)
 - Semantic versioning and version history
 - Domain models integration
 - AI-agnostic provider support (4 providers)
-- Vault removal with backup support
+- Node removal with backup support
 
 **Phase 2: Automation & Integrations (v0.4.0-v0.5.0) — 6-8 weeks**
-- [ ] Vault Server UI (`bozly serve`) — Visual vault management
-- [ ] Smart Routing — Per-vault provider config, fallback chains
+- [ ] Node Server UI (`bozly serve`) — Visual node management
+- [ ] Smart Routing — Per-node provider config, fallback chains
 - [ ] Usage Metrics — Track costs and usage across providers
 - [ ] Hooks system (session-start, session-end, post-execution)
 - [ ] Workflows (multi-step processes)
-- [ ] Cross-vault queries (`bozly search --all`)
+- [ ] Cross-node queries (`bozly search --all`)
 - [ ] Auto-Cleanup — Session archival, disk management
 
 **Phase 3: Ecosystem & Community (v1.0.0) — 8-12 weeks**
-- [ ] Community vault registry
-- [ ] `bozly search` / `bozly install` vault publishing
+- [ ] Community node registry
+- [ ] `bozly search` / `bozly install` node publishing
 - [ ] MCP server integration (UniFi, Slack, Discord, GitHub)
 - [ ] Obsidian plugin
 
@@ -323,13 +323,13 @@ See [ROADMAP.md](docs/ROADMAP.md) for full timeline.
 
 | Document | Purpose |
 |----------|---------|
-| [GETTING-STARTED.md](docs/GETTING-STARTED.md) | First vault setup |
+| [GETTING-STARTED.md](docs/GETTING-STARTED.md) | First node setup |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Technical deep dive |
 | [CLI-DESIGN.md](docs/CLI-DESIGN.md) | Command reference |
 | [SESSION-RECORDING-GUIDE.md](docs/SESSION-RECORDING-GUIDE.md) | Session history & audit trail |
 | [VERSIONING-GUIDE.md](docs/VERSIONING-GUIDE.md) | Version management |
 | [AI-PROVIDERS.md](docs/AI-PROVIDERS.md) | AI provider setup |
-| [BUILDING-YOUR-VAULT.md](docs/BUILDING-YOUR-VAULT.md) | Custom vault creation |
+| [BUILDING-YOUR-NODE.md](docs/BUILDING-YOUR-NODE.md) | Custom node creation |
 
 ---
 
@@ -346,7 +346,7 @@ If you used the previous AI Vault Framework (Python/Bash version):
 | WORK-LOG.md (manual) | .bozly/sessions/ (automatic) |
 | CLAUDE.md only | context.md (AI-agnostic) |
 
-Run `bozly migrate` to convert existing vaults.
+Run `bozly migrate` to convert existing nodes.
 
 ---
 
@@ -355,7 +355,7 @@ Run `bozly migrate` to convert existing vaults.
 We welcome contributions:
 
 - **Report bugs** — [Open an issue](https://github.com/RetroGhostLabs/bozly/issues)
-- **Share your vault** — Create a repo and share in Discussions
+- **Share your node** — Create a repo and share in Discussions
 - **Improve docs** — Submit a PR for typos or improvements
 - **Contribute code** — See CONTRIBUTING.md
 
@@ -372,7 +372,7 @@ See [LICENSE](LICENSE) for details.
 ## Connect
 
 - **GitHub:** [bozly](https://github.com/RetroGhostLabs/bozly)
-- **Discussions:** [Ask questions & share vaults](https://github.com/RetroGhostLabs/bozly/discussions)
+- **Discussions:** [Ask questions & share nodes](https://github.com/RetroGhostLabs/bozly/discussions)
 - **Issues:** [Report bugs & request features](https://github.com/RetroGhostLabs/bozly/issues)
 
 ---

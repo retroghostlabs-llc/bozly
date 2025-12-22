@@ -1,0 +1,131 @@
+version: '3.8'
+
+# BOZLY Docker Compose Configuration
+# Runs npm integration tests in isolated, reproducible environment
+# Follows industry-standard patterns from Prisma, AWS SDK
+
+services:
+  # ============================================
+  # Service: Unit Tests
+  # ============================================
+  unit-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: unit-tests
+    container_name: bozly-unit-tests
+    environment:
+      NODE_ENV: test
+      CI: 'true'
+      BOZLY_DEBUG: '${BOZLY_DEBUG:-false}'
+    volumes:
+      # Persist test results
+      - ./test-results:/app/test-results
+      - ./coverage:/app/coverage
+    # Don't run by default, use profile
+    profiles:
+      - test
+    command: npm run test:coverage
+
+  # ============================================
+  # Service: Fresh Installation Test
+  # ============================================
+  # This is the CRITICAL test - verifies npm package is valid
+  test-install:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test-install
+    container_name: bozly-test-install
+    environment:
+      NODE_ENV: test
+      CI: 'true'
+    profiles:
+      - test
+    # Command runs during build (test-install stage)
+    entrypoint: /bin/true
+
+  # ============================================
+  # Service: Integration Tests
+  # ============================================
+  integration-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: integration-tests
+    container_name: bozly-integration-tests
+    environment:
+      NODE_ENV: test
+      CI: 'true'
+      BOZLY_DEBUG: '${BOZLY_DEBUG:-false}'
+      BOZLY_HOME: /app/.bozly-test
+    volumes:
+      - ./test-results:/app/test-results
+      - ./coverage:/app/coverage
+    profiles:
+      - test
+    command: npm run test:integration
+
+  # ============================================
+  # Service: Complete Test Suite (all tests)
+  # ============================================
+  # Run this before publishing: docker compose -f docker-compose.yml run all-tests
+  all-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: unit-tests
+    container_name: bozly-all-tests
+    environment:
+      NODE_ENV: test
+      CI: 'true'
+      BOZLY_DEBUG: '${BOZLY_DEBUG:-false}'
+    volumes:
+      - ./test-results:/app/test-results
+      - ./coverage:/app/coverage
+    profiles:
+      - test
+    # Run all test commands
+    command: >
+      bash -c "
+        echo '=== Running Unit Tests ===' &&
+        npm run test:coverage &&
+        echo '=== Running Integration Tests ===' &&
+        npm run test:integration &&
+        echo '✅ All tests passed!'
+      "
+
+# ============================================
+# Network Configuration
+# ============================================
+networks:
+  default:
+    name: bozly-test-net
+    driver: bridge
+
+# ============================================
+# Usage Instructions
+# ============================================
+#
+# Run unit tests only:
+#   docker compose -f docker-compose.yml --profile test run unit-tests
+#
+# Run fresh installation test:
+#   docker compose -f docker-compose.yml --profile test run test-install
+#
+# Run integration tests:
+#   docker compose -f docker-compose.yml --profile test run integration-tests
+#
+# Run ALL tests (recommended pre-publish):
+#   docker compose -f docker-compose.yml --profile test run all-tests
+#
+# View test results:
+#   cat test-results/*
+#   cat coverage/coverage-final.json
+#
+# Clean up:
+#   docker compose -f docker-compose.yml --profile test down --remove-orphans
+#
+# For CI/CD (GitHub Actions):
+#   docker compose -f docker-compose.yml --profile test up all-tests --exit-code-from all-tests
+#
