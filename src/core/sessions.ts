@@ -2,7 +2,7 @@
  * Session Management - Multi-file Architecture
  *
  * Records command executions with a structured multi-file format:
- * ~/.bozly/sessions/{vaultId}/{YYYY}/{MM}/{DD}/{uuid}/
+ * ~/.bozly/sessions/{nodeId}/{YYYY}/{MM}/{DD}/{uuid}/
  *   ├── session.json       (metadata/index)
  *   ├── context.md         (what AI knew)
  *   ├── prompt.txt         (raw prompt for diff)
@@ -70,22 +70,22 @@ function getDatePathComponent(timestamp: ISODateTime): string {
 
 /**
  * Build the full path to a session directory
- * Path: ~/.bozly/sessions/{vaultId}/{YYYY}/{MM}/{DD}/{uuid}/
+ * Path: ~/.bozly/sessions/{nodeId}/{YYYY}/{MM}/{DD}/{uuid}/
  *
  * @param basePath - Base path (.bozly directory)
- * @param vaultId - Machine-readable vault ID
+ * @param nodeId - Machine-readable vault ID
  * @param timestamp - ISO 8601 timestamp
  * @param sessionId - UUID session ID
  * @returns Full path to session directory
  */
 export function getSessionPath(
   basePath: string,
-  vaultId: string,
+  nodeId: string,
   timestamp: ISODateTime,
   sessionId: string
 ): string {
   const datePath = getDatePathComponent(timestamp);
-  return path.join(basePath, "sessions", vaultId, datePath, sessionId);
+  return path.join(basePath, "sessions", nodeId, datePath, sessionId);
 }
 
 /**
@@ -187,8 +187,8 @@ export async function loadSessionFiles(sessionPath: string): Promise<SessionFile
 /**
  * Record a new session with multi-file architecture
  *
- * @param vaultPath - Path to vault (.bozly directory base)
- * @param vaultId - Machine-readable vault ID
+ * @param nodePath - Path to vault (.bozly directory base)
+ * @param nodeId - Machine-readable vault ID
  * @param vaultName - Human-readable vault name
  * @param command - Command name
  * @param provider - AI provider used
@@ -199,9 +199,9 @@ export async function loadSessionFiles(sessionPath: string): Promise<SessionFile
  * @returns Recorded session
  */
 export async function recordSession(
-  vaultPath: string,
-  vaultId: string,
-  vaultName: string,
+  nodePath: string,
+  nodeId: string,
+  nodeName: string,
   command: string,
   provider: string,
   prompt: {
@@ -221,21 +221,21 @@ export async function recordSession(
   const sessionId = randomUUID();
 
   // Build session path
-  const bozlyPath = path.join(vaultPath, ".bozly");
-  const sessionPath = getSessionPath(bozlyPath, vaultId, now, sessionId);
+  const bozlyPath = path.join(nodePath, ".bozly");
+  const sessionPath = getSessionPath(bozlyPath, nodeId, now, sessionId);
 
   // Create session metadata
   const session: Session = {
     schema_version: "1.0",
     id: sessionId,
-    vaultId,
+    nodeId,
     timestamp: now,
     command,
     provider: provider as any,
     status: response.error ? "failed" : "completed",
     executionTimeMs: response.duration,
-    vaultName,
-    vaultPath,
+    nodeName,
+    nodePath,
     ...(response.error && {
       error: {
         message: response.error,
@@ -270,7 +270,7 @@ export async function recordSession(
 
   // Build context.md (what AI knew)
   const contextMd = `## Summary
-${command} execution on ${vaultName}
+${command} execution on ${nodeName}
 
 ## Prompt Sent to AI
 (exact text the AI received)
@@ -301,7 +301,7 @@ ${prompt.modelsUsed?.length ? `\n---\n${prompt.modelsUsed.join("\n")}` : ""}`;
   const startMs = Date.now() - response.duration;
   const executionJson: ExecutionDetails = {
     commandInput: {
-      vault_id: vaultId,
+      vault_id: nodeId,
       command,
       flags: {},
       args: {},
@@ -475,7 +475,7 @@ export async function querySessions(
               if (options.provider && session.provider !== options.provider) {
                 continue;
               }
-              if (options.vault && session.vaultId !== options.vault) {
+              if (options.node && session.nodeId !== options.node) {
                 continue;
               }
               if (options.status && session.status !== options.status) {
@@ -518,26 +518,23 @@ export async function querySessions(
 /**
  * Get latest session for a command
  *
- * @param vaultPath - Path to vault
+ * @param nodePath - Path to vault
  * @param command - Command name
  * @returns Latest session or null
  */
-export async function getLatestSession(
-  vaultPath: string,
-  command: string
-): Promise<Session | null> {
-  const sessions = await querySessions(vaultPath, { command, limit: 1 });
+export async function getLatestSession(nodePath: string, command: string): Promise<Session | null> {
+  const sessions = await querySessions(nodePath, { command, limit: 1 });
   return sessions.length > 0 ? sessions[0] : null;
 }
 
 /**
  * Get all commands that have been executed
  *
- * @param vaultPath - Path to vault
+ * @param nodePath - Path to vault
  * @returns Array of unique command names
  */
-export async function getExecutedCommands(vaultPath: string): Promise<string[]> {
-  const sessions = await querySessions(vaultPath);
+export async function getExecutedCommands(nodePath: string): Promise<string[]> {
+  const sessions = await querySessions(nodePath);
   const commands = new Set(sessions.map((s) => s.command));
   return Array.from(commands).sort();
 }
@@ -573,12 +570,12 @@ export function diffSessions(session1: Session, session2: Session): SessionDiff 
 /**
  * Get session statistics
  *
- * @param vaultPath - Path to vault
+ * @param nodePath - Path to vault
  * @param command - Optional: filter to specific command
  * @returns Statistics object
  */
 export async function getSessionStats(
-  vaultPath: string,
+  nodePath: string,
   command?: string
 ): Promise<{
   totalSessions: number;
@@ -588,7 +585,7 @@ export async function getSessionStats(
   averagePromptSize: number;
   providersUsed: string[];
 }> {
-  const sessions = await querySessions(vaultPath, { command });
+  const sessions = await querySessions(nodePath, { command });
 
   if (sessions.length === 0) {
     return {
@@ -655,27 +652,27 @@ export function formatSession(session: Session): string {
 /**
  * Get sessions for a specific vault
  *
- * @param vaultPath - Path to vault
- * @param vaultId - Vault ID to filter by
+ * @param nodePath - Path to vault
+ * @param nodeId - Vault ID to filter by
  * @returns Sessions from this vault
  */
-export async function getVaultSessions(vaultPath: string, vaultId: string): Promise<Session[]> {
-  return querySessions(vaultPath, { vault: vaultId });
+export async function getNodeSessions(nodePath: string, nodeId: string): Promise<Session[]> {
+  return querySessions(nodePath, { node: nodeId });
 }
 
 /**
  * Clean up old sessions (archive older than N days)
  *
- * @param vaultPath - Path to vault
+ * @param nodePath - Path to vault
  * @param daysToKeep - Keep sessions newer than this many days
  * @returns Number of sessions archived
  */
 export async function cleanupOldSessions(
-  vaultPath: string,
+  nodePath: string,
   daysToKeep: number = 30
 ): Promise<number> {
-  const sessionsDir = path.join(vaultPath, ".bozly", "sessions");
-  const archiveDir = path.join(vaultPath, ".bozly", "sessions", "archive");
+  const sessionsDir = path.join(nodePath, ".bozly", "sessions");
+  const archiveDir = path.join(nodePath, ".bozly", "sessions", "archive");
 
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
@@ -767,7 +764,7 @@ export async function querySessionsGlobal(
               if (options.provider && session.provider !== options.provider) {
                 continue;
               }
-              if (options.vault && session.vaultId !== options.vault) {
+              if (options.node && session.nodeId !== options.node) {
                 continue;
               }
               if (options.status && session.status !== options.status) {
@@ -813,7 +810,7 @@ export async function querySessionsGlobal(
  * @param globalSessionsPath - Path to ~/.bozly/sessions/
  * @returns Array of vault IDs with sessions
  */
-export async function getVaultsWithSessions(globalSessionsPath: string): Promise<string[]> {
+export async function getNodesWithSessions(globalSessionsPath: string): Promise<string[]> {
   const vaults = new Set<string>();
 
   try {
@@ -855,9 +852,9 @@ export async function getSessionStatsGlobal(
   averageDuration: number;
   averagePromptSize: number;
   providersUsed: string[];
-  vaultsWithSessions: string[];
+  nodesWithSessions: string[];
   commandsExecuted: string[];
-  sessionsByVault: Record<string, number>;
+  sessionsByNode: Record<string, number>;
   sessionsByProvider: Record<string, number>;
 }> {
   const sessions = await querySessionsGlobal(globalSessionsPath, options);
@@ -870,9 +867,9 @@ export async function getSessionStatsGlobal(
       averageDuration: 0,
       averagePromptSize: 0,
       providersUsed: [],
-      vaultsWithSessions: [],
+      nodesWithSessions: [],
       commandsExecuted: [],
-      sessionsByVault: {},
+      sessionsByNode: {},
       sessionsByProvider: {},
     };
   }
@@ -884,13 +881,13 @@ export async function getSessionStatsGlobal(
   const avgPromptSize =
     sessions.reduce((sum, s) => sum + (s.prompt?.metadata?.total ?? 0), 0) / sessions.length;
   const providers = [...new Set(sessions.map((s) => s.provider))].sort();
-  const vaults = [...new Set(sessions.map((s) => s.vaultId))].sort();
+  const vaults = [...new Set(sessions.map((s) => s.nodeId))].sort();
   const commands = [...new Set(sessions.map((s) => s.command))].sort();
 
   // Count sessions by vault
-  const sessionsByVault: Record<string, number> = {};
+  const sessionsByNode: Record<string, number> = {};
   for (const vault of vaults) {
-    sessionsByVault[vault] = sessions.filter((s) => s.vaultId === vault).length;
+    sessionsByNode[vault] = sessions.filter((s) => s.nodeId === vault).length;
   }
 
   // Count sessions by provider
@@ -906,9 +903,9 @@ export async function getSessionStatsGlobal(
     averageDuration: Math.round(avgDuration),
     averagePromptSize: Math.round(avgPromptSize),
     providersUsed: providers,
-    vaultsWithSessions: vaults,
+    nodesWithSessions: vaults,
     commandsExecuted: commands,
-    sessionsByVault,
+    sessionsByNode,
     sessionsByProvider,
   };
 }
@@ -1051,17 +1048,17 @@ export async function archiveSessionsByDate(
  * Archive sessions by vault
  *
  * @param globalSessionsPath - Path to ~/.bozly/sessions/
- * @param vaultId - Vault ID to archive
+ * @param nodeId - Vault ID to archive
  * @param beforeDate - Optional: only archive before this date
  * @returns Number of sessions archived
  */
-export async function archiveSessionsByVault(
+export async function archiveSessionsByNode(
   globalSessionsPath: string,
-  vaultId: string,
+  nodeId: string,
   beforeDate?: Date
 ): Promise<number> {
-  const vaultSessionsPath = path.join(globalSessionsPath, vaultId);
-  const archiveDir = path.join(globalSessionsPath, "archive", vaultId);
+  const vaultSessionsPath = path.join(globalSessionsPath, nodeId);
+  const archiveDir = path.join(globalSessionsPath, "archive", nodeId);
   let archived = 0;
 
   try {
@@ -1110,14 +1107,14 @@ export async function archiveSessionsByVault(
 
     if (archived > 0) {
       await logger.info("Sessions archived by vault", {
-        vault: vaultId,
+        vault: nodeId,
         count: archived,
         beforeDate: beforeDate?.toISOString(),
       });
     }
   } catch (error) {
     await logger.warn("Failed to archive sessions by vault", {
-      vault: vaultId,
+      vault: nodeId,
       error: error instanceof Error ? error.message : String(error),
     });
   }
@@ -1136,7 +1133,7 @@ export function exportSessionsToCSV(sessions: Session[]): string {
     "Timestamp,Vault,Command,Provider,Status,Duration(ms),ContextSize,TotalPromptSize";
   const rows = sessions.map(
     (s) =>
-      `${s.timestamp},${s.vaultId},${s.command},${s.provider},${s.status},${s.executionTimeMs ?? 0},${s.prompt?.metadata?.contextSize ?? 0},${s.prompt?.metadata?.total ?? 0}`
+      `${s.timestamp},${s.nodeId},${s.command},${s.provider},${s.status},${s.executionTimeMs ?? 0},${s.prompt?.metadata?.contextSize ?? 0},${s.prompt?.metadata?.total ?? 0}`
   );
 
   return [headers, ...rows].join("\n");

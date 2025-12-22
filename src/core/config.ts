@@ -13,9 +13,9 @@
  * - Configuration file discovery via directory tree walk
  *
  * Usage:
- *   import { getGlobalConfig, getVaultConfig, setConfig } from './config.js';
+ *   import { getGlobalConfig, getNodeConfig, setConfig } from './config.js';
  *   const globalConfig = await getGlobalConfig();
- *   const vaultConfig = await getVaultConfig();
+ *   const vaultConfig = await getNodeConfig();
  *   await setConfig('ai.defaultProvider', 'gpt', true); // global
  *
  * @module core/config
@@ -25,7 +25,7 @@ import fs from "fs/promises";
 import path from "path";
 import os from "os";
 import { logger } from "./logger.js";
-import { GlobalConfig, VaultConfig } from "./types.js";
+import { GlobalConfig, NodeConfig } from "./types.js";
 
 const BOZLY_HOME = path.join(os.homedir(), ".bozly");
 const GLOBAL_CONFIG_FILE = "bozly-config.json";
@@ -34,11 +34,11 @@ const VAULT_CONFIG_FILE = "config.json";
 /**
  * Get configuration
  */
-export async function getConfig(isGlobal = false): Promise<GlobalConfig | VaultConfig> {
+export async function getConfig(isGlobal = false): Promise<GlobalConfig | NodeConfig> {
   if (isGlobal) {
     return getGlobalConfig();
   }
-  return getVaultConfig();
+  return getNodeConfig();
 }
 
 /**
@@ -90,8 +90,8 @@ export async function getGlobalConfig(): Promise<GlobalConfig> {
  * @returns Vault configuration object
  * @throws {Error} If not in a vault directory or config is invalid
  */
-export async function getVaultConfig(): Promise<VaultConfig> {
-  const configPath = await findVaultConfig();
+export async function getNodeConfig(): Promise<NodeConfig> {
+  const configPath = await findNodeConfig();
   if (!configPath) {
     await logger.warn("Vault configuration not found", { cwd: process.cwd() });
     throw new Error("Not in a vault directory. Run 'bozly init' first.");
@@ -99,7 +99,7 @@ export async function getVaultConfig(): Promise<VaultConfig> {
 
   try {
     const content = await fs.readFile(configPath, "utf-8");
-    const config = JSON.parse(content) as VaultConfig;
+    const config = JSON.parse(content) as NodeConfig;
     await logger.debug("Loaded vault configuration", {
       configPath,
       vaultName: config.name,
@@ -156,7 +156,7 @@ export async function setConfig(key: string, value: string, isGlobal = false): P
       await fs.writeFile(configPath, JSON.stringify(config, null, 2));
       await logger.info("Global config updated", { key });
     } else {
-      const configPath = await findVaultConfig();
+      const configPath = await findNodeConfig();
       if (configPath) {
         await fs.writeFile(configPath, JSON.stringify(config, null, 2));
         await logger.info("Vault config updated", { key });
@@ -186,7 +186,7 @@ export async function getConfigPath(isGlobal = false): Promise<string> {
     return configPath;
   }
 
-  const configPath = await findVaultConfig();
+  const configPath = await findNodeConfig();
   if (!configPath) {
     await logger.warn("Vault config not found", { cwd: process.cwd() });
     throw new Error("Not in a vault directory");
@@ -198,7 +198,7 @@ export async function getConfigPath(isGlobal = false): Promise<string> {
 /**
  * Find vault config.json by walking up directory tree
  */
-async function findVaultConfig(): Promise<string | null> {
+async function findNodeConfig(): Promise<string | null> {
   let currentPath = process.cwd();
   let searchDepth = 0;
 

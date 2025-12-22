@@ -73,9 +73,9 @@ describe("BOZLY CLI Integration Tests", () => {
     }
   });
 
-  describe("Vault Initialization", () => {
+  describe("Node Operations" Initialization", () => {
     it("should initialize a new vault successfully", async () => {
-      const vaultPath = path.join(TEMP_DIR, "test-vault-1");
+      const nodePath = path.join(TEMP_DIR, "test-vault-1");
 
       // Check if compiled CLI exists
       const cliPath = path.join(PROJECT_ROOT, "dist/cli/index.js");
@@ -90,14 +90,14 @@ describe("BOZLY CLI Integration Tests", () => {
         return;
       }
 
-      const result = await runCommand("node", [cliPath, "init", vaultPath, "--name", "test-vault-1", "--type", "default"]);
+      const result = await runCommand("node", [cliPath, "init", nodePath, "--name", "test-vault-1", "--type", "default"]);
 
       // Accept either success or already-exists error (test might run multiple times)
       expect([0, 1]).toContain(result.code);
     });
 
     it("should create context.md during vault initialization", async () => {
-      const vaultPath = path.join(TEMP_DIR, "test-vault-2");
+      const nodePath = path.join(TEMP_DIR, "test-vault-2");
       const cliPath = path.join(PROJECT_ROOT, "dist/cli/index.js");
       const cliExists = await fs
         .access(cliPath)
@@ -109,9 +109,9 @@ describe("BOZLY CLI Integration Tests", () => {
         return;
       }
 
-      await runCommand("node", [cliPath, "init", vaultPath, "--name", "test-vault-2", "--type", "default"]);
+      await runCommand("node", [cliPath, "init", nodePath, "--name", "test-vault-2", "--type", "default"]);
 
-      const contextPath = path.join(vaultPath, ".bozly", "context.md");
+      const contextPath = path.join(nodePath, ".bozly", "context.md");
       const contextExists = await fs
         .access(contextPath)
         .then(() => true)
@@ -122,7 +122,7 @@ describe("BOZLY CLI Integration Tests", () => {
     });
 
     it("should create proper vault directory structure", async () => {
-      const vaultPath = path.join(TEMP_DIR, "test-vault-3");
+      const nodePath = path.join(TEMP_DIR, "test-vault-3");
       const cliPath = path.join(PROJECT_ROOT, "dist/cli/index.js");
       const cliExists = await fs
         .access(cliPath)
@@ -134,14 +134,14 @@ describe("BOZLY CLI Integration Tests", () => {
         return;
       }
 
-      await runCommand("node", [cliPath, "init", vaultPath, "--name", "test-vault-3"]);
+      await runCommand("node", [cliPath, "init", nodePath, "--name", "test-vault-3"]);
 
       // Just verify no crash - structure validation is in unit tests
       expect(true).toBe(true);
     });
   });
 
-  describe("Vault Registry Operations", () => {
+  describe("Node Operations" Registry Operations", () => {
     it("should list vaults in registry", async () => {
       const cliPath = path.join(PROJECT_ROOT, "dist/cli/index.js");
       const cliExists = await fs
@@ -175,7 +175,7 @@ describe("BOZLY CLI Integration Tests", () => {
     });
   });
 
-  describe("Vault Configuration", () => {
+  describe("Node Operations" Configuration", () => {
     it("should retrieve vault context", async () => {
       const cliPath = path.join(PROJECT_ROOT, "dist/cli/index.js");
       const cliExists = await fs
@@ -261,7 +261,7 @@ describe("BOZLY CLI Integration Tests", () => {
     });
   });
 
-  describe("Multi-Vault Operations", () => {
+  describe("Node Operations" Operations", () => {
     it("should manage multiple vaults independently", async () => {
       const cliPath = path.join(PROJECT_ROOT, "dist/cli/index.js");
       const cliExists = await fs

@@ -94,8 +94,8 @@ export async function writeJSON<T>(filePath: string, data: T): Promise<void> {
  * Create mock vault structure for testing
  */
 export async function createMockVault(basePath: string): Promise<string> {
-  const vaultPath = path.join(basePath, "test-vault");
-  const bozlyPath = path.join(vaultPath, ".bozly");
+  const nodePath = path.join(basePath, "test-vault");
+  const bozlyPath = path.join(nodePath, ".bozly");
 
   // Create directory structure
   await fs.mkdir(path.join(bozlyPath, "sessions"), { recursive: true });
@@ -125,7 +125,7 @@ export async function createMockVault(basePath: string): Promise<string> {
   const index = { tasks: [], lastUpdated: new Date().toISOString() };
   await writeJSON(path.join(bozlyPath, "index.json"), index);
 
-  return vaultPath;
+  return nodePath;
 }
 
 /**
@@ -162,14 +162,14 @@ export async function cleanupGlobalRegistry(testMarker?: string): Promise<void> 
       const registry = await readJSON<any>(registryPath);
 
       // Remove vaults with .tmp in path (test vaults) or matching test marker
-      const originalCount = registry.vaults.length;
-      registry.vaults = registry.vaults.filter((vault: any) => {
+      const originalCount = registry.nodes.length;
+      registry.nodes = registry.nodes.filter((vault: any) => {
         const isTestVault = vault.path.includes("/.tmp/");
         const isMarkedTest = testMarker && vault.name.includes(testMarker);
         return !isTestVault && !isMarkedTest;
       });
 
-      if (registry.vaults.length < originalCount) {
+      if (registry.nodes.length < originalCount) {
         registry.lastUpdated = new Date().toISOString();
         await writeJSON(registryPath, registry);
       }

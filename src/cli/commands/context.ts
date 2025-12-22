@@ -5,7 +5,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { logger } from "../../core/logger.js";
-import { getCurrentVault } from "../../core/vault.js";
+import { getCurrentNode } from "../../core/node.js";
 import { generateContext } from "../../core/context.js";
 
 export const contextCommand = new Command("context")
@@ -21,21 +21,21 @@ export const contextCommand = new Command("context")
         file: options.file,
       });
 
-      const vault = await getCurrentVault();
+      const node = await getCurrentNode();
 
-      if (!vault) {
-        await logger.warn("Not in a vault directory");
-        console.log(chalk.yellow("Not in a vault directory."));
-        console.log("Run 'bozly init' to initialize a vault here.");
+      if (!node) {
+        await logger.warn("Not in a node directory");
+        console.log(chalk.yellow("Not in a node directory."));
+        console.log("Run 'bozly init' to initialize a node here.");
         process.exit(1);
       }
 
       await logger.info("Generating context for vault", {
-        vaultName: vault.name,
+        vaultName: node.name,
         provider: options.ai,
       });
 
-      const context = await generateContext(vault, {
+      const context = await generateContext(node, {
         provider: options.ai,
       });
 

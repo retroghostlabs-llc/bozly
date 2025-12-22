@@ -20,9 +20,9 @@ import {
   getExecutedCommands,
   getSessionStats,
   formatSessionForLogs,
-  getVaultSessions,
-} from "../../src/core/sessions.js";
-import { Session, ExecutionLogEntry, FileChange } from "../../src/core/types.js";
+  getNodeSessions,
+} from "../../../src/core/sessions.js";
+import { Session, ExecutionLogEntry, FileChange } from "../../../src/core/types.js";
 import {
   createTempDir,
   getTempDir,
@@ -34,11 +34,11 @@ import {
 } from "../conftest.js";
 
 describe("Sessions Module", () => {
-  let vaultPath: string;
+  let nodePath: string;
 
   beforeEach(async () => {
     const tempDir = await createTempDir();
-    vaultPath = await createMockVault(tempDir);
+    nodePath = await createMockVault(tempDir);
   });
 
   afterEach(async () => {
@@ -48,11 +48,11 @@ describe("Sessions Module", () => {
   describe("getSessionPath", () => {
     it("should build correct session path from components", () => {
       const basePath = "/home/user/.bozly";
-      const vaultId = "music-vault";
+      const nodeId = "music-vault";
       const timestamp = "2025-12-20T14:32:00Z" as any;
       const sessionId = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
 
-      const result = getSessionPath(basePath, vaultId, timestamp, sessionId);
+      const result = getSessionPath(basePath, nodeId, timestamp, sessionId);
 
       expect(result).toContain("sessions");
       expect(result).toContain("music-vault");
@@ -62,11 +62,11 @@ describe("Sessions Module", () => {
 
     it("should handle different dates correctly", () => {
       const basePath = "/home/user/.bozly";
-      const vaultId = "vault";
+      const nodeId = "vault";
       const sessionId = "uuid";
 
-      const path1 = getSessionPath(basePath, vaultId, "2025-01-15T10:00:00Z" as any, sessionId);
-      const path2 = getSessionPath(basePath, vaultId, "2025-12-31T23:59:59Z" as any, sessionId);
+      const path1 = getSessionPath(basePath, nodeId, "2025-01-15T10:00:00Z" as any, sessionId);
+      const path2 = getSessionPath(basePath, nodeId, "2025-12-31T23:59:59Z" as any, sessionId);
 
       expect(path1).toContain("2025/01/15");
       expect(path2).toContain("2025/12/31");
@@ -75,7 +75,7 @@ describe("Sessions Module", () => {
 
   describe("createSessionDirectory", () => {
     it("should create directory with parent paths", async () => {
-      const sessionPath = path.join(vaultPath, ".bozly", "sessions", "music-vault", "2025", "12", "20", "uuid");
+      const sessionPath = path.join(nodePath, ".bozly", "sessions", "music-vault", "2025", "12", "20", "uuid");
 
       const result = await createSessionDirectory(sessionPath);
 
@@ -84,7 +84,7 @@ describe("Sessions Module", () => {
     });
 
     it("should handle existing directory gracefully", async () => {
-      const sessionPath = path.join(vaultPath, ".bozly", "sessions", "music-vault", "2025", "12", "20", "uuid");
+      const sessionPath = path.join(nodePath, ".bozly", "sessions", "music-vault", "2025", "12", "20", "uuid");
 
       // Create once
       await createSessionDirectory(sessionPath);
@@ -100,7 +100,7 @@ describe("Sessions Module", () => {
       const now = new Date().toISOString() as any;
 
       const session = await recordSession(
-        vaultPath,
+        nodePath,
         "music-vault",
         "Music Vault",
         "rate-album",
@@ -116,7 +116,7 @@ describe("Sessions Module", () => {
         }
       );
 
-      const sessionDir = path.join(vaultPath, ".bozly", "sessions", "music-vault", now.split("T")[0].replace(/-/g, "/"), session.id);
+      const sessionDir = path.join(nodePath, ".bozly", "sessions", "music-vault", now.split("T")[0].replace(/-/g, "/"), session.id);
 
       // Check all files exist
       expect(await fileExists(path.join(sessionDir, "session.json"))).toBe(true);
@@ -129,7 +129,7 @@ describe("Sessions Module", () => {
 
     it("should record session with correct metadata", async () => {
       const session = await recordSession(
-        vaultPath,
+        nodePath,
         "music-vault",
         "Music Vault",
         "daily",
@@ -145,7 +145,7 @@ describe("Sessions Module", () => {
       );
 
       expect(session.id).toBeDefined();
-      expect(session.vaultId).toBe("music-vault");
+      expect(session.nodeId).toBe("music-vault");
       expect(session.command).toBe("daily");
       expect(session.provider).toBe("claude");
       expect(session.status).toBe("completed");
@@ -154,7 +154,7 @@ describe("Sessions Module", () => {
 
     it("should mark failed sessions with error status", async () => {
       const session = await recordSession(
-        vaultPath,
+        nodePath,
         "music-vault",
         "Music Vault",
         "rate-album",
@@ -183,7 +183,7 @@ describe("Sessions Module", () => {
       ];
 
       const session = await recordSession(
-        vaultPath,
+        nodePath,
         "music-vault",
         "Music Vault",
         "test",
@@ -207,7 +207,7 @@ describe("Sessions Module", () => {
       ];
 
       const session = await recordSession(
-        vaultPath,
+        nodePath,
         "music-vault",
         "Music Vault",
         "test",
@@ -225,7 +225,7 @@ describe("Sessions Module", () => {
   describe("loadSessionFiles", () => {
     it("should load all session files correctly", async () => {
       const recordedSession = await recordSession(
-        vaultPath,
+        nodePath,
         "music-vault",
         "Music Vault",
         "daily",
@@ -242,7 +242,7 @@ describe("Sessions Module", () => {
       );
 
       const dateStr = recordedSession.timestamp.split("T")[0].replace(/-/g, "/");
-      const sessionDir = path.join(vaultPath, ".bozly", "sessions", "music-vault", dateStr, recordedSession.id);
+      const sessionDir = path.join(nodePath, ".bozly", "sessions", "music-vault", dateStr, recordedSession.id);
 
       const files = await loadSessionFiles(sessionDir);
 
@@ -256,7 +256,7 @@ describe("Sessions Module", () => {
     });
 
     it("should return null for non-existent session", async () => {
-      const nonExistentPath = path.join(vaultPath, ".bozly", "sessions", "nonexistent");
+      const nonExistentPath = path.join(nodePath, ".bozly", "sessions", "nonexistent");
       const files = await loadSessionFiles(nonExistentPath);
 
       expect(files).toBeNull();
@@ -265,118 +265,118 @@ describe("Sessions Module", () => {
 
   describe("querySessions", () => {
     it("should return empty array for vault with no sessions", async () => {
-      const sessions = await querySessions(vaultPath);
+      const sessions = await querySessions(nodePath);
 
       expect(sessions).toEqual([]);
     });
 
     it("should return all sessions", async () => {
-      await recordSession(vaultPath, "music-vault", "Music Vault", "daily", "claude", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "daily", "claude", {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
-      await recordSession(vaultPath, "music-vault", "Music Vault", "weekly", "gpt", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "weekly", "gpt", {
         commandText: "test",
       }, { text: "result", duration: 200 });
 
-      const sessions = await querySessions(vaultPath);
+      const sessions = await querySessions(nodePath);
 
       expect(sessions.length).toBe(2);
     });
 
     it("should filter by command", async () => {
-      await recordSession(vaultPath, "music-vault", "Music Vault", "daily", "claude", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "daily", "claude", {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
-      await recordSession(vaultPath, "music-vault", "Music Vault", "weekly", "claude", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "weekly", "claude", {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
-      const sessions = await querySessions(vaultPath, { command: "daily" });
+      const sessions = await querySessions(nodePath, { command: "daily" });
 
       expect(sessions.length).toBe(1);
       expect(sessions[0].command).toBe("daily");
     });
 
     it("should filter by provider", async () => {
-      await recordSession(vaultPath, "music-vault", "Music Vault", "test", "claude", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "test", "claude", {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
-      await recordSession(vaultPath, "music-vault", "Music Vault", "test", "gpt", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "test", "gpt", {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
-      const sessions = await querySessions(vaultPath, { provider: "claude" });
+      const sessions = await querySessions(nodePath, { provider: "claude" });
 
       expect(sessions.length).toBe(1);
       expect(sessions[0].provider).toBe("claude");
     });
 
     it("should filter by status", async () => {
-      await recordSession(vaultPath, "music-vault", "Music Vault", "test1", "claude", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "test1", "claude", {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
-      await recordSession(vaultPath, "music-vault", "Music Vault", "test2", "claude", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "test2", "claude", {
         commandText: "test",
       }, { text: "", error: "Failed", duration: 100 });
 
-      const sessions = await querySessions(vaultPath, { status: "completed" });
+      const sessions = await querySessions(nodePath, { status: "completed" });
 
       expect(sessions.length).toBe(1);
       expect(sessions[0].status).toBe("completed");
     });
 
     it("should filter by vault", async () => {
-      await recordSession(vaultPath, "music-vault", "Music Vault", "test", "claude", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "test", "claude", {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
-      const sessions = await querySessions(vaultPath, { vault: "music-vault" });
+      const sessions = await querySessions(nodePath, { vault: "music-vault" });
 
       expect(sessions.length).toBe(1);
-      expect(sessions[0].vaultId).toBe("music-vault");
+      expect(sessions[0].nodeId).toBe("music-vault");
     });
 
     it("should apply limit", async () => {
       for (let i = 0; i < 5; i++) {
-        await recordSession(vaultPath, "music-vault", "Music Vault", `test${i}`, "claude", {
+        await recordSession(nodePath, "music-vault", "Music Vault", `test${i}`, "claude", {
           commandText: "test",
         }, { text: "result", duration: 100 });
       }
 
-      const sessions = await querySessions(vaultPath, { limit: 2 });
+      const sessions = await querySessions(nodePath, { limit: 2 });
 
       expect(sessions.length).toBe(2);
     });
 
     it("should apply offset", async () => {
       for (let i = 0; i < 5; i++) {
-        await recordSession(vaultPath, "music-vault", "Music Vault", `test${i}`, "claude", {
+        await recordSession(nodePath, "music-vault", "Music Vault", `test${i}`, "claude", {
           commandText: "test",
         }, { text: "result", duration: 100 });
       }
 
-      const sessions = await querySessions(vaultPath, { offset: 2, limit: 2 });
+      const sessions = await querySessions(nodePath, { offset: 2, limit: 2 });
 
       expect(sessions.length).toBe(2);
     });
 
     it("should sort by timestamp newest first", async () => {
-      const session1 = await recordSession(vaultPath, "music-vault", "Music Vault", "test1", "claude", {
+      const session1 = await recordSession(nodePath, "music-vault", "Music Vault", "test1", "claude", {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
       // Add small delay
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      const session2 = await recordSession(vaultPath, "music-vault", "Music Vault", "test2", "claude", {
+      const session2 = await recordSession(nodePath, "music-vault", "Music Vault", "test2", "claude", {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
-      const sessions = await querySessions(vaultPath);
+      const sessions = await querySessions(nodePath);
 
       expect(sessions[0].id).toBe(session2.id);
       expect(sessions[1].id).toBe(session1.id);
@@ -385,23 +385,23 @@ describe("Sessions Module", () => {
 
   describe("getLatestSession", () => {
     it("should return latest session for command", async () => {
-      const session1 = await recordSession(vaultPath, "music-vault", "Music Vault", "daily", "claude", {
+      const session1 = await recordSession(nodePath, "music-vault", "Music Vault", "daily", "claude", {
         commandText: "test",
       }, { text: "result1", duration: 100 });
 
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      const session2 = await recordSession(vaultPath, "music-vault", "Music Vault", "daily", "claude", {
+      const session2 = await recordSession(nodePath, "music-vault", "Music Vault", "daily", "claude", {
         commandText: "test",
       }, { text: "result2", duration: 100 });
 
-      const latest = await getLatestSession(vaultPath, "daily");
+      const latest = await getLatestSession(nodePath, "daily");
 
       expect(latest?.id).toBe(session2.id);
     });
 
     it("should return null if command has no sessions", async () => {
-      const latest = await getLatestSession(vaultPath, "nonexistent");
+      const latest = await getLatestSession(nodePath, "nonexistent");
 
       expect(latest).toBeNull();
     });
@@ -409,19 +409,19 @@ describe("Sessions Module", () => {
 
   describe("getExecutedCommands", () => {
     it("should return all unique commands", async () => {
-      await recordSession(vaultPath, "music-vault", "Music Vault", "daily", "claude", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "daily", "claude", {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
-      await recordSession(vaultPath, "music-vault", "Music Vault", "weekly", "claude", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "weekly", "claude", {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
-      await recordSession(vaultPath, "music-vault", "Music Vault", "daily", "claude", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "daily", "claude", {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
-      const commands = await getExecutedCommands(vaultPath);
+      const commands = await getExecutedCommands(nodePath);
 
       expect(commands).toContain("daily");
       expect(commands).toContain("weekly");
@@ -429,15 +429,15 @@ describe("Sessions Module", () => {
     });
 
     it("should return sorted array", async () => {
-      await recordSession(vaultPath, "music-vault", "Music Vault", "zebra", "claude", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "zebra", "claude", {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
-      await recordSession(vaultPath, "music-vault", "Music Vault", "alpha", "claude", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "alpha", "claude", {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
-      const commands = await getExecutedCommands(vaultPath);
+      const commands = await getExecutedCommands(nodePath);
 
       expect(commands[0]).toBe("alpha");
       expect(commands[1]).toBe("zebra");
@@ -446,12 +446,12 @@ describe("Sessions Module", () => {
 
   describe("diffSessions", () => {
     it("should diff two sessions", async () => {
-      const session1 = await recordSession(vaultPath, "music-vault", "Music Vault", "daily", "claude", {
+      const session1 = await recordSession(nodePath, "music-vault", "Music Vault", "daily", "claude", {
         contextText: "# Short context",
         commandText: "Test command",
       }, { text: "Output 1", duration: 1000 });
 
-      const session2 = await recordSession(vaultPath, "music-vault", "Music Vault", "daily", "claude", {
+      const session2 = await recordSession(nodePath, "music-vault", "Music Vault", "daily", "claude", {
         contextText: "# Much longer context with more details",
         commandText: "Test command with more instructions",
       }, { text: "Output 2", duration: 2000 });
@@ -466,17 +466,17 @@ describe("Sessions Module", () => {
 
   describe("getSessionStats", () => {
     it("should calculate statistics for all sessions", async () => {
-      await recordSession(vaultPath, "music-vault", "Music Vault", "test1", "claude", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "test1", "claude", {
         contextText: "# Context",
         commandText: "test",
       }, { text: "result", duration: 1000 });
 
-      await recordSession(vaultPath, "music-vault", "Music Vault", "test2", "claude", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "test2", "claude", {
         contextText: "# Context",
         commandText: "test",
       }, { text: "result", duration: 2000 });
 
-      const stats = await getSessionStats(vaultPath);
+      const stats = await getSessionStats(nodePath);
 
       expect(stats.totalSessions).toBe(2);
       expect(stats.totalSuccessful).toBe(2);
@@ -485,17 +485,17 @@ describe("Sessions Module", () => {
     });
 
     it("should filter stats by command", async () => {
-      await recordSession(vaultPath, "music-vault", "Music Vault", "daily", "claude", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "daily", "claude", {
         contextText: "# Context",
         commandText: "test",
       }, { text: "result", duration: 1000 });
 
-      await recordSession(vaultPath, "music-vault", "Music Vault", "weekly", "claude", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "weekly", "claude", {
         contextText: "# Context",
         commandText: "test",
       }, { text: "result", duration: 2000 });
 
-      const stats = await getSessionStats(vaultPath, "daily");
+      const stats = await getSessionStats(nodePath, "daily");
 
       expect(stats.totalSessions).toBe(1);
     });
@@ -503,7 +503,7 @@ describe("Sessions Module", () => {
 
   describe("formatSessionForLogs", () => {
     it("should format session for display", async () => {
-      const session = await recordSession(vaultPath, "music-vault", "Music Vault", "daily", "claude", {
+      const session = await recordSession(nodePath, "music-vault", "Music Vault", "daily", "claude", {
         contextText: "# Context",
         commandText: "test",
       }, { text: "result", duration: 1000 });
@@ -517,7 +517,7 @@ describe("Sessions Module", () => {
     });
 
     it("should include details in verbose mode", async () => {
-      const session = await recordSession(vaultPath, "music-vault", "Music Vault", "daily", "claude", {
+      const session = await recordSession(nodePath, "music-vault", "Music Vault", "daily", "claude", {
         contextText: "# Context with some text",
         commandText: "test command",
       }, { text: "result", duration: 1000 });
@@ -529,47 +529,47 @@ describe("Sessions Module", () => {
     });
   });
 
-  describe("getVaultSessions", () => {
+  describe("getNodeSessions", () => {
     it("should get sessions for specific vault", async () => {
-      await recordSession(vaultPath, "music-vault", "Music Vault", "test", "claude", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "test", "claude", {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
-      const sessions = await getVaultSessions(vaultPath, "music-vault");
+      const sessions = await getNodeSessions(nodePath, "music-vault");
 
       expect(sessions.length).toBe(1);
-      expect(sessions[0].vaultId).toBe("music-vault");
+      expect(sessions[0].nodeId).toBe("music-vault");
     });
   });
 
   describe("Integration Tests", () => {
     it("should record, query, and retrieve sessions end-to-end", async () => {
       // Record multiple sessions
-      const session1 = await recordSession(vaultPath, "music-vault", "Music Vault", "daily", "claude", {
+      const session1 = await recordSession(nodePath, "music-vault", "Music Vault", "daily", "claude", {
         contextText: "# Daily context",
         commandText: "Daily analysis",
       }, { text: "Daily complete", duration: 1500 });
 
-      const session2 = await recordSession(vaultPath, "music-vault", "Music Vault", "weekly", "gpt", {
+      const session2 = await recordSession(nodePath, "music-vault", "Music Vault", "weekly", "gpt", {
         contextText: "# Weekly context",
         commandText: "Weekly report",
       }, { text: "Weekly complete", duration: 2500 });
 
       // Query all sessions
-      const allSessions = await querySessions(vaultPath);
+      const allSessions = await querySessions(nodePath);
       expect(allSessions.length).toBe(2);
 
       // Query specific command
-      const dailyOnly = await querySessions(vaultPath, { command: "daily" });
+      const dailyOnly = await querySessions(nodePath, { command: "daily" });
       expect(dailyOnly.length).toBe(1);
       expect(dailyOnly[0].id).toBe(session1.id);
 
       // Get latest session
-      const latest = await getLatestSession(vaultPath, "weekly");
+      const latest = await getLatestSession(nodePath, "weekly");
       expect(latest?.id).toBe(session2.id);
 
       // Get stats
-      const stats = await getSessionStats(vaultPath);
+      const stats = await getSessionStats(nodePath);
       expect(stats.totalSessions).toBe(2);
       expect(stats.providersUsed).toContain("claude");
       expect(stats.providersUsed).toContain("gpt");
@@ -581,21 +581,21 @@ describe("Sessions Module", () => {
     });
 
     it("should handle multiple vaults correctly", async () => {
-      await recordSession(vaultPath, "music-vault", "Music Vault", "test", "claude", {
+      await recordSession(nodePath, "music-vault", "Music Vault", "test", "claude", {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
-      await recordSession(vaultPath, "journal-vault", "Journal Vault", "test", "claude", {
+      await recordSession(nodePath, "journal-vault", "Journal Vault", "test", "claude", {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
-      const musicSessions = await querySessions(vaultPath, { vault: "music-vault" });
-      const journalSessions = await querySessions(vaultPath, { vault: "journal-vault" });
+      const musicSessions = await querySessions(nodePath, { vault: "music-vault" });
+      const journalSessions = await querySessions(nodePath, { vault: "journal-vault" });
 
       expect(musicSessions.length).toBe(1);
       expect(journalSessions.length).toBe(1);
-      expect(musicSessions[0].vaultId).toBe("music-vault");
-      expect(journalSessions[0].vaultId).toBe("journal-vault");
+      expect(musicSessions[0].nodeId).toBe("music-vault");
+      expect(journalSessions[0].nodeId).toBe("journal-vault");
     });
   });
 
@@ -622,7 +622,7 @@ describe("Sessions Module", () => {
       const session1 = {
         schema_version: "1.0",
         id: "uuid-1",
-        vaultId: "music-vault",
+        nodeId: "music-vault",
         timestamp: new Date().toISOString(),
         command: "rate-album",
         provider: "claude",
@@ -633,7 +633,7 @@ describe("Sessions Module", () => {
       const session2 = {
         schema_version: "1.0",
         id: "uuid-2",
-        vaultId: "journal-vault",
+        nodeId: "journal-vault",
         timestamp: new Date().toISOString(),
         command: "daily-entry",
         provider: "gpt",
@@ -662,7 +662,7 @@ describe("Sessions Module", () => {
         vault: "music-vault",
       });
       expect(musicSessions.length).toBe(1);
-      expect(musicSessions[0].vaultId).toBe("music-vault");
+      expect(musicSessions[0].nodeId).toBe("music-vault");
 
       // Query by command
       const ratingSessions = await querySessionsGlobal(globalSessionsPath, {
@@ -689,7 +689,7 @@ describe("Sessions Module", () => {
       const session1 = {
         schema_version: "1.0",
         id: "s1",
-        vaultId: "vault1",
+        nodeId: "vault1",
         timestamp: new Date().toISOString(),
         command: "test",
         provider: "claude",
@@ -699,7 +699,7 @@ describe("Sessions Module", () => {
       const session2 = {
         schema_version: "1.0",
         id: "s2",
-        vaultId: "vault2",
+        nodeId: "vault2",
         timestamp: new Date().toISOString(),
         command: "test",
         provider: "claude",
@@ -715,8 +715,8 @@ describe("Sessions Module", () => {
         JSON.stringify(session2, null, 2)
       );
 
-      const { getVaultsWithSessions } = await import("../../src/core/sessions.js");
-      const vaults = await getVaultsWithSessions(globalSessionsPath);
+      const { getNodesWithSessions } = await import("../../src/core/sessions.js");
+      const vaults = await getNodesWithSessions(globalSessionsPath);
 
       expect(vaults.length).toBe(2);
       expect(vaults).toContain("vault1");
@@ -767,7 +767,7 @@ describe("Sessions Module", () => {
         const sessionData = {
           schema_version: "1.0",
           id: sess.id,
-          vaultId: sess.vault,
+          nodeId: sess.vault,
           timestamp: new Date().toISOString(),
           command: sess.command,
           provider: sess.provider,
@@ -787,8 +787,8 @@ describe("Sessions Module", () => {
       expect(stats.totalSessions).toBe(3);
       expect(stats.totalSuccessful).toBe(2);
       expect(stats.totalFailed).toBe(1);
-      expect(stats.vaultsWithSessions).toContain("music");
-      expect(stats.vaultsWithSessions).toContain("journal");
+      expect(stats.nodesWithSessions).toContain("music");
+      expect(stats.nodesWithSessions).toContain("journal");
       expect(stats.providersUsed).toContain("claude");
       expect(stats.providersUsed).toContain("gpt");
       expect(stats.commandsExecuted).toContain("rate");
@@ -833,7 +833,7 @@ describe("Sessions Module", () => {
       const oldSession = {
         schema_version: "1.0",
         id: "old-session",
-        vaultId: "vault",
+        nodeId: "vault",
         timestamp: oldDate.toISOString(),
         command: "test",
         provider: "claude",
@@ -843,7 +843,7 @@ describe("Sessions Module", () => {
       const newSession = {
         schema_version: "1.0",
         id: "new-session",
-        vaultId: "vault",
+        nodeId: "vault",
         timestamp: newDate.toISOString(),
         command: "test",
         provider: "claude",
@@ -909,7 +909,7 @@ describe("Sessions Module", () => {
       const sess1 = {
         schema_version: "1.0",
         id: "sess1",
-        vaultId: "vault1",
+        nodeId: "vault1",
         timestamp: new Date().toISOString(),
         command: "test",
         provider: "claude",
@@ -919,7 +919,7 @@ describe("Sessions Module", () => {
       const sess2 = {
         schema_version: "1.0",
         id: "sess2",
-        vaultId: "vault2",
+        nodeId: "vault2",
         timestamp: new Date().toISOString(),
         command: "test",
         provider: "claude",

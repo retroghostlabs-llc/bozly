@@ -256,86 +256,66 @@ See [CLI-DESIGN.md](docs/CLI-DESIGN.md) for full command reference.
 
 ## Project Status
 
-**Current Phase:** Phase 1: Beta (Release Phase — 94% Complete)
+**Current Phase:** Phase 1: Beta — ✅ 100% COMPLETE
 
-**Progress:** 17 of 18 sessions complete | Sprint 1-3: ✅ 100% COMPLETE | Sprint 4: 🔄 IN PROGRESS (3 of 4 sessions)
+**Released:** v0.3.0-beta.1 (December 21, 2025) 🚀
 
-**Timeline:** Beta ready Early Feb 2026 | v1.0 Public Launch June 2026
+**Next:** Phase 2 - Automation & Integrations (v0.4.0-v0.5.0) | v1.0 Public Launch June 2026
 
 ### Development Progress
 
-**Phase 1: Beta (v0.3.0) — Sprint 1-4 (18 sessions, Sessions 37-59)**
+**Phase 1: Beta (v0.3.0-beta.1) — ✅ COMPLETE (18 sessions)**
 ```
-Sprint 1: Foundation           ✅ 100% COMPLETE (Sessions 37-40)
-  ✅ TypeScript CLI structure with 7 commands
+Sprint 1: Foundation           ✅ COMPLETE (Sessions 37-40)
+  ✅ 11 CLI commands fully working
   ✅ Core modules: vault, registry, config, context (3,000+ lines)
-  ✅ Comprehensive logging system (400+ lines)
+  ✅ Comprehensive logging system with BOZLY_DEBUG
   ✅ 4 vault templates + 2 example vaults
-  ✅ Unit tests (63 passing)
+  ✅ 59/60 unit tests passing (98% success rate)
 
-Sprint 2: Execution            ✅ 100% COMPLETE (Sessions 44-52)
-  ✅ Session 44: Context loading & validation (context.ts)
-  ✅ Session 45: Domain Models + Commands (models.ts 800+ lines) ⭐
-  ✅ Session 46: AI CLI integration (providers.ts, 4 providers)
-  ✅ Session 49: Manual framework walkthrough (Part 1)
-  ✅ Session 50: Memory systems & n8n research (956 lines)
-  ✅ Session 51: Ecosystem research consolidation
-  ✅ Session 52: Session recording architecture design (500+ lines)
-  ✅ Session 53: Session recording implementation (NEXT)
-  Target: `bozly run daily` fully functional with session recording + audit trail
+Sprint 2: Execution            ✅ COMPLETE (Sessions 44-52)
+  ✅ Context loading & validation
+  ✅ Domain models (Pattern 7, 800+ lines, YAML support)
+  ✅ AI provider integration (Claude, ChatGPT, Gemini, Ollama)
+  ✅ Session recording architecture design
 
-Sprint 3: Patterns             ✅ 100% COMPLETE (Sessions 53-55)
-  ✅ Session 53: Session recording implementation (Part 2 final)
-    ✅ recordSession(), loadSession(), querySessions(), diffSessions()
-    ✅ bozly logs + bozly diff commands with filters
-    ✅ Session files: multi-file architecture (6 files per session)
-    ✅ Session hierarchy: vault/date/id organization
-    ✅ 32 unit tests all passing
-    ✅ SESSION-RECORDING-GUIDE.md documentation
-  ✅ Session 54: Session transparency (Pattern 2) — Global operations
-    ✅ querySessionsGlobal(), getSessionStatsGlobal(), archival functions
-    ✅ bozly logs --global, --stats flags
-    ✅ 6 new functions + 37 tests (6 new patterns tests)
-    ✅ Multi-vault session monitoring enabled
-  ✅ Session 55: Versioning System (Pattern 4) — Version Management
-    ✅ versions.ts module with semantic versioning
-    ✅ bozly version command with --vault, --model, --history flags
-    ✅ Model version tracking integrated with loadModel()
-    ✅ Context version tracking integrated with generateContext()
-    ✅ 39 unit tests all passing
-    ✅ VERSIONING-GUIDE.md (600+ lines documentation)
+Sprint 3: Patterns             ✅ COMPLETE (Sessions 53-55)
+  ✅ Session recording implementation (32 tests)
+  ✅ Session transparency - Pattern 2 (37 tests total)
+  ✅ Versioning system - Pattern 4 (39 tests, 600+ lines docs)
 
-Sprint 4: Release              🔄 IN PROGRESS (Sessions 56-59)
-  ✅ Session 56: CLAUDE.md Optimization & Timeline Updates (COMPLETE)
-  ✅ Session 56b: ESLint Cleanup & vitest 4.0 Upgrade (COMPLETE)
-  ✅ Session 57: Manual CLI Testing (COMPLETE - 36 test scenarios)
-  ✅ Session 58: Vault Removal + Test Cleanup Infrastructure (COMPLETE)
-  ⏳ Session 59: npm Publish & Beta Launch (NEXT)
+Sprint 4: Release              ✅ COMPLETE (Sessions 56-59)
+  ✅ CLAUDE.md optimization & timeline updates
+  ✅ ESLint cleanup (42→0 errors) & vitest 4.0 upgrade
+  ✅ Manual CLI testing (36 scenarios all passing)
+  ✅ Vault removal with backup support
+  ✅ npm publish & beta release
 ```
 
-**⭐ Key Completed Work (Sessions 44-52):**
-- Context loading infrastructure + vault context generation
-- Domain Models (Pattern 7): YAML-based definitions with 4 types (scoring, analysis, classification, prediction)
-- AI Provider integration: Claude, ChatGPT, Gemini, Ollama detection and streaming execution
-- Session recording architecture: Multi-file design (6 files/session) with vault/date/id hierarchy
-- Manual framework validation: All CLI commands tested end-to-end, logger bug fixed
-- Ecosystem research: Claude memory + n8n integration patterns fully documented (1,500+ lines)
-- Combined 4,000+ lines of production code + 2,000+ lines of architecture documentation
+**Key Features Implemented:**
+- 11 CLI commands: init, list, add, remove, status, context, run, logs, diff, config, version
+- Multi-file session recording with full audit trail
+- Semantic versioning and version history
+- Domain models integration
+- AI-agnostic provider support (4 providers)
+- Vault removal with backup support
 
-**Phase 2: Polish (v0.4.0-0.5.0) — 6-8 weeks after Phase 1**
-- [ ] Hooks system (session-start, session-end, post-tool)
+**Phase 2: Automation & Integrations (v0.4.0-v0.5.0) — 6-8 weeks**
+- [ ] Vault Server UI (`bozly serve`) — Visual vault management
+- [ ] Smart Routing — Per-vault provider config, fallback chains
+- [ ] Usage Metrics — Track costs and usage across providers
+- [ ] Hooks system (session-start, session-end, post-execution)
 - [ ] Workflows (multi-step processes)
 - [ ] Cross-vault queries (`bozly search --all`)
-- [ ] Session history viewer (`bozly history`)
-- [ ] Task tracking (`bozly tasks`)
+- [ ] Auto-Cleanup — Session archival, disk management
 
-**Phase 3: Ecosystem (v1.0.0) — 8-12 weeks after Phase 2**
+**Phase 3: Ecosystem & Community (v1.0.0) — 8-12 weeks**
 - [ ] Community vault registry
-- [ ] `bozly search` / `bozly install`
-- [ ] Vault publishing
-- [ ] Obsidian plugin (paid)
+- [ ] `bozly search` / `bozly install` vault publishing
+- [ ] MCP server integration (UniFi, Slack, Discord, GitHub)
+- [ ] Obsidian plugin
 
-See [ROADMAP.md](docs/ROADMAP.md) for full timeline and [progress tracking docs](../../MASTER-RELEASE-TIMELINE.md).
+See [ROADMAP.md](docs/ROADMAP.md) for full timeline.
 
 ---
 
@@ -347,6 +327,8 @@ See [ROADMAP.md](docs/ROADMAP.md) for full timeline and [progress tracking docs]
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Technical deep dive |
 | [CLI-DESIGN.md](docs/CLI-DESIGN.md) | Command reference |
 | [SESSION-RECORDING-GUIDE.md](docs/SESSION-RECORDING-GUIDE.md) | Session history & audit trail |
+| [VERSIONING-GUIDE.md](docs/VERSIONING-GUIDE.md) | Version management |
+| [AI-PROVIDERS.md](docs/AI-PROVIDERS.md) | AI provider setup |
 | [BUILDING-YOUR-VAULT.md](docs/BUILDING-YOUR-VAULT.md) | Custom vault creation |
 
 ---
@@ -399,13 +381,12 @@ See [LICENSE](LICENSE) for details.
 
 *Built by [RetroGhostLabs](https://github.com/RetroGhostLabs) | MIT License*
 
-*Last updated: 2025-12-21* | *Status: Phase 1 Beta (Sprints 1-3 Complete, Sprint 4: 3/4 Sessions) | Progress: 94% | Beta: Early Feb 2026 | v1.0: June 2026*
+*Last updated: 2025-12-22* | *Status: Phase 1 Beta ✅ COMPLETE | Released: v0.3.0-beta.1 (Dec 21, 2025) | Next: Phase 2 (v0.4.0) | v1.0: June 2026*
 
 ---
 
 ## 📊 Progress Tracking
 
-**For detailed timeline, phases, and sprint breakdown, see private workspace docs:**
-- [MASTER-RELEASE-TIMELINE.md](../../MASTER-RELEASE-TIMELINE.md) — Complete project timeline
-- [TIMELINE-VISUAL.md](../../TIMELINE-VISUAL.md) — Visual timeline Dec 2025 → June 2026
-- [WORK-LOG.md](../../WORK-LOG.md) — Session history (42+ sessions documented)
+**Phase 1 Beta: ✅ COMPLETE** — v0.3.0-beta.1 released December 21, 2025
+
+For detailed timeline and planning docs, see the private workspace.

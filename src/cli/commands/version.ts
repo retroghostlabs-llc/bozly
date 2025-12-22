@@ -3,7 +3,7 @@
  *
  * Usage:
  *   bozly version                        # Show framework version
- *   bozly version --vault                # Show version info for current vault
+ *   bozly version --node                # Show version info for current vault
  *   bozly version --model <name>         # Show specific model version
  *   bozly version --model <name> --history  # Show model version history
  *   bozly version --all                  # Show all version information
@@ -18,7 +18,7 @@ import {
   formatVersionInfo,
   getModelVersionHistory,
 } from "../../core/versions.js";
-import { getCurrentVault } from "../../core/vault.js";
+import { getCurrentNode } from "../../core/node.js";
 import { loadModel } from "../../core/models.js";
 import os from "os";
 import path from "path";
@@ -39,7 +39,7 @@ export const versionCommand = new Command("version")
       });
 
       // No options: show framework version
-      if (!options.vault && !options.model && !options.all && !options.history) {
+      if (!options.node && !options.model && !options.all && !options.history) {
         await showFrameworkVersion();
         return;
       }
@@ -50,30 +50,30 @@ export const versionCommand = new Command("version")
         console.log(""); // blank line
 
         try {
-          const vault = await getCurrentVault();
-          if (vault) {
-            await showVaultVersion(vault.path);
+          const node = await getCurrentNode();
+          if (node) {
+            await showVaultVersion(node.path);
           }
         } catch {
-          // Not in a vault directory - that's ok for --all
+          // Not in a node directory - that's ok for --all
         }
         return;
       }
 
-      // --vault: show vault version
+      // --vault: show node version
       if (options.vault) {
-        const vault = await getCurrentVault();
-        if (vault) {
-          await showVaultVersion(vault.path);
+        const node = await getCurrentNode();
+        if (node) {
+          await showVaultVersion(node.path);
         }
         return;
       }
 
       // --model: show specific model version
       if (options.model) {
-        const vault = await getCurrentVault();
-        if (vault) {
-          await showModelVersion(vault.path, options.model, options.history);
+        const node = await getCurrentNode();
+        if (node) {
+          await showModelVersion(node.path, options.model, options.history);
         }
         return;
       }
@@ -102,7 +102,7 @@ async function showFrameworkVersion(): Promise<void> {
 }
 
 /**
- * Show vault version information
+ * Show node version information
  */
 async function showVaultVersion(vaultPath: string): Promise<void> {
   const vaultName = path.basename(vaultPath);
@@ -111,15 +111,15 @@ async function showVaultVersion(vaultPath: string): Promise<void> {
   if (!history) {
     console.log(chalk.yellow(`No version history found for vault: ${vaultName}`));
     console.log(
-      chalk.gray("Version tracking will start when you next run a command in this vault.")
+      chalk.gray("Version tracking will start when you next run a command in this node.")
     );
     return;
   }
 
-  console.log(chalk.cyan(`Vault Version Information: ${vaultName}\n`));
+  console.log(chalk.cyan(`Node Version Information: ${vaultName}\n`));
   console.log(formatVersionInfo(history));
 
-  await logger.info("Vault version displayed", {
+  await logger.info("Node version displayed", {
     vaultPath,
     vaultVersion: history.vaultVersion,
   });

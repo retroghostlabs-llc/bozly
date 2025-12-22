@@ -8,7 +8,7 @@
  *   bozly logs --command daily           # Filter by command
  *   bozly logs --provider claude         # Filter by AI provider
  *   bozly logs --status completed        # Filter by status (completed, failed, dry_run)
- *   bozly logs --vault music-vault       # Filter by vault ID
+ *   bozly logs --node music-node       # Filter by node ID
  *   bozly logs --verbose                 # Show detailed information
  *   bozly logs --since 2025-12-20        # Sessions since date (ISO format)
  *   bozly logs --until 2025-12-21        # Sessions until date (ISO format)
@@ -18,7 +18,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { logger } from "../../core/logger.js";
-import { getCurrentVault } from "../../core/vault.js";
+import { getCurrentNode } from "../../core/node.js";
 import {
   querySessions,
   formatSessionForLogs,
@@ -34,7 +34,7 @@ export const logsCommand = new Command("logs")
   .option("-l, --limit <number>", "Maximum number of sessions to show (default: 10)")
   .option("-c, --command <name>", "Filter by command name")
   .option("-p, --provider <name>", "Filter by AI provider (claude, gpt, gemini, ollama)")
-  .option("-v, --vault <id>", "Filter by vault ID")
+  .option("-v, --node <id>", "Filter by node ID")
   .option("-s, --status <status>", "Filter by status (completed, failed, dry_run)")
   .option("--since <date>", "Sessions since date (ISO 8601 format)")
   .option("--until <date>", "Sessions until date (ISO 8601 format)")
@@ -70,7 +70,7 @@ export const logsCommand = new Command("logs")
       }
 
       if (options.vault) {
-        queryOptions.vault = options.vault;
+        queryOptions.node = options.vault;
       }
 
       if (options.status) {
@@ -130,11 +130,11 @@ export const logsCommand = new Command("logs")
           console.log(chalk.gray(`  Average Duration: ${stats.averageDuration}ms`));
           console.log(chalk.gray(`  Average Prompt Size: ${stats.averagePromptSize} chars`));
 
-          if (stats.vaultsWithSessions.length > 0) {
+          if (stats.nodesWithSessions.length > 0) {
             console.log(chalk.cyan("\n  Sessions by Vault:"));
-            for (const vault of stats.vaultsWithSessions) {
-              const count = stats.sessionsByVault[vault];
-              console.log(chalk.gray(`    ${vault}: ${count}`));
+            for (const node of stats.nodesWithSessions) {
+              const count = stats.sessionsByNode[node];
+              console.log(chalk.gray(`    ${node}: ${count}`));
             }
           }
 
@@ -173,7 +173,7 @@ export const logsCommand = new Command("logs")
 
           if (options.verbose) {
             console.log(chalk.gray(`  ID: ${session.id}`));
-            console.log(chalk.gray(`  Vault: ${session.vaultId}`));
+            console.log(chalk.gray(`  Vault: ${session.nodeId}`));
 
             if (session.error) {
               console.log(chalk.red(`  Error: ${session.error.message}`));
@@ -194,11 +194,11 @@ export const logsCommand = new Command("logs")
         console.log(chalk.gray(`  Average Duration: ${Math.round(avgDuration)}ms`));
       } else {
         // Query from current vault
-        const vault = await getCurrentVault();
+        const node = await getCurrentNode();
 
-        if (!vault) {
-          await logger.warn("Not in a vault directory");
-          console.log(chalk.yellow("✗ Not in a vault directory"));
+        if (!node) {
+          await logger.warn("Not in a node directory");
+          console.log(chalk.yellow("✗ Not in a node directory"));
           console.log(
             "  Run 'bozly logs' from within a vault, or use 'bozly logs --global' to view all vaults."
           );
@@ -206,12 +206,12 @@ export const logsCommand = new Command("logs")
         }
 
         await logger.info("Querying sessions from vault", {
-          vaultPath: vault.path,
+          vaultPath: node.path,
           filters: queryOptions,
         });
 
         // Query sessions
-        const vaultPath = vault.path;
+        const vaultPath = node.path;
         const sessions = await querySessions(vaultPath, queryOptions);
 
         // Handle stats mode
@@ -221,7 +221,7 @@ export const logsCommand = new Command("logs")
             queryOptions
           );
 
-          console.log(chalk.cyan(`\n📊 Session Statistics for ${vault.name}:\n`));
+          console.log(chalk.cyan(`\n📊 Session Statistics for ${node.name}:\n`));
           console.log(chalk.gray(`  Total Sessions: ${stats.totalSessions}`));
           console.log(chalk.green(`  Successful: ${stats.totalSuccessful}`));
           console.log(chalk.red(`  Failed: ${stats.totalFailed}`));

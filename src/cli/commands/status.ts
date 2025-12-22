@@ -1,15 +1,15 @@
 /**
- * bozly status - Show current vault status
+ * bozly status - Show current node status
  */
 
 import { Command } from "commander";
 import chalk from "chalk";
 import { logger } from "../../core/logger.js";
-import { getCurrentVault } from "../../core/vault.js";
-import { getVaultCommands } from "../../core/commands.js";
+import { getCurrentNode } from "../../core/node.js";
+import { getNodeCommands } from "../../core/commands.js";
 
 export const statusCommand = new Command("status")
-  .description("Show current vault status")
+  .description("Show current node status")
   .option("-v, --verbose", "Show detailed information")
   .action(async (options) => {
     try {
@@ -17,33 +17,33 @@ export const statusCommand = new Command("status")
         verbose: options.verbose,
       });
 
-      const vault = await getCurrentVault();
+      const node = await getCurrentNode();
 
-      if (!vault) {
-        await logger.warn("Not in a vault directory");
-        console.log(chalk.yellow("Not in a vault directory."));
+      if (!node) {
+        await logger.warn("Not in a node directory");
+        console.log(chalk.yellow("Not in a node directory."));
         console.log();
-        console.log("To initialize a vault here:");
+        console.log("To initialize a node here:");
         console.log("  bozly init");
         return;
       }
 
-      await logger.info("Vault found", {
-        name: vault.name,
-        path: vault.path,
-        type: vault.type,
+      await logger.info("Node found", {
+        name: node.name,
+        path: node.path,
+        type: node.type,
       });
 
-      console.log(chalk.cyan("Vault Status:\n"));
-      console.log(chalk.bold("Name:"), vault.name);
-      console.log(chalk.bold("Path:"), vault.path);
-      console.log(chalk.bold("Type:"), vault.type);
+      console.log(chalk.cyan("Node Status:\n"));
+      console.log(chalk.bold("Name:"), node.name);
+      console.log(chalk.bold("Path:"), node.path);
+      console.log(chalk.bold("Type:"), node.type);
       console.log();
 
       // Show commands
-      const commands = await getVaultCommands(vault.path);
+      const commands = await getNodeCommands(node.path);
       if (commands.length > 0) {
-        await logger.debug("Found vault commands", {
+        await logger.debug("Found node commands", {
           commandCount: commands.length,
           commands: commands.map((c) => c.name),
         });
@@ -65,10 +65,10 @@ export const statusCommand = new Command("status")
         console.log();
       }
 
-      console.log(chalk.green("✓ Vault is ready"));
+      console.log(chalk.green("✓ Node is ready"));
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      await logger.error("Failed to get vault status", {
+      await logger.error("Failed to get node status", {
         error: errorMsg,
       });
 

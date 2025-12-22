@@ -10,7 +10,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { logger } from "../../core/logger.js";
-import { getCurrentVault } from "../../core/vault.js";
+import { getCurrentNode } from "../../core/node.js";
 import {
   diffSessions,
   querySessions,
@@ -34,16 +34,16 @@ export const diffCommand = new Command("diff")
         command: options.command,
       });
 
-      const vault = await getCurrentVault();
+      const node = await getCurrentNode();
 
-      if (!vault) {
-        await logger.warn("Not in a vault directory");
-        console.log(chalk.yellow("✗ Not in a vault directory"));
-        console.log("  Run 'bozly diff' from within a vault to compare session prompts.");
+      if (!node) {
+        await logger.warn("Not in a node directory");
+        console.log(chalk.yellow("✗ Not in a node directory"));
+        console.log("  Run 'bozly diff' from within a node to compare session prompts.");
         process.exit(1);
       }
 
-      const vaultPath = vault.path;
+      const vaultPath = node.path;
 
       // Handle --last and --command modes
       if (options.last || options.command) {
@@ -72,8 +72,8 @@ export const diffCommand = new Command("diff")
 
         // Load session files to get prompt.txt
         const bozlyPath = path.join(vaultPath, ".bozly");
-        const path1 = getSessionPath(bozlyPath, sess1.vaultId, sess1.timestamp, sess1.id);
-        const path2 = getSessionPath(bozlyPath, sess2.vaultId, sess2.timestamp, sess2.id);
+        const path1 = getSessionPath(bozlyPath, sess1.nodeId, sess1.timestamp, sess1.id);
+        const path2 = getSessionPath(bozlyPath, sess2.nodeId, sess2.timestamp, sess2.id);
 
         const files1 = await loadSessionFiles(path1);
         const files2 = await loadSessionFiles(path2);
@@ -138,8 +138,8 @@ export const diffCommand = new Command("diff")
 
       // Load session files
       const bozlyPath = path.join(vaultPath, ".bozly");
-      const path1 = getSessionPath(bozlyPath, sess1.vaultId, sess1.timestamp, sess1.id);
-      const path2 = getSessionPath(bozlyPath, sess2.vaultId, sess2.timestamp, sess2.id);
+      const path1 = getSessionPath(bozlyPath, sess1.nodeId, sess1.timestamp, sess1.id);
+      const path2 = getSessionPath(bozlyPath, sess2.nodeId, sess2.timestamp, sess2.id);
 
       const files1 = await loadSessionFiles(path1);
       const files2 = await loadSessionFiles(path2);

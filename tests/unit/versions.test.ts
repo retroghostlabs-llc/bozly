@@ -23,13 +23,13 @@ import {
   getModelVersionHistory,
   hasFileChanged,
   incrementVersion,
-} from "../../src/core/versions.js";
+} from "../../../src/core/versions.js";
 import type {
   VaultVersionHistory,
   ModelVersionInfo,
   VersionEntry,
-} from "../../src/core/versions.js";
-import type { Model } from "../../src/core/types.js";
+} from "../../../src/core/versions.js";
+import type { Model } from "../../../src/core/types.js";
 
 // Test utilities
 let testDir: string;
@@ -132,7 +132,7 @@ describe("Hash Computation", () => {
 describe("Version History Management", () => {
   it("should save and load version history", async () => {
     const history: VaultVersionHistory = {
-      vaultId: "test-vault",
+      nodeId: "test-vault",
       vaultVersion: "0.1.0",
       created: new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
@@ -145,7 +145,7 @@ describe("Version History Management", () => {
     const loaded = await loadVersionHistory(testDir);
 
     expect(loaded).toBeDefined();
-    expect(loaded?.vaultId).toBe("test-vault");
+    expect(loaded?.nodeId).toBe("test-vault");
     expect(loaded?.vaultVersion).toBe("0.1.0");
   });
 
@@ -254,7 +254,7 @@ describe("Version Information Retrieval", () => {
     const info = await getVersionInfo(testDir);
 
     expect(info).toBeDefined();
-    expect(info?.vaultId).toBeDefined();
+    expect(info?.nodeId).toBeDefined();
     expect(info?.files.length).toBe(1);
   });
 

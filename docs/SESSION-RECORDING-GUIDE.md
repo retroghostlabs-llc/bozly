@@ -193,12 +193,18 @@ tar -czf sessions-2025-11.tar.gz ~/.bozly/sessions/*/2025/11/
 
 ## Phase 2+ Enhancements (Roadmap)
 
+- **Auto-Cleanup & Disk Management** — Prevent session bloat
+  - `bozly cleanup` command with `--preview`, `--older-than`, `--archive` flags
+  - Session retention policy (configurable, default 90 days)
+  - Storage monitoring (`bozly status --storage`)
+  - Auto-cleanup when storage exceeds threshold
+  - See: `planning/current/SESSION-65-AUTO-CLEANUP-DESIGN.md`
 - **Session Memory** — Extract and reuse session summaries across commands
 - **Cross-Vault Queries** — Search sessions across multiple vaults
 - **n8n Integration** — Monitor session directories for workflow automation
-- **Gzip Compression** — Reduce disk space for old sessions
+- **Gzip Compression** — Reduce disk space for old sessions (part of Auto-Cleanup)
 - **Prompt Hashing** — Detect identical prompts across executions
-- **Session Archival Tool** — Automated archival and rotation
+- **Session Archival Tool** — Automated archival and rotation (part of Auto-Cleanup)
 
 ## Global Session Operations (Pattern 2 - Transparency)
 

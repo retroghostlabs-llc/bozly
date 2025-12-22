@@ -3,7 +3,7 @@
  */
 
 export * from "./types.js";
-export * from "./vault.js";
+export * from "./node.js";
 export * from "./registry.js";
 export * from "./context.js";
 export * from "./commands.js";

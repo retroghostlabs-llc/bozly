@@ -15,7 +15,7 @@
  *
  * Usage:
  *   import { generateContext } from './context.js';
- *   const vault = await getCurrentVault();
+ *   const vault = await getCurrentNode();
  *   const context = await generateContext(vault, { provider: 'gpt' });
  *   console.log(context);
  *
@@ -26,7 +26,7 @@ import fs from "fs/promises";
 import path from "path";
 import { logger } from "./logger.js";
 import { trackFileVersion } from "./versions.js";
-import { VaultInfo, ContextOptions } from "./types.js";
+import { NodeInfo, ContextOptions } from "./types.js";
 
 const CONTEXT_FILE = "context.md";
 
@@ -45,7 +45,7 @@ const CONTEXT_FILE = "context.md";
  * @returns Complete context as markdown string for AI consumption
  */
 export async function generateContext(
-  vault: VaultInfo,
+  vault: NodeInfo,
   options: ContextOptions = {}
 ): Promise<string> {
   const bozlyPath = path.join(vault.path, ".bozly");

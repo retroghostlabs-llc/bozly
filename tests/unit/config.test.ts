@@ -10,21 +10,21 @@ import {
   writeJSON,
   fileExists,
 } from "../conftest";
-import type { VaultConfig, GlobalConfig } from "../../src/core/types";
+import type { NodeConfig, GlobalConfig } from "../../../src/core/types";
 import path from "path";
 import fs from "fs/promises";
 
 describe("Configuration Handling", () => {
-  describe("Vault Configuration", () => {
-    it("should load vault config from .bozly/config.json", async () => {
+  describe("Node Configuration", () => {
+    it("should load node config from .bozly/config.json", async () => {
       await createTempDir();
       const tempDir = getTempDir();
-      const vaultPath = path.join(tempDir, "vault");
-      const bozlyPath = path.join(vaultPath, ".bozly");
+      const nodePath = path.join(tempDir, "vault");
+      const bozlyPath = path.join(nodePath, ".bozly");
 
       await fs.mkdir(bozlyPath, { recursive: true });
 
-      const mockConfig: VaultConfig = {
+      const mockConfig: NodeConfig = {
         name: "test-vault",
         type: "music",
         version: "0.3.0",
@@ -44,8 +44,8 @@ describe("Configuration Handling", () => {
     it("should handle missing config gracefully", async () => {
       await createTempDir();
       const tempDir = getTempDir();
-      const vaultPath = path.join(tempDir, "vault");
-      const bozlyPath = path.join(vaultPath, ".bozly");
+      const nodePath = path.join(tempDir, "vault");
+      const bozlyPath = path.join(nodePath, ".bozly");
 
       await fs.mkdir(bozlyPath, { recursive: true });
 
@@ -58,11 +58,11 @@ describe("Configuration Handling", () => {
     it("should save vault config", async () => {
       await createTempDir();
       const tempDir = getTempDir();
-      const vaultPath = path.join(tempDir, "vault");
+      const nodePath = path.join(tempDir, "vault");
 
-      await fs.mkdir(path.join(vaultPath, ".bozly"), { recursive: true });
+      await fs.mkdir(path.join(nodePath, ".bozly"), { recursive: true });
 
-      const config: VaultConfig = {
+      const config: NodeConfig = {
         name: "updated-vault",
         type: "project",
         version: "0.3.0",
@@ -74,12 +74,12 @@ describe("Configuration Handling", () => {
       };
 
       // Write config using utility function
-      const configPath = path.join(vaultPath, ".bozly", "config.json");
+      const configPath = path.join(nodePath, ".bozly", "config.json");
       await writeJSON(configPath, config);
 
       expect(await fileExists(configPath)).toBe(true);
 
-      const saved = await readJSON<VaultConfig>(configPath);
+      const saved = await readJSON<NodeConfig>(configPath);
       expect(saved).toEqual(config);
       expect(saved.ai.defaultProvider).toBe("gpt");
     });
@@ -87,12 +87,12 @@ describe("Configuration Handling", () => {
     it("should support optional hooks in config", async () => {
       await createTempDir();
       const tempDir = getTempDir();
-      const vaultPath = path.join(tempDir, "vault");
-      const bozlyPath = path.join(vaultPath, ".bozly");
+      const nodePath = path.join(tempDir, "vault");
+      const bozlyPath = path.join(nodePath, ".bozly");
 
       await fs.mkdir(bozlyPath, { recursive: true });
 
-      const configWithHooks: VaultConfig = {
+      const configWithHooks: NodeConfig = {
         name: "test",
         type: "default",
         version: "0.3.0",
@@ -112,7 +112,7 @@ describe("Configuration Handling", () => {
 
       // Verify config with hooks was saved correctly
       const configPath = path.join(bozlyPath, "config.json");
-      const loaded = await readJSON<VaultConfig>(configPath);
+      const loaded = await readJSON<NodeConfig>(configPath);
       expect(loaded.hooks).toBeDefined();
       expect(loaded.hooks?.sessionStart).toBe("echo 'Starting session'");
     });
@@ -202,8 +202,8 @@ describe("Configuration Handling", () => {
     it("should handle malformed JSON config gracefully", async () => {
       await createTempDir();
       const tempDir = getTempDir();
-      const vaultPath = path.join(tempDir, "vault");
-      const bozlyPath = path.join(vaultPath, ".bozly");
+      const nodePath = path.join(tempDir, "vault");
+      const bozlyPath = path.join(nodePath, ".bozly");
 
       await fs.mkdir(bozlyPath, { recursive: true });
       await fs.writeFile(path.join(bozlyPath, "config.json"), "{ invalid json }");
@@ -221,11 +221,11 @@ describe("Configuration Handling", () => {
     it("should preserve config structure when saving", async () => {
       await createTempDir();
       const tempDir = getTempDir();
-      const vaultPath = path.join(tempDir, "vault");
+      const nodePath = path.join(tempDir, "vault");
 
-      await fs.mkdir(path.join(vaultPath, ".bozly"), { recursive: true });
+      await fs.mkdir(path.join(nodePath, ".bozly"), { recursive: true });
 
-      const original: VaultConfig = {
+      const original: NodeConfig = {
         name: "vault",
         type: "music",
         version: "0.3.0",
@@ -236,9 +236,9 @@ describe("Configuration Handling", () => {
         },
       };
 
-      const configPath = path.join(vaultPath, ".bozly", "config.json");
+      const configPath = path.join(nodePath, ".bozly", "config.json");
       await writeJSON(configPath, original);
-      const loaded = await readJSON<VaultConfig>(configPath);
+      const loaded = await readJSON<NodeConfig>(configPath);
 
       expect(loaded).toEqual(original);
       expect(loaded.ai.providers).toHaveLength(4);

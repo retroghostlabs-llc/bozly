@@ -35,7 +35,7 @@ export const configCommand = new Command("config")
       if (options.list || (!key && !value)) {
         const config = await getConfig(isGlobal);
         await logger.debug("Config listed", { isGlobal });
-        console.log(chalk.cyan(isGlobal ? "Global Configuration:" : "Vault Configuration:"));
+        console.log(chalk.cyan(isGlobal ? "Global Configuration:" : "Node Configuration:"));
         console.log();
         console.log(JSON.stringify(config, null, 2));
         return;

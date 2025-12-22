@@ -11,8 +11,8 @@ import {
   fileExists,
   writeJSON,
 } from "../conftest";
-import { addVaultToRegistry, listVaults, getVault, removeVault } from "../../src/core/registry";
-import type { Registry } from "../../src/core/types";
+import { addNodeToRegistry, listNodes, getNode, removeNode } from "../../../src/core/registry";
+import type { Registry } from "../../../src/core/types";
 import path from "path";
 import fs from "fs/promises";
 
@@ -23,8 +23,8 @@ function setBozlyHome(homePath: string): void {
   process.env.BOZLY_HOME = homePath;
 }
 
-describe("Vault Registry", () => {
-  describe("addVaultToRegistry", () => {
+describe("Node Operations" Registry", () => {
+  describe("addNodeToRegistry", () => {
     it("should add a new vault to registry", async () => {
       await createTempDir();
       const tempDir = getTempDir();
@@ -33,17 +33,17 @@ describe("Vault Registry", () => {
       // Create registry first
       await createMockRegistry(tempDir);
 
-      const vaultPath = path.join(tempDir, "new-vault");
-      await fs.mkdir(vaultPath, { recursive: true });
+      const nodePath = path.join(tempDir, "new-vault");
+      await fs.mkdir(nodePath, { recursive: true });
 
-      const vault = await addVaultToRegistry({
-        path: vaultPath,
+      const vault = await addNodeToRegistry({
+        path: nodePath,
         name: "new-vault",
       });
 
       expect(vault).toBeDefined();
       expect(vault.name).toBe("new-vault");
-      expect(vault.path).toBe(vaultPath);
+      expect(vault.path).toBe(nodePath);
       expect(vault.active).toBe(true);
     });
 
@@ -59,12 +59,12 @@ describe("Vault Registry", () => {
       await fs.mkdir(vault1Path, { recursive: true });
       await fs.mkdir(vault2Path, { recursive: true });
 
-      const vault1 = await addVaultToRegistry({
+      const vault1 = await addNodeToRegistry({
         path: vault1Path,
         name: "vault-1",
       });
 
-      const vault2 = await addVaultToRegistry({
+      const vault2 = await addNodeToRegistry({
         path: vault2Path,
         name: "vault-2",
       });
@@ -79,11 +79,11 @@ describe("Vault Registry", () => {
 
       await createMockRegistry(tempDir);
 
-      const vaultPath = path.join(tempDir, "new-vault");
-      await fs.mkdir(vaultPath, { recursive: true });
+      const nodePath = path.join(tempDir, "new-vault");
+      await fs.mkdir(nodePath, { recursive: true });
 
-      await addVaultToRegistry({
-        path: vaultPath,
+      await addNodeToRegistry({
+        path: nodePath,
         name: "new-vault",
         type: "default",
       });
@@ -91,12 +91,12 @@ describe("Vault Registry", () => {
       const registryPath = path.join(tempDir, "bozly-registry.json");
       const registry = await readJSON<Registry>(registryPath);
 
-      expect(registry.vaults).toHaveLength(2); // original + new
-      expect(registry.vaults.some((v) => v.name === "new-vault")).toBe(true);
+      expect(registry.nodes).toHaveLength(2); // original + new
+      expect(registry.nodes.some((v) => v.name === "new-vault")).toBe(true);
     });
   });
 
-  describe("listVaults", () => {
+  describe("listNodes", () => {
     it("should return empty array when no vaults exist", async () => {
       await createTempDir();
       const tempDir = getTempDir();
@@ -111,7 +111,7 @@ describe("Vault Registry", () => {
       };
       await writeJSON(path.join(tempDir, "bozly-registry.json"), emptyRegistry);
 
-      const vaults = await listVaults();
+      const vaults = await listNodes();
       expect(vaults).toEqual([]);
     });
 
@@ -122,7 +122,7 @@ describe("Vault Registry", () => {
 
       await createMockRegistry(tempDir);
 
-      const vaults = await listVaults();
+      const vaults = await listNodes();
       expect(vaults.length).toBeGreaterThan(0);
       expect(vaults[0]).toHaveProperty("id");
       expect(vaults[0]).toHaveProperty("name");
@@ -136,7 +136,7 @@ describe("Vault Registry", () => {
 
       await createMockRegistry(tempDir);
 
-      const vaults = await listVaults();
+      const vaults = await listNodes();
       const vault = vaults[0];
 
       expect(vault.name).toBe("test-vault");
@@ -146,7 +146,7 @@ describe("Vault Registry", () => {
     });
   });
 
-  describe("getVault", () => {
+  describe("getNode", () => {
     it("should retrieve vault by ID", async () => {
       await createTempDir();
       const tempDir = getTempDir();
@@ -154,13 +154,13 @@ describe("Vault Registry", () => {
 
       await createMockRegistry(tempDir);
 
-      const vaults = await listVaults();
-      const vaultId = vaults[0].id;
+      const vaults = await listNodes();
+      const nodeId = vaults[0].id;
 
-      const vault = await getVault(vaultId);
+      const vault = await getNode(nodeId);
 
       expect(vault).toBeDefined();
-      expect(vault?.id).toBe(vaultId);
+      expect(vault?.id).toBe(nodeId);
       expect(vault?.name).toBe("test-vault");
     });
 
@@ -171,7 +171,7 @@ describe("Vault Registry", () => {
 
       await createMockRegistry(tempDir);
 
-      const vault = await getVault("non-existent-id");
+      const vault = await getNode("non-existent-id");
       expect(vault).toBeUndefined();
     });
 
@@ -182,14 +182,14 @@ describe("Vault Registry", () => {
 
       await createMockRegistry(tempDir);
 
-      const vault = await getVault("test-vault");
+      const vault = await getNode("test-vault");
 
       expect(vault).toBeDefined();
       expect(vault?.name).toBe("test-vault");
     });
   });
 
-  describe("removeVault", () => {
+  describe("removeNode", () => {
     it("should remove vault from registry", async () => {
       await createTempDir();
       const tempDir = getTempDir();
@@ -197,15 +197,15 @@ describe("Vault Registry", () => {
 
       await createMockRegistry(tempDir);
 
-      const vaults = await listVaults();
-      const vaultId = vaults[0].id;
+      const vaults = await listNodes();
+      const nodeId = vaults[0].id;
       const initialCount = vaults.length;
 
-      await removeVault(vaultId);
+      await removeNode(nodeId);
 
-      const updatedVaults = await listVaults();
+      const updatedVaults = await listNodes();
       expect(updatedVaults.length).toBe(initialCount - 1);
-      expect(updatedVaults.some((v) => v.id === vaultId)).toBe(false);
+      expect(updatedVaults.some((v) => v.id === nodeId)).toBe(false);
     });
 
     it("should throw error for non-existent vault", async () => {
@@ -215,7 +215,7 @@ describe("Vault Registry", () => {
 
       await createMockRegistry(tempDir);
 
-      await expect(removeVault("non-existent-id")).rejects.toThrow();
+      await expect(removeNode("non-existent-id")).rejects.toThrow();
     });
 
     it("should persist changes to registry file", async () => {
@@ -225,15 +225,15 @@ describe("Vault Registry", () => {
 
       await createMockRegistry(tempDir);
 
-      const vaults = await listVaults();
-      const vaultId = vaults[0].id;
+      const vaults = await listNodes();
+      const nodeId = vaults[0].id;
 
-      await removeVault(vaultId);
+      await removeNode(nodeId);
 
       const registryPath = path.join(tempDir, "bozly-registry.json");
       const registry = await readJSON<Registry>(registryPath);
 
-      expect(registry.vaults.some((v) => v.id === vaultId)).toBe(false);
+      expect(registry.nodes.some((v) => v.id === nodeId)).toBe(false);
     });
   });
 
@@ -251,10 +251,10 @@ describe("Vault Registry", () => {
       // Wait a bit to ensure timestamp difference
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      const vaultPath = path.join(tempDir, "vault-2");
-      await fs.mkdir(vaultPath, { recursive: true });
-      await addVaultToRegistry({
-        path: vaultPath,
+      const nodePath = path.join(tempDir, "vault-2");
+      await fs.mkdir(nodePath, { recursive: true });
+      await addNodeToRegistry({
+        path: nodePath,
         name: "vault-2",
       });
 

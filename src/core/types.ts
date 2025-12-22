@@ -3,9 +3,9 @@
  */
 
 /**
- * Vault configuration stored in .bozly/config.json
+ * Node configuration stored in .bozly/config.json
  */
-export interface VaultConfig {
+export interface NodeConfig {
   name: string;
   type: string;
   version: string;
@@ -22,9 +22,9 @@ export interface VaultConfig {
 }
 
 /**
- * Vault information stored in registry
+ * Node information stored in registry
  */
-export interface VaultInfo {
+export interface NodeInfo {
   id: string;
   name: string;
   path: string;
@@ -39,7 +39,7 @@ export interface VaultInfo {
  */
 export interface Registry {
   version: string;
-  vaults: VaultInfo[];
+  nodes: NodeInfo[];
   created: string;
   lastUpdated: string;
 }
@@ -55,7 +55,7 @@ export interface GlobalConfig {
 }
 
 /**
- * Options for initializing a vault
+ * Options for initializing a node
  */
 export interface InitOptions {
   path: string;
@@ -65,17 +65,17 @@ export interface InitOptions {
 }
 
 /**
- * Options for adding a vault to registry
+ * Options for adding a node to registry
  */
-export interface AddVaultOptions {
+export interface AddNodeOptions {
   path: string;
   name?: string;
 }
 
 /**
- * Vault command definition
+ * Node command definition
  */
-export interface VaultCommand {
+export interface NodeCommand {
   name: string;
   description?: string;
   file: string;
@@ -123,7 +123,7 @@ export type SemVer = string; // e.g., "1.0.0"
 export type Hash = string; // SHA256 hash
 export type ISODateTime = string; // ISO 8601 datetime
 export type AIProvider = string;
-export type VaultDomain = "music" | "projects" | "journal" | "content" | "custom";
+export type NodeDomain = "music" | "projects" | "journal" | "content" | "custom";
 export type ModelType = "scoring" | "analysis" | "classification" | "prediction";
 
 /**
@@ -181,7 +181,7 @@ export interface Model {
   name: string;
   version: SemVer;
   description?: string;
-  domain?: VaultDomain;
+  domain?: NodeDomain;
   type?: ModelType;
   created?: ISODateTime;
   updated?: ISODateTime;
@@ -239,9 +239,9 @@ export interface Session {
 
   // Execution context
   provider: AIProvider;
-  vaultId: string; // Machine-readable vault ID (for directory hierarchy)
-  vaultName: string;
-  vaultPath: string;
+  nodeId: string; // Machine-readable node ID (for directory hierarchy)
+  nodeName: string;
+  nodePath: string;
 
   // Status (completed, failed, dry_run)
   status: "completed" | "failed" | "dry_run";
@@ -354,7 +354,7 @@ export interface SessionFiles {
 export interface SessionQueryOptions {
   command?: string;
   provider?: string;
-  vault?: string;
+  node?: string;
   status?: "completed" | "failed" | "dry_run";
   startDate?: ISODateTime;
   endDate?: ISODateTime;

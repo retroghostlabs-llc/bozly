@@ -1,20 +1,20 @@
 /**
- * bozly init - Initialize a vault in the current directory
+ * bozly init - Initialize a node in the current directory
  */
 
 import { Command } from "commander";
 import chalk from "chalk";
 import ora from "ora";
 import { logger } from "../../core/logger.js";
-import { initVault } from "../../core/vault.js";
+import { initNode } from "../../core/node.js";
 
 export const initCommand = new Command("init")
-  .description("Initialize a new vault in the current directory")
-  .option("-t, --type <type>", "Vault template type (default, music, journal, content)", "default")
-  .option("-n, --name <name>", "Vault name (defaults to directory name)")
+  .description("Initialize a new node in the current directory")
+  .option("-t, --type <type>", "Node template type (default, music, journal, content)", "default")
+  .option("-n, --name <name>", "Node name (defaults to directory name)")
   .option("--force", "Overwrite existing .bozly/ folder")
   .action(async (options) => {
-    const spinner = ora("Initializing vault...").start();
+    const spinner = ora("Initializing node...").start();
 
     try {
       await logger.debug("bozly init command started", {
@@ -24,19 +24,19 @@ export const initCommand = new Command("init")
         force: options.force,
       });
 
-      const result = await initVault({
+      const result = await initNode({
         path: process.cwd(),
         type: options.type,
         name: options.name,
         force: options.force,
       });
 
-      await logger.info("Vault initialized successfully", {
+      await logger.info("Node initialized successfully", {
         path: result.path,
         type: result.type,
       });
 
-      spinner.succeed(chalk.green("Vault initialized successfully!"));
+      spinner.succeed(chalk.green("Node initialized successfully!"));
       console.log();
       console.log(chalk.gray("Created:"), result.path);
       console.log(chalk.gray("Type:"), result.type);
@@ -51,7 +51,7 @@ export const initCommand = new Command("init")
       spinner.fail(chalk.red("Failed to initialize vault"));
 
       const errorMsg = error instanceof Error ? error.message : String(error);
-      await logger.error("Vault initialization failed", {
+      await logger.error("Node initialization failed", {
         error: errorMsg,
       });
 

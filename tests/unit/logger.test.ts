@@ -7,7 +7,7 @@ import {
   getLogger,
   logger,
   LogLevel,
-} from "../../src/core/logger.js";
+} from "../../../src/core/logger.js";
 import {
   createTempDir,
   getTempDir,

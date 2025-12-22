@@ -4,19 +4,19 @@
 
 import { describe, it, expect } from "vitest";
 import type {
-  VaultConfig,
-  VaultInfo,
+  NodeConfig,
+  NodeInfo,
   Registry,
   GlobalConfig,
   InitOptions,
   ContextOptions,
   RunOptions,
-} from "../../src/core/types";
+} from "../../../src/core/types";
 
 describe("Type Definitions", () => {
-  describe("VaultConfig", () => {
+  describe("NodeConfig", () => {
     it("should allow valid vault config", () => {
-      const config: VaultConfig = {
+      const config: NodeConfig = {
         name: "test",
         type: "default",
         version: "0.3.0",
@@ -32,7 +32,7 @@ describe("Type Definitions", () => {
     });
 
     it("should allow optional hooks field", () => {
-      const config: VaultConfig = {
+      const config: NodeConfig = {
         name: "test",
         type: "default",
         version: "0.3.0",
@@ -50,9 +50,9 @@ describe("Type Definitions", () => {
     });
   });
 
-  describe("VaultInfo", () => {
+  describe("NodeInfo", () => {
     it("should create valid vault info", () => {
-      const info: VaultInfo = {
+      const info: NodeInfo = {
         id: "123e4567-e89b-12d3-a456-426614174000",
         name: "my-vault",
         path: "/home/user/my-vault",
@@ -66,7 +66,7 @@ describe("Type Definitions", () => {
     });
 
     it("should allow optional lastAccessed field", () => {
-      const info: VaultInfo = {
+      const info: NodeInfo = {
         id: "id",
         name: "vault",
         path: "/path",
@@ -84,18 +84,18 @@ describe("Type Definitions", () => {
     it("should create valid registry", () => {
       const registry: Registry = {
         version: "0.3.0",
-        vaults: [],
+        nodes: [],
         created: new Date().toISOString(),
         lastUpdated: new Date().toISOString(),
       };
 
-      expect(registry.vaults).toHaveLength(0);
+      expect(registry.nodes).toHaveLength(0);
     });
 
-    it("should support multiple vaults in registry", () => {
+    it("should support multiple nodes in registry", () => {
       const registry: Registry = {
         version: "0.3.0",
-        vaults: [
+        nodes: [
           {
             id: "1",
             name: "vault1",
@@ -117,9 +117,9 @@ describe("Type Definitions", () => {
         lastUpdated: new Date().toISOString(),
       };
 
-      expect(registry.vaults).toHaveLength(2);
-      expect(registry.vaults[0].name).toBe("vault1");
-      expect(registry.vaults[1].active).toBe(false);
+      expect(registry.nodes).toHaveLength(2);
+      expect(registry.nodes[0].name).toBe("vault1");
+      expect(registry.nodes[1].active).toBe(false);
     });
   });
 

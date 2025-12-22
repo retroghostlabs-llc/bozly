@@ -417,6 +417,58 @@ Include:
 
 ---
 
+## BOZLY vs Your AI's Built-in Features
+
+Your AI tool (Claude, ChatGPT, etc.) has its own built-in features like `/memory`, `/compact`, chat history, and more. **You can still use them!** But BOZLY provides its own context management that works across all providers.
+
+### Why BOZLY Doesn't Rely on AI Features
+
+BOZLY is AI-agnostic. If BOZLY depended on Claude's `/memory` command, it wouldn't work with GPT or Ollama. Instead, BOZLY provides equivalent features that work everywhere:
+
+| AI Feature | BOZLY Alternative | Why It Matters |
+|------------|-------------------|----------------|
+| `/memory` (Claude) | `.bozly/sessions/` | Works with any AI |
+| `/compact` (Claude) | Fresh context each run | No bloat, predictable |
+| Chat history | Session recording | Auditable, searchable |
+| `/chat` mode | Each `bozly run` is isolated | Clean, reproducible |
+
+### Session Isolation (By Design)
+
+Each `bozly run` starts fresh. The AI receives:
+1. Your vault context (`.bozly/context.md`)
+2. The command prompt (`.bozly/commands/<command>.md`)
+3. Referenced models (if any)
+
+**Nothing else.** No previous conversation. No chat history.
+
+**Benefits:**
+- **Reproducible:** Same command = same context = predictable behavior
+- **Auditable:** `bozly logs` shows exactly what was sent
+- **Portable:** Switch providers without losing context
+- **Private:** No conversation history leaking between runs
+
+### When to Use BOZLY vs AI Features
+
+| Need | Use BOZLY | Use AI Feature |
+|------|-----------|----------------|
+| **Consistent domain context** | `.bozly/context.md` | — |
+| **Session history** | `bozly logs` | — |
+| **Domain models** | `.bozly/models/` | — |
+| **Quick interactive chat** | — | AI's chat mode |
+| **Compress mid-conversation** | — | `/compact` (if available) |
+| **Access AI-specific tools** | — | AI's MCP servers, etc. |
+
+### Future: Session Memory (Phase 2)
+
+BOZLY will add opt-in memory in Phase 2:
+- Analyze past sessions for relevant context
+- Inject relevant history into new runs
+- Still user-controlled (not automatic)
+
+See [BOZLY-RESPONSIBILITY-MODEL.md](../../.claude/guides/BOZLY-RESPONSIBILITY-MODEL.md) for the full design philosophy.
+
+---
+
 ## FAQ
 
 **Q: Which provider should I use?**

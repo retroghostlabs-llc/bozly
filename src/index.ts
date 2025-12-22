@@ -9,29 +9,29 @@
 // Export core functionality for programmatic use
 export {
   // Types
-  VaultConfig,
-  VaultInfo,
+  NodeConfig,
+  NodeInfo,
   Registry,
   GlobalConfig,
-  VaultCommand,
-  // Vault operations
-  initVault,
-  getCurrentVault,
+  NodeCommand,
+  // Node operations
+  initNode,
+  getCurrentNode,
   // Registry operations
   getRegistry,
-  addVault,
-  removeVault,
+  addNode,
+  removeNode,
   // Context generation
   generateContext,
   // Command operations
-  getVaultCommands,
+  getNodeCommands,
   getCommand,
-  runVaultCommand,
+  runNodeCommand,
   // Configuration
   getConfig,
   setConfig,
   getGlobalConfig,
-  getVaultConfig,
+  getNodeConfig,
 } from "./core/index.js";
 
 // Version

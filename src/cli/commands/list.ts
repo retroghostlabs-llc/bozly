@@ -20,35 +20,35 @@ export const listCommand = new Command("list")
       const registry = await getRegistry();
 
       await logger.info("Registry loaded", {
-        vaultCount: registry.vaults.length,
+        vaultCount: registry.nodes.length,
       });
 
-      if (registry.vaults.length === 0) {
+      if (registry.nodes.length === 0) {
         console.log(chalk.yellow("No vaults registered."));
         console.log();
         console.log("To register a vault:");
-        console.log("  bozly init          Initialize new vault in current directory");
+        console.log("  bozly init          Initialize new node in current directory");
         console.log("  bozly add <path>    Register existing vault");
         return;
       }
 
       console.log(chalk.cyan("Registered Vaults:\n"));
 
-      for (const vault of registry.vaults) {
-        const status = vault.active ? chalk.green("●") : chalk.gray("○");
-        console.log(`${status} ${chalk.bold(vault.name)}`);
-        console.log(chalk.gray(`  Path: ${vault.path}`));
-        console.log(chalk.gray(`  Type: ${vault.type}`));
+      for (const node of registry.nodes) {
+        const status = node.active ? chalk.green("●") : chalk.gray("○");
+        console.log(`${status} ${chalk.bold(node.name)}`);
+        console.log(chalk.gray(`  Path: ${node.path}`));
+        console.log(chalk.gray(`  Type: ${node.type}`));
 
         if (options.all) {
-          console.log(chalk.gray(`  ID: ${vault.id}`));
-          console.log(chalk.gray(`  Created: ${vault.created}`));
-          console.log(chalk.gray(`  Last accessed: ${vault.lastAccessed ?? "never"}`));
+          console.log(chalk.gray(`  ID: ${node.id}`));
+          console.log(chalk.gray(`  Created: ${node.created}`));
+          console.log(chalk.gray(`  Last accessed: ${node.lastAccessed ?? "never"}`));
         }
         console.log();
       }
 
-      console.log(chalk.gray(`Total: ${registry.vaults.length} vault(s)`));
+      console.log(chalk.gray(`Total: ${registry.nodes.length} vault(s)`));
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       await logger.error("Failed to list vaults", {

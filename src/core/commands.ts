@@ -14,7 +14,7 @@
 import fs from "fs/promises";
 import path from "path";
 import { spawn } from "child_process";
-import { VaultInfo, VaultCommand, RunOptions, RunResult } from "./types.js";
+import { NodeInfo, NodeCommand, RunOptions, RunResult } from "./types.js";
 import { generateContext } from "./context.js";
 import { loadModel, modelExists, formatModelForPrompt } from "./models.js";
 import { validateProvider, getProviderConfig } from "./providers.js";
@@ -22,9 +22,9 @@ import { validateProvider, getProviderConfig } from "./providers.js";
 /**
  * Get all commands for a vault
  */
-export async function getVaultCommands(vaultPath: string): Promise<VaultCommand[]> {
+export async function getNodeCommands(vaultPath: string): Promise<NodeCommand[]> {
   const commandsPath = path.join(vaultPath, ".bozly", "commands");
-  const commands: VaultCommand[] = [];
+  const commands: NodeCommand[] = [];
 
   try {
     const files = await fs.readdir(commandsPath);
@@ -56,7 +56,7 @@ export async function getVaultCommands(vaultPath: string): Promise<VaultCommand[
 export async function getCommand(
   vaultPath: string,
   commandName: string
-): Promise<VaultCommand | null> {
+): Promise<NodeCommand | null> {
   const commandsPath = path.join(vaultPath, ".bozly", "commands");
   const filePath = path.join(commandsPath, `${commandName}.md`);
 
@@ -85,8 +85,8 @@ export async function getCommand(
  * 4. Building complete prompt with context, model, and command
  * 5. Executing with AI provider (or showing dry-run)
  */
-export async function runVaultCommand(
-  vault: VaultInfo,
+export async function runNodeCommand(
+  vault: NodeInfo,
   commandName: string,
   options: RunOptions = {}
 ): Promise<RunResult> {
@@ -157,7 +157,7 @@ export async function runVaultCommand(
 /**
  * Build the full prompt with context, model, and command
  */
-function buildPrompt(context: string, modelContent: string, command: VaultCommand): string {
+function buildPrompt(context: string, modelContent: string, command: NodeCommand): string {
   let prompt = context;
 
   if (modelContent) {

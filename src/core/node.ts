@@ -1,42 +1,42 @@
 /**
- * Vault Operations Module
+ * Node Operations Module
  *
  * Provides core functionality for creating, managing, and accessing vaults.
- * Handles vault initialization, file structure creation, registry updates,
- * and vault discovery in the file system.
+ * Handles node initialization, file structure creation, registry updates,
+ * and node discovery in the file system.
  *
  * Key features:
  * - Initialize new vaults with configurable types
  * - Automatic .bozly directory structure creation
- * - Vault registration and metadata management
- * - Current vault discovery (walking up directory tree)
+ * - Node registration and metadata management
+ * - Current node discovery (walking up directory tree)
  * - Default context template generation
  *
  * Usage:
- *   import { initVault, getCurrentVault } from './vault.js';
- *   const vault = await initVault({ path: '/home/user/my-vault' });
- *   const current = await getCurrentVault();
+ *   import { initNode, getCurrentNode } from './vault.js';
+ *   const vault = await initNode({ path: '/home/user/my-vault' });
+ *   const current = await getCurrentNode();
  *
- * @module core/vault
+ * @module core/node
  */
 
 import fs from "fs/promises";
 import path from "path";
-import { addVaultToRegistry } from "./registry.js";
+import { addNodeToRegistry } from "./registry.js";
 import { logger } from "./logger.js";
-import { VaultConfig, VaultInfo, InitOptions } from "./types.js";
+import { NodeConfig, NodeInfo, InitOptions } from "./types.js";
 
 const BOZLY_DIR = ".bozly";
 const CONFIG_FILE = "config.json";
 const CONTEXT_FILE = "context.md";
 
 /**
- * Initialize a new vault in the specified directory
+ * Initialize a new node in the specified directory
  *
  * Creates a complete vault structure with configuration, context, and subdirectories.
- * Handles vault registration and integration with the global registry.
+ * Handles node registration and integration with the global registry.
  *
- * @param options - Vault initialization options
+ * @param options - Node initialization options
  * @param options.path - Directory path for vault (required)
  * @param options.name - Human-readable vault name (optional, defaults to directory name)
  * @param options.type - Vault type (optional, defaults to 'default')
@@ -45,20 +45,20 @@ const CONTEXT_FILE = "context.md";
  * @throws {Error} If vault path is invalid or already exists (without force)
  *
  * @example
- *   const vault = await initVault({
+ *   const vault = await initNode({
  *     path: '/home/user/my-vault',
  *     name: 'my-vault',
  *     type: 'music'
  *   });
- *   console.log(`Created vault: ${vault.id}`);
+ *   console.log(`Created node: ${vault.id}`);
  */
-export async function initVault(options: InitOptions): Promise<VaultInfo> {
-  const vaultPath = path.resolve(options.path);
-  const bozlyPath = path.join(vaultPath, BOZLY_DIR);
+export async function initNode(options: InitOptions): Promise<NodeInfo> {
+  const nodePath = path.resolve(options.path);
+  const bozlyPath = path.join(nodePath, BOZLY_DIR);
 
   // Log function entry with parameters
-  await logger.debug("Initializing vault", {
-    vaultPath,
+  await logger.debug("Initializing node", {
+    nodePath,
     name: options.name,
     type: options.type,
     force: options.force,
@@ -68,17 +68,17 @@ export async function initVault(options: InitOptions): Promise<VaultInfo> {
   try {
     await fs.access(bozlyPath);
     if (!options.force) {
-      await logger.warn("Vault already exists", {
-        vaultPath,
+      await logger.warn("Node already exists", {
+        nodePath,
         action: "rejecting without --force",
       });
-      throw new Error(`Vault already exists at ${vaultPath}. Use --force to overwrite.`);
+      throw new Error(`Node already exists at ${nodePath}. Use --force to overwrite.`);
     }
-    await logger.info("Overwriting existing vault", { vaultPath });
+    await logger.info("Overwriting existing node", { nodePath });
   } catch (error) {
     // Directory doesn't exist, which is fine
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
-      await logger.error("Failed to check vault existence", { vaultPath }, error as Error);
+      await logger.error("Failed to check node existence", { nodePath }, error as Error);
       throw error;
     }
   }
@@ -93,7 +93,7 @@ export async function initVault(options: InitOptions): Promise<VaultInfo> {
       const dirPath = path.join(bozlyPath, dir);
       await fs.mkdir(dirPath, { recursive: true });
     }
-    await logger.debug("Created vault subdirectories", {
+    await logger.debug("Created node subdirectories", {
       count: subdirs.length,
       directories: subdirs,
     });
@@ -103,11 +103,11 @@ export async function initVault(options: InitOptions): Promise<VaultInfo> {
   }
 
   // Determine vault name
-  const name = options.name || path.basename(vaultPath);
+  const name = options.name || path.basename(nodePath);
   await logger.debug("Determined vault name", { name, isDefault: !options.name });
 
   // Create config.json
-  const config: VaultConfig = {
+  const config: NodeConfig = {
     name,
     type: options.type ?? "default",
     version: "0.3.0",
@@ -121,12 +121,12 @@ export async function initVault(options: InitOptions): Promise<VaultInfo> {
   try {
     await fs.writeFile(path.join(bozlyPath, CONFIG_FILE), JSON.stringify(config, null, 2));
     await logger.info("Vault configuration created", {
-      vaultName: config.name,
+      nodeName: config.name,
       vaultType: config.type,
       defaultProvider: config.ai.defaultProvider,
     });
   } catch (error) {
-    await logger.error("Failed to write vault configuration", { vaultPath }, error as Error);
+    await logger.error("Failed to write vault configuration", { nodePath }, error as Error);
     throw error;
   }
 
@@ -134,9 +134,9 @@ export async function initVault(options: InitOptions): Promise<VaultInfo> {
   try {
     const contextContent = generateDefaultContext(name, options.type ?? "default");
     await fs.writeFile(path.join(bozlyPath, CONTEXT_FILE), contextContent);
-    await logger.debug("Created vault context file", { type: options.type ?? "default" });
+    await logger.debug("Created node context file", { type: options.type ?? "default" });
   } catch (error) {
-    await logger.error("Failed to write vault context", { vaultPath }, error as Error);
+    await logger.error("Failed to write vault context", { nodePath }, error as Error);
     throw error;
   }
 
@@ -146,29 +146,29 @@ export async function initVault(options: InitOptions): Promise<VaultInfo> {
       path.join(bozlyPath, "index.json"),
       JSON.stringify({ tasks: [], lastUpdated: new Date().toISOString() }, null, 2)
     );
-    await logger.debug("Created vault index file");
+    await logger.debug("Created node index file");
   } catch (error) {
-    await logger.error("Failed to write vault index", { vaultPath }, error as Error);
+    await logger.error("Failed to write vault index", { nodePath }, error as Error);
     throw error;
   }
 
   // Register vault
   try {
-    const vault = await addVaultToRegistry({
+    const vault = await addNodeToRegistry({
       name,
-      path: vaultPath,
+      path: nodePath,
       type: options.type ?? "default",
     });
 
     await logger.info("Vault initialized successfully", {
-      vaultId: vault.id,
-      vaultName: vault.name,
-      vaultPath: vault.path,
+      nodeId: vault.id,
+      nodeName: vault.name,
+      nodePath: vault.path,
     });
 
     return vault;
   } catch (error) {
-    await logger.error("Failed to register vault", { vaultPath }, error as Error);
+    await logger.error("Failed to register vault", { nodePath }, error as Error);
     throw error;
   }
 }
@@ -184,14 +184,14 @@ export async function initVault(options: InitOptions): Promise<VaultInfo> {
  * @throws {Error} If vault config is malformed or unreadable
  *
  * @example
- *   const vault = await getCurrentVault();
+ *   const vault = await getCurrentNode();
  *   if (vault) {
  *     console.log(`Found vault: ${vault.name}`);
  *   } else {
  *     console.log("Not in a vault directory");
  *   }
  */
-export async function getCurrentVault(): Promise<VaultInfo | null> {
+export async function getCurrentNode(): Promise<NodeInfo | null> {
   let currentPath = process.cwd();
   let searchDepth = 0;
 
@@ -211,9 +211,9 @@ export async function getCurrentVault(): Promise<VaultInfo | null> {
       // Found a .bozly directory
       const configPath = path.join(bozlyPath, CONFIG_FILE);
       const configContent = await fs.readFile(configPath, "utf-8");
-      const config = JSON.parse(configContent) as VaultConfig;
+      const config = JSON.parse(configContent) as NodeConfig;
 
-      const vault: VaultInfo = {
+      const vault: NodeInfo = {
         id: generateId(currentPath),
         name: config.name,
         path: currentPath,
@@ -223,8 +223,8 @@ export async function getCurrentVault(): Promise<VaultInfo | null> {
       };
 
       await logger.info("Found current vault", {
-        vaultName: vault.name,
-        vaultPath: vault.path,
+        nodeName: vault.name,
+        nodePath: vault.path,
         searchDepth,
       });
 
@@ -335,6 +335,6 @@ Manage content pipeline: ideas → scripts → production → publishing.
 /**
  * Generate a simple ID from path
  */
-function generateId(vaultPath: string): string {
-  return Buffer.from(vaultPath).toString("base64url").slice(0, 16);
+function generateId(nodePath: string): string {
+  return Buffer.from(nodePath).toString("base64url").slice(0, 16);
 }

@@ -1,7 +1,7 @@
 /**
- * bozly run - Execute a vault command
+ * bozly run - Execute a node command
  *
- * Runs a command in the current vault with optional AI provider integration.
+ * Runs a command in the current node with optional AI provider integration.
  *
  * Usage:
  *   bozly run <command>                    # Use default provider
@@ -13,17 +13,17 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { logger } from "../../core/logger.js";
-import { getCurrentVault } from "../../core/vault.js";
-import { runVaultCommand } from "../../core/commands.js";
+import { getCurrentNode } from "../../core/node.js";
+import { runNodeCommand } from "../../core/commands.js";
 import { recordSession } from "../../core/sessions.js";
 import { getDefaultProvider, formatProvidersList, validateProvider } from "../../core/providers.js";
 
 export const runCommand = new Command("run")
-  .description("Execute a vault command with optional AI provider integration")
+  .description("Execute a node command with optional AI provider integration")
   .argument("[command]", "Command to run (e.g., daily, weekly)")
   .option("--ai <provider>", "AI provider (claude, gpt, gemini, ollama)")
   .option("--dry", "Show what would be sent without executing")
-  .option("--no-context", "Run without vault context")
+  .option("--no-context", "Run without node context")
   .option("--list-providers", "Show available AI providers and installation status")
   .option("--verbose", "Include full prompt/response in session logs")
   .action(async (commandArg, options) => {
@@ -51,12 +51,12 @@ export const runCommand = new Command("run")
         listProviders: options.listProviders,
       });
 
-      const vault = await getCurrentVault();
+      const node = await getCurrentNode();
 
-      if (!vault) {
-        await logger.warn("Not in a vault directory");
-        console.log(chalk.yellow("✗ Not in a vault directory"));
-        console.log("  Run 'bozly init' to initialize a vault here.");
+      if (!node) {
+        await logger.warn("Not in a node directory");
+        console.log(chalk.yellow("✗ Not in a node directory"));
+        console.log("  Run 'bozly init' to initialize a node here.");
         process.exit(1);
       }
 
@@ -79,8 +79,8 @@ export const runCommand = new Command("run")
         }
       }
 
-      await logger.info("Running vault command", {
-        vaultName: vault.name,
+      await logger.info("Running node command", {
+        vaultName: node.name,
         command: commandArg,
         provider,
         dryRun: options.dry,
@@ -90,7 +90,7 @@ export const runCommand = new Command("run")
         console.log(chalk.cyan("▶ Dry run mode — showing what would be executed\n"));
       }
 
-      const result = await runVaultCommand(vault, commandArg, {
+      const result = await runNodeCommand(node, commandArg, {
         provider,
         dryRun: options.dry,
         includeContext: options.context,
@@ -120,9 +120,9 @@ export const runCommand = new Command("run")
         // Record session for audit trail
         try {
           await recordSession(
-            vault.path,
-            vault.id,
-            vault.name,
+            node.path,
+            node.id,
+            node.name,
             commandArg,
             result.provider,
             {
@@ -138,7 +138,7 @@ export const runCommand = new Command("run")
 
           await logger.debug("Session recorded", {
             command: commandArg,
-            vaultId: vault.id,
+            vaultId: node.id,
           });
         } catch (recordError) {
           // Log but don't fail the command if session recording fails

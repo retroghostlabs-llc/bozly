@@ -117,13 +117,13 @@ async function main(): Promise<void> {
     console.log(chalk.gray("Version:"), VERSION);
     console.log();
     console.log(chalk.yellow("Quick Start:"));
-    console.log("  bozly init              Initialize a vault in current directory");
+    console.log("  bozly init              Initialize a node in current directory");
     console.log("  bozly list              List all registered vaults");
-    console.log("  bozly status            Show current vault status");
+    console.log("  bozly status            Show current node status");
     console.log();
     console.log(chalk.yellow("Context & Execution:"));
     console.log("  bozly context           Generate AI context");
-    console.log("  bozly run <command>     Execute a vault command");
+    console.log("  bozly run <command>     Execute a node command");
     console.log("  bozly logs              View session logs");
     console.log();
     console.log(chalk.gray("Run 'bozly --help' for all commands"));

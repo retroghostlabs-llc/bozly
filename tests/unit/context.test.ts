@@ -10,8 +10,8 @@ import {
   writeJSON,
   fileExists,
 } from "../conftest";
-import { generateContext } from "../../src/core/context";
-import type { ContextOptions, VaultInfo } from "../../src/core/types";
+import { generateContext } from "../../../src/core/context";
+import type { ContextOptions, NodeInfo } from "../../../src/core/types";
 import path from "path";
 import fs from "fs/promises";
 
@@ -20,12 +20,12 @@ describe("Context Generation and Loading", () => {
     it("should generate context with basic information", async () => {
       await createTempDir();
       const tempDir = getTempDir();
-      const vaultPath = await createMockVault(tempDir);
+      const nodePath = await createMockVault(tempDir);
 
-      const vault: VaultInfo = {
+      const vault: NodeInfo = {
         id: "test-vault-id",
         name: "test-vault",
-        path: vaultPath,
+        path: nodePath,
         type: "default",
         active: true,
       };
@@ -40,12 +40,12 @@ describe("Context Generation and Loading", () => {
     it("should include vault name in context", async () => {
       await createTempDir();
       const tempDir = getTempDir();
-      const vaultPath = await createMockVault(tempDir);
+      const nodePath = await createMockVault(tempDir);
 
-      const vault: VaultInfo = {
+      const vault: NodeInfo = {
         id: "test-vault-id",
         name: "test-vault",
-        path: vaultPath,
+        path: nodePath,
         type: "default",
         active: true,
       };
@@ -58,12 +58,12 @@ describe("Context Generation and Loading", () => {
     it("should include vault config metadata", async () => {
       await createTempDir();
       const tempDir = getTempDir();
-      const vaultPath = await createMockVault(tempDir);
+      const nodePath = await createMockVault(tempDir);
 
-      const vault: VaultInfo = {
+      const vault: NodeInfo = {
         id: "test-vault-id",
         name: "music-vault",
-        path: vaultPath,
+        path: nodePath,
         type: "music",
         active: true,
       };
@@ -77,12 +77,12 @@ describe("Context Generation and Loading", () => {
     it("should handle context options parameter", async () => {
       await createTempDir();
       const tempDir = getTempDir();
-      const vaultPath = await createMockVault(tempDir);
+      const nodePath = await createMockVault(tempDir);
 
-      const vault: VaultInfo = {
+      const vault: NodeInfo = {
         id: "test-vault-id",
         name: "test-vault",
-        path: vaultPath,
+        path: nodePath,
         type: "default",
         active: true,
       };
@@ -101,12 +101,12 @@ describe("Context Generation and Loading", () => {
     it("should include AI provider information", async () => {
       await createTempDir();
       const tempDir = getTempDir();
-      const vaultPath = await createMockVault(tempDir);
+      const nodePath = await createMockVault(tempDir);
 
-      const vault: VaultInfo = {
+      const vault: NodeInfo = {
         id: "test-vault-id",
         name: "test-vault",
-        path: vaultPath,
+        path: nodePath,
         type: "default",
         active: true,
       };
@@ -124,12 +124,12 @@ describe("Context Generation and Loading", () => {
     it("should handle different vault types", async () => {
       await createTempDir();
       const tempDir = getTempDir();
-      const vaultPath = await createMockVault(tempDir);
+      const nodePath = await createMockVault(tempDir);
 
-      const vault: VaultInfo = {
+      const vault: NodeInfo = {
         id: "test-vault-id",
         name: "test-vault",
-        path: vaultPath,
+        path: nodePath,
         type: "project",
         active: true,
       };
@@ -143,12 +143,12 @@ describe("Context Generation and Loading", () => {
     it("should include vault path information", async () => {
       await createTempDir();
       const tempDir = getTempDir();
-      const vaultPath = await createMockVault(tempDir);
+      const nodePath = await createMockVault(tempDir);
 
-      const vault: VaultInfo = {
+      const vault: NodeInfo = {
         id: "test-vault-id",
         name: "test-vault",
-        path: vaultPath,
+        path: nodePath,
         type: "default",
         active: true,
       };
@@ -162,17 +162,17 @@ describe("Context Generation and Loading", () => {
     it("should handle vault with custom context file", async () => {
       await createTempDir();
       const tempDir = getTempDir();
-      const vaultPath = await createMockVault(tempDir);
+      const nodePath = await createMockVault(tempDir);
 
       // Add custom context.md
-      const bozlyPath = path.join(vaultPath, ".bozly");
+      const bozlyPath = path.join(nodePath, ".bozly");
       const contextPath = path.join(bozlyPath, "context.md");
       await fs.writeFile(contextPath, "# Custom Vault Context\n\nThis is a custom context.");
 
-      const vault: VaultInfo = {
+      const vault: NodeInfo = {
         id: "test-vault-id",
         name: "test-vault",
-        path: vaultPath,
+        path: nodePath,
         type: "default",
         active: true,
       };
@@ -185,12 +185,12 @@ describe("Context Generation and Loading", () => {
     it("should be consistent across multiple calls", async () => {
       await createTempDir();
       const tempDir = getTempDir();
-      const vaultPath = await createMockVault(tempDir);
+      const nodePath = await createMockVault(tempDir);
 
-      const vault: VaultInfo = {
+      const vault: NodeInfo = {
         id: "test-vault-id",
         name: "test-vault",
-        path: vaultPath,
+        path: nodePath,
         type: "default",
         active: true,
       };
@@ -204,12 +204,12 @@ describe("Context Generation and Loading", () => {
     it("should handle includeCommands option", async () => {
       await createTempDir();
       const tempDir = getTempDir();
-      const vaultPath = await createMockVault(tempDir);
+      const nodePath = await createMockVault(tempDir);
 
-      const vault: VaultInfo = {
+      const vault: NodeInfo = {
         id: "test-vault-id",
         name: "test-vault",
-        path: vaultPath,
+        path: nodePath,
         type: "default",
         active: true,
       };
@@ -224,12 +224,12 @@ describe("Context Generation and Loading", () => {
     it("should handle multiple AI providers", async () => {
       await createTempDir();
       const tempDir = getTempDir();
-      const vaultPath = await createMockVault(tempDir);
+      const nodePath = await createMockVault(tempDir);
 
-      const vault: VaultInfo = {
+      const vault: NodeInfo = {
         id: "test-vault-id",
         name: "test-vault",
-        path: vaultPath,
+        path: nodePath,
         type: "default",
         active: true,
       };
