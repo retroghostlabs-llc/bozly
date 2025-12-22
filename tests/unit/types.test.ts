@@ -11,7 +11,7 @@ import type {
   InitOptions,
   ContextOptions,
   RunOptions,
-} from "../../../src/core/types";
+} from "../../dist/core/types.js";
 
 describe("Type Definitions", () => {
   describe("NodeConfig", () => {

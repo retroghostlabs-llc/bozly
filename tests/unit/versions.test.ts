@@ -23,13 +23,13 @@ import {
   getModelVersionHistory,
   hasFileChanged,
   incrementVersion,
-} from "../../../src/core/versions.js";
+} from "../../dist/core/versions.js";
 import type {
   VaultVersionHistory,
   ModelVersionInfo,
   VersionEntry,
-} from "../../../src/core/versions.js";
-import type { Model } from "../../../src/core/types.js";
+} from "../../dist/core/versions.js";
+import type { Model } from "../../dist/core/types.js";
 
 // Test utilities
 let testDir: string;

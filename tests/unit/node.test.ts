@@ -1,5 +1,5 @@
 /**
- * Unit tests for core vault operations
+ * Unit tests for core node operations
  */
 
 import { describe, it, expect } from "vitest";
@@ -11,15 +11,23 @@ import {
   fileExists,
   dirExists,
 } from "../conftest";
-import { initNode } from "../../../src/core/vault";
-import type { NodeConfig } from "../../../src/core/types";
+import { initNode } from "../../dist/core/node.js";
+import type { NodeConfig } from "../../dist/core/types.js";
 import path from "path";
 
-describe("Node Operations" Operations", () => {
+describe("Node Operations", () => {
+  /**
+   * Helper to set BOZLY_HOME for tests
+   */
+  function setBozlyHome(homePath: string): void {
+    process.env.BOZLY_HOME = homePath;
+  }
+
   describe("initNode", () => {
     it("should create a new vault with default settings", async () => {
       await createTempDir();
       const tempDir = getTempDir();
+      setBozlyHome(tempDir);
       const nodePath = path.join(tempDir, "my-vault");
 
       // Initialize vault
@@ -116,7 +124,7 @@ describe("Node Operations" Operations", () => {
           name: "my-vault",
           type: "default",
         })
-      ).rejects.toThrow("Vault already exists");
+      ).rejects.toThrow("Node already exists");
     });
 
     it("should overwrite existing vault with force flag", async () => {
@@ -210,8 +218,8 @@ describe("Node Operations" Operations", () => {
     });
   });
 
-  describe("Node Operations" Creation", () => {
-    it("should create a complete mock vault structure", async () => {
+  describe("Node Creation", () => {
+    it("should create a complete mock node structure", async () => {
       await createTempDir();
       const tempDir = getTempDir();
 

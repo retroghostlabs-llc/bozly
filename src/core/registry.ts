@@ -1,22 +1,22 @@
 /**
  * Node Registry Module
  *
- * Manages the global vault registry stored in ~/.bozly/bozly-registry.json.
- * Provides functionality for registering, updating, removing, and querying vaults.
- * The registry is the central source of truth for all vaults known to BOZLY.
+ * Manages the global node registry stored in ~/.bozly/bozly-registry.json.
+ * Provides functionality for registering, updating, removing, and querying nodes.
+ * The registry is the central source of truth for all nodes known to BOZLY.
  *
  * Key features:
  * - Global registry management in ~/.bozly/
  * - Automatic registry creation and initialization
- * - Vault registration and metadata tracking
- * - Vault deregistration with integrity checking
+ * - Node registration and metadata tracking
+ * - Node deregistration with integrity checking
  * - Timestamp tracking for created and last-accessed times
  *
  * Usage:
  *   import { getRegistry, addNodeToRegistry, removeNode } from './registry.js';
  *   const registry = await getRegistry();
- *   const vault = await addNodeToRegistry({ name: 'vault', path: '/path', type: 'default' });
- *   await removeNode(vault.id);
+ *   const node = await addNodeToRegistry({ name: 'music', path: '/path', type: 'default' });
+ *   await removeNode(node.id);
  *
  * @module core/registry
  */
@@ -45,7 +45,7 @@ function getBozlyHome(): string {
  * Loads the registry from ~/.bozly/bozly-registry.json. If the registry doesn't
  * exist, creates a new default registry and initializes the .bozly directory.
  *
- * @returns Global vault registry with all registered nodes
+ * @returns Global node registry with all registered nodes
  * @throws {Error} If registry file is malformed or unreadable
  */
 export async function getRegistry(): Promise<Registry> {
@@ -54,7 +54,7 @@ export async function getRegistry(): Promise<Registry> {
   try {
     const content = await fs.readFile(registryPath, "utf-8");
     const registry = JSON.parse(content) as Registry;
-    await logger.debug("Loaded vault registry", {
+    await logger.debug("Loaded node registry", {
       nodeCount: registry.nodes.length,
       registryPath,
     });
@@ -96,7 +96,7 @@ export async function saveRegistry(registry: Registry): Promise<void> {
     await ensureBozlyHome();
     registry.lastUpdated = new Date().toISOString();
     await fs.writeFile(registryPath, JSON.stringify(registry, null, 2));
-    await logger.debug("Saved vault registry", {
+    await logger.debug("Saved node registry", {
       nodeCount: registry.nodes.length,
       lastUpdated: registry.lastUpdated,
     });
@@ -107,21 +107,21 @@ export async function saveRegistry(registry: Registry): Promise<void> {
 }
 
 /**
- * Add an existing vault to the registry
+ * Add an existing node to the registry
  *
- * Discovers and registers an existing vault by reading its configuration.
- * The vault must have been initialized (with a .bozly directory) first.
+ * Discovers and registers an existing node by reading its configuration.
+ * The node must have been initialized (with a .bozly directory) first.
  *
- * @param options - Vault options
- * @param options.path - Path to the vault directory (required)
- * @param options.name - Optional vault name (overrides config name)
- * @returns Vault information that was registered
+ * @param options - Node options
+ * @param options.path - Path to the node directory (required)
+ * @param options.name - Optional node name (overrides config name)
+ * @returns Node information that was registered
  * @throws {Error} If node not found, uninitialized, or config is invalid
  */
 export async function addNode(options: AddNodeOptions): Promise<NodeInfo> {
   const nodePath = path.resolve(options.path);
 
-  await logger.debug("Adding vault to registry", {
+  await logger.debug("Adding node to registry", {
     nodePath,
     name: options.name,
   });
@@ -159,16 +159,16 @@ export async function addNode(options: AddNodeOptions): Promise<NodeInfo> {
 }
 
 /**
- * Add or update a vault in the registry (internal)
+ * Add or update a node in the registry (internal)
  *
- * If the vault is already registered (by path), updates its metadata.
+ * If the node is already registered (by path), updates its metadata.
  * Otherwise, creates a new registry entry with a unique ID.
  *
- * @param options - Vault options
- * @param options.name - Vault display name
- * @param options.path - Vault directory path
- * @param options.type - Vault type (e.g., 'music', 'journal', 'default')
- * @returns Vault information with ID and metadata
+ * @param options - Node options
+ * @param options.name - Node display name
+ * @param options.path - Node directory path
+ * @param options.type - Node type (e.g., 'music', 'journal', 'default')
+ * @returns Node information with ID and metadata
  */
 export async function addNodeToRegistry(options: {
   name: string;
@@ -177,11 +177,11 @@ export async function addNodeToRegistry(options: {
 }): Promise<NodeInfo> {
   const registry = await getRegistry();
 
-  // Check if vault already registered
+  // Check if node already registered
   const existing = registry.nodes.find((v) => v.path === options.path);
   if (existing) {
     // Update existing
-    await logger.debug("Updating existing vault registration", {
+    await logger.debug("Updating existing node registration", {
       nodeName: existing.name,
       nodePath: options.path,
     });
@@ -189,15 +189,15 @@ export async function addNodeToRegistry(options: {
     existing.type = options.type;
     existing.lastAccessed = new Date().toISOString();
     await saveRegistry(registry);
-    await logger.info("Vault registration updated", {
-      vaultId: existing.id,
+    await logger.info("Node registration updated", {
+      nodeId: existing.id,
       nodeName: existing.name,
     });
     return existing;
   }
 
-  // Add new vault
-  const vault: NodeInfo = {
+  // Add new node
+  const node: NodeInfo = {
     id: generateId(options.path),
     name: options.name,
     path: options.path,
@@ -207,17 +207,17 @@ export async function addNodeToRegistry(options: {
     lastAccessed: new Date().toISOString(),
   };
 
-  registry.nodes.push(vault);
+  registry.nodes.push(node);
   await saveRegistry(registry);
 
-  await logger.info("New vault registered", {
-    vaultId: vault.id,
-    nodeName: vault.name,
-    nodePath: vault.path,
-    nodeType: vault.type,
+  await logger.info("New node registered", {
+    nodeId: node.id,
+    nodeName: node.name,
+    nodePath: node.path,
+    nodeType: node.type,
   });
 
-  return vault;
+  return node;
 }
 
 /**
@@ -233,8 +233,8 @@ export async function listNodes(): Promise<NodeInfo[]> {
 /**
  * Get a node by ID or name
  *
- * @param idOrName - Vault ID or display name
- * @returns Vault information or undefined if not found
+ * @param idOrName - Node ID or display name
+ * @returns Node information or undefined if not found
  */
 export async function getNode(idOrName: string): Promise<NodeInfo | undefined> {
   const registry = await getRegistry();
@@ -244,30 +244,30 @@ export async function getNode(idOrName: string): Promise<NodeInfo | undefined> {
 /**
  * Remove a node from the registry
  *
- * Removes a vault by ID or path. Note that this does NOT delete the vault
+ * Removes a node by ID or path. Note that this does NOT delete the node
  * files from the file system, only removes it from the registry.
  *
- * @param pathOrId - Vault ID or file system path
- * @throws {Error} If vault is not found
+ * @param pathOrId - Node ID or file system path
+ * @throws {Error} If node is not found
  */
 export async function removeNode(pathOrId: string): Promise<void> {
   const registry = await getRegistry();
   const index = registry.nodes.findIndex((v) => v.id === pathOrId || v.path === pathOrId);
 
   if (index === -1) {
-    const error = new Error(`Vault not found: ${pathOrId}`);
-    await logger.error("Vault not found in registry", { pathOrId }, error);
+    const error = new Error(`Node not found: ${pathOrId}`);
+    await logger.error("Node not found in registry", { pathOrId }, error);
     throw error;
   }
 
-  const vault = registry.nodes[index];
+  const node = registry.nodes[index];
   registry.nodes.splice(index, 1);
   await saveRegistry(registry);
 
-  await logger.info("Vault removed from registry", {
-    vaultId: vault.id,
-    nodeName: vault.name,
-    nodePath: vault.path,
+  await logger.info("Node removed from registry", {
+    nodeId: node.id,
+    nodeName: node.name,
+    nodePath: node.path,
   });
 }
 
@@ -279,7 +279,7 @@ async function ensureBozlyHome(): Promise<void> {
 }
 
 /**
- * Generate a unique ID from vault path using SHA1 hash
+ * Generate a unique ID from node path using SHA1 hash
  * Takes first 12 characters of hex-encoded SHA1 for a short, unique ID
  */
 function generateId(nodePath: string): string {

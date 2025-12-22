@@ -10,7 +10,7 @@ import {
   writeJSON,
   fileExists,
 } from "../conftest";
-import type { NodeConfig, GlobalConfig } from "../../../src/core/types";
+import type { NodeConfig, GlobalConfig } from "../../dist/core/types.js";
 import path from "path";
 import fs from "fs/promises";
 

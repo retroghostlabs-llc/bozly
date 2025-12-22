@@ -21,8 +21,8 @@ import {
   getSessionStats,
   formatSessionForLogs,
   getNodeSessions,
-} from "../../../src/core/sessions.js";
-import { Session, ExecutionLogEntry, FileChange } from "../../../src/core/types.js";
+} from "../../dist/core/sessions.js";
+import { Session, ExecutionLogEntry, FileChange } from "../../dist/core/types.js";
 import {
   createTempDir,
   getTempDir,
@@ -334,7 +334,7 @@ describe("Sessions Module", () => {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
-      const sessions = await querySessions(nodePath, { vault: "music-vault" });
+      const sessions = await querySessions(nodePath, { node: "music-vault" });
 
       expect(sessions.length).toBe(1);
       expect(sessions[0].nodeId).toBe("music-vault");
@@ -589,8 +589,8 @@ describe("Sessions Module", () => {
         commandText: "test",
       }, { text: "result", duration: 100 });
 
-      const musicSessions = await querySessions(nodePath, { vault: "music-vault" });
-      const journalSessions = await querySessions(nodePath, { vault: "journal-vault" });
+      const musicSessions = await querySessions(nodePath, { node: "music-vault" });
+      const journalSessions = await querySessions(nodePath, { node: "journal-vault" });
 
       expect(musicSessions.length).toBe(1);
       expect(journalSessions.length).toBe(1);
@@ -659,7 +659,7 @@ describe("Sessions Module", () => {
 
       // Query by vault
       const musicSessions = await querySessionsGlobal(globalSessionsPath, {
-        vault: "music-vault",
+        node: "music-vault",
       });
       expect(musicSessions.length).toBe(1);
       expect(musicSessions[0].nodeId).toBe("music-vault");
@@ -794,8 +794,8 @@ describe("Sessions Module", () => {
       expect(stats.commandsExecuted).toContain("rate");
       expect(stats.commandsExecuted).toContain("list");
       expect(stats.commandsExecuted).toContain("entry");
-      expect(stats.sessionsByVault["music"]).toBe(2);
-      expect(stats.sessionsByVault["journal"]).toBe(1);
+      expect(stats.sessionsByNode["music"]).toBe(2);
+      expect(stats.sessionsByNode["journal"]).toBe(1);
       expect(stats.sessionsByProvider["claude"]).toBe(2);
       expect(stats.sessionsByProvider["gpt"]).toBe(1);
     });
@@ -883,7 +883,7 @@ describe("Sessions Module", () => {
 
     it("should archive sessions by vault", async () => {
       const globalSessionsPath = path.join(tempDir, ".bozly", "sessions");
-      const { archiveSessionsByVault } = await import("../../src/core/sessions.js");
+      const { archiveSessionsByNode } = await import("../../src/core/sessions.js");
 
       // Create sessions in multiple vaults
       const vault1Sess = path.join(
@@ -936,7 +936,7 @@ describe("Sessions Module", () => {
       );
 
       // Archive all sessions from vault1
-      const archived = await archiveSessionsByVault(globalSessionsPath, "vault1");
+      const archived = await archiveSessionsByNode(globalSessionsPath, "vault1");
       expect(archived).toBe(1);
 
       // Check that vault1 session was archived

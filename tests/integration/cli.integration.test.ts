@@ -73,7 +73,7 @@ describe("BOZLY CLI Integration Tests", () => {
     }
   });
 
-  describe("Node Operations" Initialization", () => {
+  describe("Node Initialization", () => {
     it("should initialize a new vault successfully", async () => {
       const nodePath = path.join(TEMP_DIR, "test-vault-1");
 
@@ -141,7 +141,7 @@ describe("BOZLY CLI Integration Tests", () => {
     });
   });
 
-  describe("Node Operations" Registry Operations", () => {
+  describe("Node Registry Operations", () => {
     it("should list vaults in registry", async () => {
       const cliPath = path.join(PROJECT_ROOT, "dist/cli/index.js");
       const cliExists = await fs
@@ -175,7 +175,7 @@ describe("BOZLY CLI Integration Tests", () => {
     });
   });
 
-  describe("Node Operations" Configuration", () => {
+  describe("Node Configuration", () => {
     it("should retrieve vault context", async () => {
       const cliPath = path.join(PROJECT_ROOT, "dist/cli/index.js");
       const cliExists = await fs
@@ -261,7 +261,7 @@ describe("BOZLY CLI Integration Tests", () => {
     });
   });
 
-  describe("Node Operations" Operations", () => {
+  describe("Node Operations", () => {
     it("should manage multiple vaults independently", async () => {
       const cliPath = path.join(PROJECT_ROOT, "dist/cli/index.js");
       const cliExists = await fs

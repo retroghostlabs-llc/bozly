@@ -46,8 +46,8 @@ export interface VersionEntry {
  * Version history for a vault
  */
 export interface VaultVersionHistory {
-  vaultId: string;
-  vaultVersion: SemVer;
+  nodeId: string;
+  nodeVersion: SemVer;
   created: ISODateTime;
   lastUpdated: ISODateTime;
   frameworkVersion: SemVer;
@@ -253,8 +253,8 @@ export async function trackFileVersion(
 
   if (!history) {
     history = {
-      vaultId: path.basename(vaultPath),
-      vaultVersion: "0.1.0",
+      nodeId: path.basename(vaultPath),
+      nodeVersion: "0.1.0",
       created: new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
       frameworkVersion: "0.3.0",
@@ -311,8 +311,8 @@ export async function trackModelVersion(vaultPath: string, model: Model): Promis
 
   if (!history) {
     history = {
-      vaultId: path.basename(vaultPath),
-      vaultVersion: "0.1.0",
+      nodeId: path.basename(vaultPath),
+      nodeVersion: "0.1.0",
       created: new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
       frameworkVersion: "0.3.0",
@@ -395,7 +395,7 @@ export function getFrameworkVersion(): FrameworkVersionInfo {
 export function formatVersionInfo(history: VaultVersionHistory): string {
   let output = "";
 
-  output += `Vault Version: ${history.vaultVersion}\n`;
+  output += `Vault Version: ${history.nodeVersion}\n`;
   output += `Framework Version: ${history.frameworkVersion}\n`;
   output += `Last Updated: ${history.lastUpdated}\n\n`;
 

@@ -134,11 +134,11 @@ export async function createMockVault(basePath: string): Promise<string> {
 export async function createMockRegistry(basePath: string): Promise<void> {
   const registry = {
     version: "0.3.0",
-    vaults: [
+    nodes: [
       {
-        id: "test-vault-1",
-        name: "test-vault",
-        path: path.join(basePath, "test-vault"),
+        id: "test-node-1",
+        name: "test-node",
+        path: path.join(basePath, "test-node"),
         type: "default",
         active: true,
         created: new Date().toISOString(),
@@ -161,17 +161,21 @@ export async function cleanupGlobalRegistry(testMarker?: string): Promise<void> 
     if (await fileExists(registryPath)) {
       const registry = await readJSON<any>(registryPath);
 
-      // Remove vaults with .tmp in path (test vaults) or matching test marker
-      const originalCount = registry.nodes.length;
-      registry.nodes = registry.nodes.filter((vault: any) => {
-        const isTestVault = vault.path.includes("/.tmp/");
-        const isMarkedTest = testMarker && vault.name.includes(testMarker);
-        return !isTestVault && !isMarkedTest;
-      });
+      // Remove nodes with .tmp in path (test nodes) or matching test marker
+      // Handle both old "vaults" and new "nodes" property names
+      const nodesKey = registry.nodes ? "nodes" : "vaults";
+      const originalCount = registry[nodesKey]?.length || 0;
+      if (registry[nodesKey]) {
+        registry[nodesKey] = registry[nodesKey].filter((vault: any) => {
+          const isTestVault = vault.path.includes("/.tmp/");
+          const isMarkedTest = testMarker && vault.name.includes(testMarker);
+          return !isTestVault && !isMarkedTest;
+        });
 
-      if (registry.nodes.length < originalCount) {
-        registry.lastUpdated = new Date().toISOString();
-        await writeJSON(registryPath, registry);
+        if (registry[nodesKey].length < originalCount) {
+          registry.lastUpdated = new Date().toISOString();
+          await writeJSON(registryPath, registry);
+        }
       }
     }
   } catch (error) {

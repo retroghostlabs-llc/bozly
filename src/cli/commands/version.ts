@@ -121,7 +121,7 @@ async function showVaultVersion(vaultPath: string): Promise<void> {
 
   await logger.info("Node version displayed", {
     vaultPath,
-    vaultVersion: history.vaultVersion,
+    nodeVersion: history.nodeVersion,
   });
 }
 

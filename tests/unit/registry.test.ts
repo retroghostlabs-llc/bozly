@@ -11,8 +11,8 @@ import {
   fileExists,
   writeJSON,
 } from "../conftest";
-import { addNodeToRegistry, listNodes, getNode, removeNode } from "../../../src/core/registry";
-import type { Registry } from "../../../src/core/types";
+import { addNodeToRegistry, listNodes, getNode, removeNode } from "../../dist/core/registry.js";
+import type { Registry } from "../../dist/core/types.js";
 import path from "path";
 import fs from "fs/promises";
 
@@ -23,9 +23,9 @@ function setBozlyHome(homePath: string): void {
   process.env.BOZLY_HOME = homePath;
 }
 
-describe("Node Operations" Registry", () => {
+describe("Node Operations", () => {
   describe("addNodeToRegistry", () => {
-    it("should add a new vault to registry", async () => {
+    it("should add a new node to registry", async () => {
       await createTempDir();
       const tempDir = getTempDir();
       setBozlyHome(tempDir);
@@ -105,7 +105,7 @@ describe("Node Operations" Registry", () => {
       // Create empty registry
       const emptyRegistry: Registry = {
         version: "0.3.0",
-        vaults: [],
+        nodes: [],
         created: new Date().toISOString(),
         lastUpdated: new Date().toISOString(),
       };
@@ -139,7 +139,7 @@ describe("Node Operations" Registry", () => {
       const vaults = await listNodes();
       const vault = vaults[0];
 
-      expect(vault.name).toBe("test-vault");
+      expect(vault.name).toBe("test-node");
       expect(vault.type).toBe("default");
       expect(vault.active).toBe(true);
       expect(vault.created).toBeDefined();
@@ -161,7 +161,7 @@ describe("Node Operations" Registry", () => {
 
       expect(vault).toBeDefined();
       expect(vault?.id).toBe(nodeId);
-      expect(vault?.name).toBe("test-vault");
+      expect(vault?.name).toBe("test-node");
     });
 
     it("should return undefined for non-existent vault", async () => {
@@ -182,10 +182,10 @@ describe("Node Operations" Registry", () => {
 
       await createMockRegistry(tempDir);
 
-      const vault = await getNode("test-vault");
+      const vault = await getNode("test-node");
 
       expect(vault).toBeDefined();
-      expect(vault?.name).toBe("test-vault");
+      expect(vault?.name).toBe("test-node");
     });
   });
 

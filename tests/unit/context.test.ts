@@ -10,8 +10,8 @@ import {
   writeJSON,
   fileExists,
 } from "../conftest";
-import { generateContext } from "../../../src/core/context";
-import type { ContextOptions, NodeInfo } from "../../../src/core/types";
+import { generateContext } from "../../dist/core/context.js";
+import type { ContextOptions, NodeInfo } from "../../dist/core/types.js";
 import path from "path";
 import fs from "fs/promises";
 
