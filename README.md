@@ -112,14 +112,14 @@ TIER 3: NODE CONFIG (Node-Owned)
 
 ### Installation
 
-**Beta Status:** BOZLY 0.3.0-beta.1 is now available for public beta testing. All Phase 1 features are implemented and tested. [Report issues on GitHub](https://github.com/RetroGhostLabs/bozly/issues).
+**Beta Status:** BOZLY 0.3.0-rc.1 is available for public beta testing. All Phase 1 features are implemented, tested, and production-ready. [Report issues on GitHub](https://github.com/RetroGhostLabs/bozly/issues).
 
 ```bash
-# npm (recommended - beta version)
-npm install -g bozly@0.3.0-beta.1
+# npm (recommended - release candidate)
+npm install -g @retroghostlabs/bozly@0.3.0-rc.1
 
-# Or install latest beta automatically
-npm install -g bozly
+# Or install latest version
+npm install -g @retroghostlabs/bozly
 
 # Homebrew (coming soon for v1.0)
 # brew tap retroghostlabs/bozly
@@ -258,13 +258,13 @@ See [CLI-DESIGN.md](docs/CLI-DESIGN.md) for full command reference.
 
 **Current Phase:** Phase 1: Beta — ✅ 100% COMPLETE
 
-**Released:** v0.3.0-beta.1 (December 21, 2025) 🚀
+**Released:** v0.3.0-rc.1 (December 22, 2025) 🚀
 
-**Next:** Phase 2 - Automation & Integrations (v0.4.0-v0.5.0) | v1.0 Public Launch June 2026
+**Next:** Phase 2 - Automation & Integrations (v0.4.0-v0.5.0) starting January 2026 | v1.0 Public Launch June 2026
 
 ### Development Progress
 
-**Phase 1: Beta (v0.3.0-beta.1) — ✅ COMPLETE (18 sessions)**
+**Phase 1: Beta (v0.3.0-rc.1) — ✅ COMPLETE (18 sessions)**
 ```
 Sprint 1: Foundation           ✅ COMPLETE (Sessions 37-40)
   ✅ 11 CLI commands fully working
@@ -323,13 +323,14 @@ See [ROADMAP.md](docs/ROADMAP.md) for full timeline.
 
 | Document | Purpose |
 |----------|---------|
-| [GETTING-STARTED.md](docs/GETTING-STARTED.md) | First node setup |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Technical deep dive |
-| [CLI-DESIGN.md](docs/CLI-DESIGN.md) | Command reference |
-| [SESSION-RECORDING-GUIDE.md](docs/SESSION-RECORDING-GUIDE.md) | Session history & audit trail |
-| [VERSIONING-GUIDE.md](docs/VERSIONING-GUIDE.md) | Version management |
-| [AI-PROVIDERS.md](docs/AI-PROVIDERS.md) | AI provider setup |
-| [BUILDING-YOUR-NODE.md](docs/BUILDING-YOUR-NODE.md) | Custom node creation |
+| [GETTING-STARTED.md](docs/GETTING-STARTED.md) | First node setup & quick start guide |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Technical deep dive & design patterns |
+| [CLI-DESIGN.md](docs/CLI-DESIGN.md) | Complete command reference |
+| [SESSION-RECORDING-GUIDE.md](docs/SESSION-RECORDING-GUIDE.md) | Session history, audit trail & queries |
+| [VERSIONING-GUIDE.md](docs/VERSIONING-GUIDE.md) | Version management & node upgrades |
+| [AI-PROVIDERS.md](docs/AI-PROVIDERS.md) | Setting up Claude, GPT, Ollama, Gemini |
+| [DOMAIN-MODELS.md](docs/DOMAIN-MODELS.md) | YAML model definitions for nodes |
+| [ECOSYSTEM.md](docs/ECOSYSTEM.md) | Integration patterns & extensions |
 
 ---
 
@@ -381,12 +382,12 @@ See [LICENSE](LICENSE) for details.
 
 *Built by [RetroGhostLabs](https://github.com/RetroGhostLabs) | MIT License*
 
-*Last updated: 2025-12-22* | *Status: Phase 1 Beta ✅ COMPLETE | Released: v0.3.0-beta.1 (Dec 21, 2025) | Next: Phase 2 (v0.4.0) | v1.0: June 2026*
+*Last updated: 2025-12-22* | *Status: Phase 1 ✅ COMPLETE | Released: v0.3.0-rc.1 (Dec 22, 2025) | Next: Phase 2 (v0.4.0, Jan 2026) | v1.0: June 2026*
 
 ---
 
 ## 📊 Progress Tracking
 
-**Phase 1 Beta: ✅ COMPLETE** — v0.3.0-beta.1 released December 21, 2025
+**Phase 1 Beta: ✅ COMPLETE** — v0.3.0-rc.1 released December 22, 2025
 
 For detailed timeline and planning docs, see the private workspace.
