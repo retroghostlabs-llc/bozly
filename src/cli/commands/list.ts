@@ -1,5 +1,5 @@
 /**
- * bozly list - List all registered vaults
+ * bozly list - List all registered nodes
  */
 
 import { Command } from "commander";
@@ -9,7 +9,7 @@ import { getRegistry } from "../../core/registry.js";
 
 export const listCommand = new Command("list")
   .alias("ls")
-  .description("List all registered vaults")
+  .description("List all registered nodes")
   .option("-a, --all", "Show all details")
   .action(async (options) => {
     try {
@@ -20,19 +20,19 @@ export const listCommand = new Command("list")
       const registry = await getRegistry();
 
       await logger.info("Registry loaded", {
-        vaultCount: registry.nodes.length,
+        nodeCount: registry.nodes.length,
       });
 
       if (registry.nodes.length === 0) {
-        console.log(chalk.yellow("No vaults registered."));
+        console.log(chalk.yellow("No nodes registered."));
         console.log();
-        console.log("To register a vault:");
+        console.log("To register a node:");
         console.log("  bozly init          Initialize new node in current directory");
-        console.log("  bozly add <path>    Register existing vault");
+        console.log("  bozly add <path>    Register existing node");
         return;
       }
 
-      console.log(chalk.cyan("Registered Vaults:\n"));
+      console.log(chalk.cyan("Registered Nodes:\n"));
 
       for (const node of registry.nodes) {
         const status = node.active ? chalk.green("●") : chalk.gray("○");
@@ -48,10 +48,10 @@ export const listCommand = new Command("list")
         console.log();
       }
 
-      console.log(chalk.gray(`Total: ${registry.nodes.length} vault(s)`));
+      console.log(chalk.gray(`Total: ${registry.nodes.length} node(s)`));
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      await logger.error("Failed to list vaults", {
+      await logger.error("Failed to list nodes", {
         error: errorMsg,
       });
 
