@@ -1,6 +1,6 @@
 # BOZLY Development Guide
 
-**Status:** Session 38 - Active
+**Status:** Active
 **Last Updated:** 2025-12-18
 
 This guide documents development standards, practices, and workflows for BOZLY contributors.
@@ -600,6 +600,290 @@ git commit -m "fix: Handle missing context.md gracefully"
 
 ---
 
+## IDE Setup (IntelliJ)
+
+BOZLY comes pre-configured for IntelliJ with:
+
+- **EditorConfig** (`.editorconfig`) — Shared formatting rules across all developers
+- **Run Configurations** (`.idea/runConfigurations/`) — Pre-configured Build, Test, Dev Watch, Validate buttons
+- **Makefile** (optional) — Alternative to npm scripts (`make build`, `make test`, etc.)
+- **IDE-SETUP.md** — Complete guide for new developers
+
+**Quick Start:**
+1. Open project in IntelliJ
+2. Go to **Run** menu → Select **Build** or **Dev Watch**
+3. IntelliJ automatically loads all configurations
+
+See `IDE-SETUP.md` for complete IntelliJ setup guide.
+
+---
+
+## Testing & CI/CD
+
+### Local Testing (Unit Tests)
+
+**Before committing code:**
+
+```bash
+npm run validate        # Lint → Format → Build → Test (comprehensive check)
+```
+
+This ensures:
+- ✅ Code passes linting
+- ✅ Code is properly formatted
+- ✅ TypeScript compiles without errors
+- ✅ All tests pass with coverage
+
+### Isolated Testing Strategies
+
+When developing features, you need to test in isolation — without affecting your real `~/.bozly/` installation.
+
+BOZLY provides **three strategies** for isolated testing, each with different trade-offs:
+
+#### Strategy 1: Isolated Temp Directory (RECOMMENDED for iteration)
+
+**Best for:** Quick iteration during active development
+
+This approach packs your dev version and installs it to a temporary directory that's completely isolated from your real setup.
+
+**Usage:**
+
+```bash
+./scripts/test-isolated.sh
+```
+
+**What it does:**
+1. Builds your TypeScript code
+2. Creates a .tgz package (exactly what npm publishes)
+3. Creates a temporary test directory (`/tmp/bozly-test-*`)
+4. Installs your package there
+5. Drops you into a bash shell for testing
+6. Auto-cleans up when you exit
+
+**Example workflow:**
+
+```bash
+# Terminal 1: Watch mode (auto-recompile)
+npm run dev
+
+# Terminal 2: Test isolated (in another window)
+./scripts/test-isolated.sh
+# Inside the temp directory:
+npx bozly init music-test
+npx bozly list
+npx bozly run --help
+# Press Ctrl+C to exit and clean up
+```
+
+**Advantages:**
+- ✅ Fastest feedback (pack takes ~1 second)
+- ✅ Tests exact npm package experience
+- ✅ Completely isolated (doesn't touch ~/.bozly/)
+- ✅ Auto-cleanup (no disk waste)
+- ✅ Can repeat as often as needed
+
+**Disadvantages:**
+- ❌ Recreates temp env each time (slower than Option 2)
+- ❌ Can't persist state between tests
+
+**Advanced options:**
+
+```bash
+./scripts/test-isolated.sh --no-cleanup  # Keep temp dir for investigation
+./scripts/test-isolated.sh --help        # Show all options
+```
+
+---
+
+#### Strategy 2: Persistent Prefix (for repeated testing)
+
+**Best for:** Testing the same scenarios repeatedly without rebuilding
+
+This keeps a test installation at `~/.bozly-test`, so you can reuse it across multiple test runs.
+
+**Usage:**
+
+```bash
+# First time: build and install to ~/.bozly-test
+./scripts/test-with-prefix.sh
+
+# Now you can test repeatedly:
+~/.bozly-test/node_modules/.bin/bozly init test-node
+~/.bozly-test/node_modules/.bin/bozly list
+
+# Or add to PATH temporarily:
+export PATH="$HOME/.bozly-test/node_modules/.bin:$PATH"
+bozly init test-node
+bozly run --help
+
+# Clean up when done:
+./scripts/test-with-prefix.sh --cleanup
+```
+
+**Advantages:**
+- ✅ Faster than recreating (no pack/install each time)
+- ✅ Persistent (test state survives between runs)
+- ✅ Can compare: `bozly` vs `~/.bozly-test/...`
+- ✅ Completely isolated
+
+**Disadvantages:**
+- ❌ Takes disk space
+- ❌ Manual cleanup required
+- ❌ Different from fresh install experience (npm cache)
+
+**When to use:**
+- Debugging a specific scenario repeatedly
+- Comparing behavior between versions
+- Testing multi-step processes
+
+---
+
+#### Strategy 3: Docker (for CI-like testing)
+
+**Best for:** Comprehensive validation before publishing
+
+This runs your code in a clean Ubuntu container, exactly like GitHub Actions.
+
+See the [Docker Testing](#docker-testing) section below for detailed usage.
+
+**Advantages:**
+- ✅ Exactly matches CI/CD environment
+- ✅ Clean OS state every time
+- ✅ Tests on Ubuntu (catches platform bugs)
+- ✅ Can test multiple Node versions in parallel
+
+**Disadvantages:**
+- ❌ Slower (Docker startup + container lifecycle)
+- ❌ Requires Docker installed
+- ❌ Less interactive for debugging
+
+**When to use:**
+- Before pushing to main
+- Pre-publish validation
+- Cross-platform testing
+
+---
+
+### Quick Reference: Choosing Your Testing Strategy
+
+| Use Case | Strategy | Command |
+|----------|----------|---------|
+| **Active development** (quick iteration) | Isolated Temp | `./scripts/test-isolated.sh` |
+| **Debugging same scenario repeatedly** | Persistent Prefix | `./scripts/test-with-prefix.sh` |
+| **Pre-publish validation** | Docker | `docker compose -f docker-compose.yml --profile test up` |
+| **Before committing** | All Three | `npm run validate` → test-isolated → docker |
+
+---
+
+### Docker Testing
+
+BOZLY uses Docker for two testing scenarios:
+
+#### 1. Local Development Testing (Dockerfile.test)
+
+For fast feedback while developing:
+
+```bash
+cd release/bozly
+docker compose -f docker-compose.test.yml up
+```
+
+**What it tests:**
+- Compiles your source code
+- Runs unit tests with coverage
+- Reports TypeScript errors
+
+**When to use:**
+- During feature development
+- Debugging test failures
+- Making changes to code
+
+#### 2. npm Integration Testing (Dockerfile)
+
+**CRITICAL:** Run before publishing to npm. This validates the exact package users will receive.
+
+```bash
+# Run all integration tests (recommended before publish)
+docker compose -f docker-compose.yml --profile test up
+
+# Or run individual stages:
+docker compose -f docker-compose.yml --profile test run unit-tests
+docker compose -f docker-compose.yml --profile test run test-install
+docker compose -f docker-compose.yml --profile test run integration-tests
+```
+
+**What it validates:**
+- ✅ Unit tests (code tests)
+- ✅ Fresh npm install (real package validation)
+- ✅ CLI command execution (bozly init, list, status, etc.)
+- ✅ Integration scenarios
+
+**Why this matters:**
+- Simulates real user experience (fresh npm install)
+- Catches bugs like missing files, permission issues, or broken package structure
+- Same environment as CI/CD release workflow
+
+See `DOCKER-TESTING.md` for detailed Docker setup and usage.
+
+### GitHub Actions Workflows
+
+#### Test Workflow (`.github/workflows/test.yml`)
+
+**Runs automatically on:**
+- Every push to `main` branch
+- Every pull request to `main`
+
+**What it does:**
+- Tests on Node 20.x and 22.x (parallel matrix)
+- Linting and formatting checks
+- Full TypeScript compilation
+- Unit tests with coverage
+- Uploads coverage to Codecov
+
+**Check status:**
+- GitHub shows ✅ or ❌ on each push/PR
+- Failed checks block merging
+
+#### Release Workflow (`.github/workflows/release.yml`)
+
+**Runs automatically when:**
+- You push a git tag (e.g., `git tag v0.3.1 && git push --tags`)
+- Or manual trigger via GitHub Actions UI
+
+**What it does:**
+1. Lint and format checks
+2. TypeScript compilation
+3. Unit tests with coverage
+4. **Docker npm integration tests** (validates published package)
+5. npm publish (only if all tests pass)
+6. Create GitHub Release with release notes
+
+**Key feature:** Release is blocked automatically if Docker tests fail. No way to accidentally publish a broken package.
+
+### Pre-Publish Checklist
+
+Before pushing a release tag:
+
+```bash
+# 1. Validate code locally
+npm run validate
+
+# 2. Run Docker npm integration tests
+docker compose -f docker-compose.yml --profile test up
+
+# 3. Update version in package.json
+npm version patch|minor|major
+
+# 4. Push tag (GitHub Actions handles the rest)
+git push --tags
+```
+
+### Full Release Workflow
+
+See `RELEASE.md` for complete step-by-step release documentation.
+
+---
+
 ## Debugging
 
 ### TypeScript Debugging
@@ -695,5 +979,5 @@ npm start                 # Run CLI (after build)
 
 ---
 
-**Last Reviewed:** 2025-12-18 (Session 38)
+**Last Reviewed:** 2025-12-18
 **Next Review:** After next major feature implementation

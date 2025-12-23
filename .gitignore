@@ -7,6 +7,8 @@ dist/
 # IDE and Editor Files
 .vscode/
 .idea/
+!.idea/runConfigurations/
+!.idea/.gitkeep
 *.swp
 *.swo
 *~

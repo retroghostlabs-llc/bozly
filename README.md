@@ -264,30 +264,30 @@ See [CLI-DESIGN.md](docs/CLI-DESIGN.md) for full command reference.
 
 ### Development Progress
 
-**Phase 1: Beta (v0.3.0-rc.1) — ✅ COMPLETE (18 sessions)**
+**Phase 1: Beta (v0.3.0-rc.1) — ✅ COMPLETE**
 ```
-Sprint 1: Foundation           ✅ COMPLETE (Sessions 37-40)
+Sprint 1: Foundation           ✅ COMPLETE
   ✅ 11 CLI commands fully working
   ✅ Core modules: node, registry, config, context (3,000+ lines)
   ✅ Comprehensive logging system with BOZLY_DEBUG
   ✅ 4 node templates + 2 example nodes
-  ✅ 59/60 unit tests passing (98% success rate)
+  ✅ 372 unit tests passing (100% success rate)
 
-Sprint 2: Execution            ✅ COMPLETE (Sessions 44-52)
+Sprint 2: Execution            ✅ COMPLETE
   ✅ Context loading & validation
   ✅ Domain models (Pattern 7, 800+ lines, YAML support)
   ✅ AI provider integration (Claude, ChatGPT, Gemini, Ollama)
   ✅ Session recording architecture design
 
-Sprint 3: Patterns             ✅ COMPLETE (Sessions 53-55)
+Sprint 3: Patterns             ✅ COMPLETE
   ✅ Session recording implementation (32 tests)
   ✅ Session transparency - Pattern 2 (37 tests total)
   ✅ Versioning system - Pattern 4 (39 tests, 600+ lines docs)
 
-Sprint 4: Release              ✅ COMPLETE (Sessions 56-59)
+Sprint 4: Release              ✅ COMPLETE
   ✅ CLAUDE.md optimization & timeline updates
-  ✅ ESLint cleanup (42→0 errors) & vitest 4.0 upgrade
-  ✅ Manual CLI testing (36 scenarios all passing)
+  ✅ ESLint cleanup & vitest 4.0 upgrade
+  ✅ Manual CLI testing (all scenarios passing)
   ✅ Vault removal with backup support
   ✅ npm publish & beta release
 ```
@@ -321,6 +321,8 @@ See [ROADMAP.md](docs/ROADMAP.md) for full timeline.
 
 ## Documentation
 
+### User Guides
+
 | Document | Purpose |
 |----------|---------|
 | [GETTING-STARTED.md](docs/GETTING-STARTED.md) | First node setup & quick start guide |
@@ -331,6 +333,16 @@ See [ROADMAP.md](docs/ROADMAP.md) for full timeline.
 | [AI-PROVIDERS.md](docs/AI-PROVIDERS.md) | Setting up Claude, GPT, Ollama, Gemini |
 | [DOMAIN-MODELS.md](docs/DOMAIN-MODELS.md) | YAML model definitions for nodes |
 | [ECOSYSTEM.md](docs/ECOSYSTEM.md) | Integration patterns & extensions |
+
+### Developer Guides
+
+| Document | Purpose |
+|----------|---------|
+| [IDE-SETUP.md](IDE-SETUP.md) | IntelliJ setup, run configurations & workflow |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | Development standards, testing, CI/CD |
+| [RELEASE.md](RELEASE.md) | Complete release workflow & automation |
+| [DOCKER-TESTING.md](DOCKER-TESTING.md) | Docker testing setup & usage |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guidelines & process |
 
 ---
 

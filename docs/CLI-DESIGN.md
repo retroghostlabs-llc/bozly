@@ -2,7 +2,7 @@
 
 **Command Reference for the BOZLY Framework**
 
-*Last updated: December 21, 2025 (Session 58 - Added `bozly remove` command)*
+*Last updated: December 22, 2025*
 
 ---
 

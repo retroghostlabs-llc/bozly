@@ -2,7 +2,7 @@
 
 **Build. OrganiZe. Link. Yield.**
 
-*Last updated: December 22, 2025 (Session 65 - Auto-Cleanup Design, Phase 1 Complete)*
+*Last updated: December 22, 2025*
 
 ---
 
@@ -213,7 +213,7 @@ External workflow automation:
 - CLI-based execution from n8n
 - Session automation pipelines
 
-### Template & Command Tooling (Design Complete - Session 67)
+### Template & Command Tooling (Design Complete)
 
 - `bozly command create` — Interactive wizard for creating commands
 - `bozly commands` — List all commands (vault + global) with source

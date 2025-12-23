@@ -9,13 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.0-beta.1] - 2025-12-21
 
-### Added - Session 59 Release Prep
+### Added - Release Preparation
 - [x] **Version bump to 0.3.0-beta.1**
   - Framework ready for public beta testing
   - All Phase 1 features implemented and tested
   - Comprehensive documentation in place
 
-### Added - Session 58
+### Added - Vault Removal & Cleanup
 - [x] **Vault Removal** (`bozly remove` command)
   - Remove vault by name or path
   - Optional timestamped backups (`--backup`, stored in `~/.bozly/backups/`)

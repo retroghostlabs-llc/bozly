@@ -395,11 +395,11 @@ vault/.bozly/sessions/
 
 **View Sessions:**
 ```bash
-# List recent sessions (Session 44 feature)
-bozly logs                    # Coming in Session 44
+# List recent sessions (future feature)
+# bozly logs
 
-# Compare sessions (Session 45 feature)
-bozly diff <session1> <session2>   # Coming in Session 45
+# Compare sessions (future feature)
+# bozly diff <session1> <session2>
 ```
 
 ---

@@ -37,6 +37,10 @@ jobs:
       - name: Test with coverage
         run: npm run test:coverage
 
+      - name: Docker npm integration tests
+        run: |
+          docker compose -f docker-compose.yml --profile test up --exit-code-from all-tests
+
       - name: Publish to npm
         run: |
           echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
