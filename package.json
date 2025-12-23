@@ -17,11 +17,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/retroghostlabs-llc/bozly.git"
+    "url": "https://github.com/RetroGhostLabs/bozly.git"
   },
-  "homepage": "https://github.com/retroghostlabs-llc/bozly",
+  "homepage": "https://github.com/RetroGhostLabs/bozly",
   "bugs": {
-    "url": "https://github.com/retroghostlabs-llc/bozly/issues"
+    "url": "https://github.com/RetroGhostLabs/bozly/issues"
   },
   "type": "module",
   "main": "./dist/index.js",
@@ -52,7 +52,7 @@
     "prepublishOnly": "npm run validate"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "dependencies": {
     "@types/js-yaml": "^4.0.9",

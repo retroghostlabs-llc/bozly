@@ -2,11 +2,11 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Status: Beta](https://img.shields.io/badge/Status-Beta-blue.svg)](#project-status)
-[![npm version](https://img.shields.io/npm/v/bozly.svg)](https://www.npmjs.com/package/bozly)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/retroghostlabs-llc/bozly/test.yml?branch=main)](https://github.com/retroghostlabs-llc/bozly/actions)
-[![Coverage Status](https://img.shields.io/codecov/c/github/retroghostlabs-llc/bozly/main)](https://codecov.io/github/retroghostlabs-llc/bozly)
+[![npm version](https://img.shields.io/npm/v/@retroghostlabs/bozly.svg)](https://www.npmjs.com/package/@retroghostlabs/bozly)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/RetroGhostLabs/bozly/test.yml?branch=main)](https://github.com/RetroGhostLabs/bozly/actions)
+[![Coverage](https://codecov.io/gh/RetroGhostLabs/bozly/branch/main/graph/badge.svg)](https://codecov.io/gh/RetroGhostLabs/bozly)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-blue)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-20%2B-green)](https://nodejs.org/)
 
 > **Build. OrganiZe. Link. Yield.**
 
@@ -104,7 +104,7 @@ TIER 3: NODE CONFIG (Node-Owned)
 ### Requirements
 
 - **macOS, Linux, or WSL2** (no native Windows)
-- **Node.js 18+** (for npm install)
+- **Node.js 20+** (for npm install) — tested on Node 20.x and 22.x
 - **At least one AI CLI** installed:
   - Claude: `npm install -g @anthropic-ai/claude-code`
   - GPT: `pip install openai-cli`

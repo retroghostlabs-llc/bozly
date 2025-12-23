@@ -2,7 +2,10 @@
 
 **Build. OrganiZe. Link. Yield.**
 
-*Last updated: December 22, 2025*
+*Last updated: December 23, 2025 (AI-Assisted Timeline Update)*
+
+**Development Model:** AI-assisted (Claude does coding, 3-4x faster than manual)
+**Total Remaining to v1.0:** 85-128 hours | **Target:** May 2026
 
 ---
 
@@ -149,7 +152,9 @@ bozly version                 # Show version info
 
 **Goal:** Smart routing + visual UI + n8n orchestration + session memory
 
-**Timeline:** 6-8 weeks after Phase 1
+**Timeline:** 32-44 hours AI-assisted development (~2-3 weeks)
+
+**Target:** January 2026
 
 ### Vault Server UI (`bozly serve`)
 
@@ -236,6 +241,8 @@ External workflow automation:
 
 **Goal:** AI helps users create templates and commands
 
+**Timeline:** Late Phase 2 (~Late January 2026)
+
 ### Features
 
 - `bozly template from-vault` — AI reverse-engineers vault into template
@@ -248,7 +255,9 @@ External workflow automation:
 
 **Goal:** Community features and vault sharing
 
-**Timeline:** 8-12 weeks after Phase 2
+**Timeline:** 35-55 hours AI-assisted development (~3-4 weeks)
+
+**Target:** February - May 2026
 
 ### Features
 
@@ -260,9 +269,13 @@ External workflow automation:
 - MCP server integration (UniFi, Slack, Discord, GitHub)
 - Obsidian plugin
 
-### Phase 3.5: Community Website
+### Phase 3.5: Community Website (bozly.io)
 
-- bozly.dev for template discovery and browsing
+**Timeline:** 18-29 hours AI-assisted development (~1-2 weeks)
+**Target:** June 2026
+**Domain:** bozly.io (owned)
+
+- bozly.io for template discovery and browsing
 - Better UX for non-developers
 - Template previews and documentation
 

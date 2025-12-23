@@ -36,11 +36,22 @@ jobs:
       - name: Test with coverage
         run: npm run test:coverage
 
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
+      - name: Upload unit test coverage to Codecov
+        uses: codecov/codecov-action@v5
         if: matrix.node-version == '22.x'
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/coverage-final.json
-          flags: unittests
-          name: codecov-umbrella
+          flags: unittest
+          name: unit-tests
+          fail_ci_if_error: false
+
+      - name: Upload integration test coverage to Codecov
+        uses: codecov/codecov-action@v5
+        if: matrix.node-version == '22.x'
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/coverage-final.json
+          flags: integration
+          name: integration-tests
           fail_ci_if_error: false
