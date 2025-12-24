@@ -116,6 +116,129 @@ describe("Configuration Handling", () => {
       expect(loaded.hooks).toBeDefined();
       expect(loaded.hooks?.sessionStart).toBe("echo 'Starting session'");
     });
+
+    it("should support optional memory config", async () => {
+      await createTempDir();
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "vault");
+      const bozlyPath = path.join(nodePath, ".bozly");
+
+      await fs.mkdir(bozlyPath, { recursive: true });
+
+      const configWithMemory: NodeConfig = {
+        name: "music-vault",
+        type: "music",
+        version: "0.3.0",
+        created: new Date().toISOString(),
+        ai: {
+          defaultProvider: "claude",
+          providers: ["claude"],
+        },
+        memory: {
+          enabled: true,
+          maxMemoriesPerCommand: 3,
+          retentionDays: 60,
+          autoIndexing: true,
+        },
+      };
+
+      const configPath = path.join(bozlyPath, "config.json");
+      await writeJSON(configPath, configWithMemory);
+
+      // Verify config with memory was saved correctly
+      const loaded = await readJSON<NodeConfig>(configPath);
+      expect(loaded.memory).toBeDefined();
+      expect(loaded.memory?.enabled).toBe(true);
+      expect(loaded.memory?.maxMemoriesPerCommand).toBe(3);
+      expect(loaded.memory?.retentionDays).toBe(60);
+    });
+
+    it("should support memory config with custom templates", async () => {
+      await createTempDir();
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "vault");
+      const bozlyPath = path.join(nodePath, ".bozly");
+
+      await fs.mkdir(bozlyPath, { recursive: true });
+
+      const configWithCustomTemplates: NodeConfig = {
+        name: "project-vault",
+        type: "project",
+        version: "0.3.0",
+        created: new Date().toISOString(),
+        ai: {
+          defaultProvider: "claude",
+          providers: ["claude"],
+        },
+        memory: {
+          enabled: true,
+          maxMemoriesPerCommand: 5,
+          retentionDays: 30,
+          autoIndexing: true,
+          customTemplates: {
+            enabled: true,
+            directory: ".bozly/templates/memory",
+          },
+        },
+      };
+
+      const configPath = path.join(bozlyPath, "config.json");
+      await writeJSON(configPath, configWithCustomTemplates);
+
+      // Verify config with custom templates was saved correctly
+      const loaded = await readJSON<NodeConfig>(configPath);
+      expect(loaded.memory?.customTemplates?.enabled).toBe(true);
+      expect(loaded.memory?.customTemplates?.directory).toBe(".bozly/templates/memory");
+    });
+
+    it("should handle vault-specific memory retention configs", async () => {
+      await createTempDir();
+      const tempDir = getTempDir();
+
+      const journalConfig: NodeConfig = {
+        name: "daily-journal",
+        type: "journal",
+        version: "0.3.0",
+        created: new Date().toISOString(),
+        ai: {
+          defaultProvider: "claude",
+          providers: ["claude"],
+        },
+        memory: {
+          enabled: true,
+          maxMemoriesPerCommand: 5,
+          retentionDays: 90,
+        },
+      };
+
+      const journalPath = path.join(tempDir, "journal.json");
+      await writeJSON(journalPath, journalConfig);
+
+      const journalLoaded = await readJSON<NodeConfig>(journalPath);
+      expect(journalLoaded.memory?.retentionDays).toBe(90);
+
+      const musicConfig: NodeConfig = {
+        name: "music-discovery",
+        type: "music",
+        version: "0.3.0",
+        created: new Date().toISOString(),
+        ai: {
+          defaultProvider: "claude",
+          providers: ["claude"],
+        },
+        memory: {
+          enabled: true,
+          maxMemoriesPerCommand: 3,
+          retentionDays: 60,
+        },
+      };
+
+      const musicPath = path.join(tempDir, "music.json");
+      await writeJSON(musicPath, musicConfig);
+
+      const musicLoaded = await readJSON<NodeConfig>(musicPath);
+      expect(musicLoaded.memory?.retentionDays).toBe(60);
+    });
   });
 
   describe("Global Configuration", () => {

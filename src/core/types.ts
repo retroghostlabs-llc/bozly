@@ -20,6 +20,7 @@ export interface NodeConfig {
     postTool?: string;
   };
   timezone?: string; // e.g., "America/New_York", defaults to system timezone
+  memory?: MemoryNodeConfig;
 }
 
 /**
@@ -106,6 +107,7 @@ export interface RunOptions {
   provider?: string;
   dryRun?: boolean;
   includeContext?: boolean;
+  pastMemories?: string[]; // Optional past session memories to inject
 }
 
 /**
@@ -737,4 +739,130 @@ export interface CreateTemplateOptions {
   author?: string;
   tags?: string[];
   category?: string;
+}
+
+/**
+ * Session memory - Structured summary of a session's learnings
+ * Auto-extracted from sessions and stored in .bozly/sessions/{nodeId}/{date}/{uuid}/memory.md
+ */
+export interface SessionMemory {
+  sessionId: string;
+  nodeId: string;
+  nodeName: string;
+  timestamp: ISODateTime;
+  durationMinutes: number;
+  tokenCount?: number;
+  aiProvider: AIProvider;
+  command: string;
+
+  // Core memory sections (markdown content)
+  title: string; // Brief title of what was accomplished
+  currentState?: string; // What's being worked on
+  taskSpec?: string; // Original request and goals
+  workflow?: string; // Commands used, patterns discovered
+  errors?: string; // Problems and solutions
+  learnings?: string; // What succeeded/failed
+  keyResults?: string; // Exact outputs and deliverables
+
+  // Metadata for indexing and discovery
+  tags: string[]; // vault-type, domain, keywords
+  relevantSessions?: string[]; // IDs of related previous sessions
+  summary: string; // One-line summary
+}
+
+/**
+ * Memory metadata stored alongside memory.md
+ */
+export interface MemoryMetadata {
+  sessionId: string;
+  nodeId: string;
+  nodeName: string;
+  timestamp: ISODateTime;
+  durationMinutes: number;
+  tokenCount?: number;
+  aiProvider: AIProvider;
+  command: string;
+  memoryAutoExtracted: boolean;
+  extractionTrigger: "tokenThreshold" | "timeThreshold" | "toolUseThreshold" | "sessionEnd";
+  tags: string[];
+  relevantPreviousSessions: string[];
+  summary: string;
+  vaultType?: string; // 'music', 'project', 'journal', etc.
+}
+
+/**
+ * Memory extraction trigger types
+ */
+export type ExtractionTrigger =
+  | "tokenThreshold"
+  | "timeThreshold"
+  | "toolUseThreshold"
+  | "sessionEnd";
+
+/**
+ * Memory index entry for querying across sessions
+ */
+export interface MemoryIndexEntry {
+  sessionId: string;
+  nodeId: string;
+  nodeName: string;
+  timestamp: ISODateTime;
+  command: string;
+  summary: string;
+  tags: string[];
+  filePath: string; // Path to memory.md file
+}
+
+/**
+ * Memory configuration options
+ */
+export interface MemoryConfig {
+  enabled: boolean;
+  engine: "built-in"; // Future: could support external engines
+  autoExtract: {
+    tokenThreshold: number; // Extract memory at this token count
+    timeThreshold: number; // Extract memory after this many seconds
+    toolUseThreshold: number; // Extract memory after this many tool calls
+  };
+  storage: {
+    format: "markdown"; // Only markdown supported currently
+    location: string; // Path like ~/.bozly/sessions/
+    indexing: boolean; // Enable memory indexing
+  };
+  templates: {
+    enabled: boolean;
+    customDirectory?: string; // Path to custom templates
+    vaultSpecific: Record<string, boolean>; // e.g., { "music": true, "project": true }
+  };
+  retention: {
+    keepSessions: "all" | number; // 'all' or number of days
+    autoArchiveAfterDays?: number;
+  };
+}
+
+/**
+ * Memory extraction statistics
+ */
+export interface MemoryStats {
+  totalSessions: number;
+  totalMemories: number;
+  oldestMemory?: ISODateTime;
+  newestMemory?: ISODateTime;
+  averageDurationMinutes: number;
+  tagCounts: Record<string, number>;
+}
+
+/**
+ * Node-level memory configuration (subset of MemoryConfig for .bozly/config.json)
+ * Allows per-node customization of memory behavior
+ */
+export interface MemoryNodeConfig {
+  enabled?: boolean; // Default: true if not specified
+  maxMemoriesPerCommand?: number; // Default: 3 (how many past memories to load)
+  retentionDays?: number; // Default: 30 (keep memories for this many days)
+  autoIndexing?: boolean; // Default: true (automatically index memories for search)
+  customTemplates?: {
+    enabled?: boolean;
+    directory?: string; // Path to custom memory templates
+  };
 }

@@ -193,6 +193,12 @@ export async function runNodeCommand(
   let context = "";
   if (options.includeContext !== false) {
     context = await generateContext(vault, { provider: options.provider });
+
+    // Inject past memories if provided
+    if (options.pastMemories && options.pastMemories.length > 0) {
+      const { injectMemoriesIntoContext } = await import("../core/sessions.js");
+      context = injectMemoriesIntoContext(context, options.pastMemories);
+    }
   }
 
   // Load referenced model if specified in command

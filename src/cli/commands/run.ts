@@ -12,10 +12,11 @@
 
 import { Command } from "commander";
 import chalk from "chalk";
+import path from "path";
 import { logger } from "../../core/logger.js";
 import { getCurrentNode } from "../../core/node.js";
 import { runNodeCommand } from "../../core/commands.js";
-import { recordSession } from "../../core/sessions.js";
+import { recordSession, loadPastMemories } from "../../core/sessions.js";
 import { executeHooks, HookContext } from "../../core/hooks.js";
 import { getDefaultProvider, formatProvidersList, validateProvider } from "../../core/providers.js";
 import { loadWorkflow, executeWorkflow } from "../../core/workflows.js";
@@ -197,10 +198,29 @@ export const runCommand = new Command("run")
 
         await executeHooks(node.path, "session-start", startContext);
 
+        // Load past memories for context injection
+        let pastMemories: string[] = [];
+        try {
+          const bozlyPath = path.join(node.path, ".bozly");
+          pastMemories = await loadPastMemories(bozlyPath, node.id, 3);
+          if (pastMemories.length > 0) {
+            await logger.debug("Loaded past memories for context", {
+              count: pastMemories.length,
+              vault: node.id,
+            });
+          }
+        } catch (error) {
+          await logger.debug("Failed to load past memories", {
+            error: error instanceof Error ? error.message : String(error),
+          });
+          // Continue without memories if loading fails
+        }
+
         const result = await runNodeCommand(node, commandArg, {
           provider,
           dryRun: options.dry,
           includeContext: options.context,
+          pastMemories,
         });
 
         await logger.info("Command execution completed", {

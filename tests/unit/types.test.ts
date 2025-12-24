@@ -11,6 +11,7 @@ import type {
   InitOptions,
   ContextOptions,
   RunOptions,
+  MemoryNodeConfig,
 } from "../../dist/core/types.js";
 
 describe("Type Definitions", () => {
@@ -47,6 +48,130 @@ describe("Type Definitions", () => {
       };
 
       expect(config.hooks?.sessionStart).toBe("echo 'start'");
+    });
+
+    it("should allow optional memory field", () => {
+      const config: NodeConfig = {
+        name: "music-vault",
+        type: "music",
+        version: "0.3.0",
+        created: new Date().toISOString(),
+        ai: {
+          defaultProvider: "claude",
+          providers: ["claude"],
+        },
+        memory: {
+          enabled: true,
+          maxMemoriesPerCommand: 3,
+          retentionDays: 60,
+          autoIndexing: true,
+        },
+      };
+
+      expect(config.memory).toBeDefined();
+      expect(config.memory?.enabled).toBe(true);
+      expect(config.memory?.maxMemoriesPerCommand).toBe(3);
+      expect(config.memory?.retentionDays).toBe(60);
+    });
+
+    it("should support memory with custom templates", () => {
+      const config: NodeConfig = {
+        name: "project-vault",
+        type: "project",
+        version: "0.3.0",
+        created: new Date().toISOString(),
+        ai: {
+          defaultProvider: "claude",
+          providers: ["claude"],
+        },
+        memory: {
+          enabled: true,
+          maxMemoriesPerCommand: 5,
+          retentionDays: 30,
+          autoIndexing: true,
+          customTemplates: {
+            enabled: true,
+            directory: ".bozly/templates/memory",
+          },
+        },
+      };
+
+      expect(config.memory?.customTemplates?.enabled).toBe(true);
+      expect(config.memory?.customTemplates?.directory).toBe(".bozly/templates/memory");
+    });
+
+    it("should allow memory field to be undefined", () => {
+      const config: NodeConfig = {
+        name: "test",
+        type: "default",
+        version: "0.3.0",
+        created: new Date().toISOString(),
+        ai: {
+          defaultProvider: "claude",
+          providers: ["claude"],
+        },
+      };
+
+      expect(config.memory).toBeUndefined();
+    });
+  });
+
+  describe("MemoryNodeConfig", () => {
+    it("should create valid memory config", () => {
+      const memoryConfig: MemoryNodeConfig = {
+        enabled: true,
+        maxMemoriesPerCommand: 3,
+        retentionDays: 30,
+        autoIndexing: true,
+      };
+
+      expect(memoryConfig.enabled).toBe(true);
+      expect(memoryConfig.maxMemoriesPerCommand).toBe(3);
+      expect(memoryConfig.retentionDays).toBe(30);
+    });
+
+    it("should allow all fields to be optional", () => {
+      const memoryConfig: MemoryNodeConfig = {};
+
+      expect(memoryConfig.enabled).toBeUndefined();
+      expect(memoryConfig.maxMemoriesPerCommand).toBeUndefined();
+    });
+
+    it("should support various retention configs", () => {
+      const musicMemory: MemoryNodeConfig = {
+        enabled: true,
+        maxMemoriesPerCommand: 3,
+        retentionDays: 60,
+      };
+
+      const journalMemory: MemoryNodeConfig = {
+        enabled: true,
+        maxMemoriesPerCommand: 5,
+        retentionDays: 90,
+      };
+
+      const projectMemory: MemoryNodeConfig = {
+        enabled: true,
+        maxMemoriesPerCommand: 3,
+        retentionDays: 30,
+      };
+
+      expect(musicMemory.retentionDays).toBe(60);
+      expect(journalMemory.retentionDays).toBe(90);
+      expect(projectMemory.retentionDays).toBe(30);
+    });
+
+    it("should support custom template configuration", () => {
+      const memoryConfig: MemoryNodeConfig = {
+        enabled: true,
+        customTemplates: {
+          enabled: true,
+          directory: ".bozly/templates/memory/custom",
+        },
+      };
+
+      expect(memoryConfig.customTemplates?.enabled).toBe(true);
+      expect(memoryConfig.customTemplates?.directory).toBe(".bozly/templates/memory/custom");
     });
   });
 

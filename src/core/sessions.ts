@@ -32,8 +32,13 @@ import {
   ExecutionDetails,
   FileChanges,
   SessionFiles,
+  SessionMemory,
+  MemoryMetadata,
 } from "./types.js";
 import { logger } from "./logger.js";
+import { MemoryExtractor } from "../memory/extractor.js";
+import { MemoryLoader } from "../memory/loader.js";
+import { MemoryIndex } from "../memory/index.js";
 
 /**
  * Format timestamp as ISO string
@@ -391,6 +396,21 @@ ${response.error ? `\n## Error\n${response.error}` : ""}`;
       path: sessionPath,
       status: session.status,
     });
+
+    // Auto-extract memory after session is saved
+    const memory = await extractAndSaveMemory(
+      sessionPath,
+      session,
+      prompt.contextText,
+      prompt.commandText,
+      response.text
+    );
+
+    // Index memory for cross-vault queries
+    if (memory) {
+      const bozlyPath = path.join(nodePath, ".bozly");
+      await indexSessionMemory(bozlyPath, memory, sessionPath);
+    }
   }
 
   return session;
@@ -1140,4 +1160,149 @@ export function exportSessionsToCSV(sessions: Session[]): string {
   );
 
   return [headers, ...rows].join("\n");
+}
+
+/**
+ * Extract and save session memory
+ *
+ * Auto-extracts memory from a completed session and saves it alongside session files
+ *
+ * @param sessionPath - Full path to session directory
+ * @param session - Session object
+ * @param vaultContext - Vault context (.bozly/context.md content)
+ * @param commandContent - Command content
+ * @param executionOutput - AI response output
+ * @returns SessionMemory object or null if extraction failed
+ */
+export async function extractAndSaveMemory(
+  sessionPath: string,
+  session: Session,
+  vaultContext?: string,
+  commandContent?: string,
+  executionOutput?: string
+): Promise<SessionMemory | null> {
+  try {
+    const extractionInput = {
+      session,
+      vaultContext,
+      commandContent,
+      executionOutput,
+      executionTimeMs: session.executionTimeMs,
+    };
+
+    // Extract memory using MemoryExtractor
+    const memory = MemoryExtractor.extract(extractionInput, "sessionEnd");
+    const vaultType = vaultContext?.toLowerCase().includes("music")
+      ? "music"
+      : vaultContext?.toLowerCase().includes("project")
+        ? "project"
+        : vaultContext?.toLowerCase().includes("journal")
+          ? "journal"
+          : "generic";
+
+    const metadata = MemoryExtractor.generateMetadata(memory, "sessionEnd", vaultType);
+
+    // Convert to markdown
+    const memoryMarkdown = MemoryExtractor.toMarkdown(memory, metadata);
+
+    // Save memory.md
+    const memoryPath = path.join(sessionPath, "memory.md");
+    await fs.writeFile(memoryPath, memoryMarkdown, "utf-8");
+
+    // Save metadata.json
+    const metadataPath = path.join(sessionPath, "metadata.json");
+    await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2), "utf-8");
+
+    logger.debug(`Extracted and saved memory for session ${session.id}`);
+    return memory;
+  } catch (error) {
+    logger.warn(`Failed to extract memory for session ${session.id}: ${String(error)}`);
+    return null;
+  }
+}
+
+/**
+ * Index a session's memory
+ *
+ * Adds memory entry to the global memory index for cross-vault querying
+ *
+ * @param bozlyBasePath - Base path to .bozly directory (~/.bozly)
+ * @param memory - SessionMemory object
+ * @param sessionPath - Full path to session directory
+ */
+export async function indexSessionMemory(
+  bozlyBasePath: string,
+  memory: SessionMemory,
+  sessionPath: string
+): Promise<void> {
+  try {
+    const indexPath = path.join(bozlyBasePath, "memory-index.json");
+    const memoryIndex = new MemoryIndex(indexPath);
+
+    await memoryIndex.load();
+
+    const metadata: MemoryMetadata = {
+      sessionId: memory.sessionId,
+      nodeId: memory.nodeId,
+      nodeName: memory.nodeName,
+      timestamp: memory.timestamp,
+      durationMinutes: memory.durationMinutes,
+      tokenCount: memory.tokenCount,
+      aiProvider: memory.aiProvider,
+      command: memory.command,
+      memoryAutoExtracted: true,
+      extractionTrigger: "sessionEnd",
+      tags: memory.tags,
+      relevantPreviousSessions: memory.relevantSessions || [],
+      summary: memory.summary,
+    };
+
+    const memoryPath = path.join(sessionPath, "memory.md");
+    await memoryIndex.addEntry(metadata, memoryPath);
+
+    logger.debug(`Indexed memory for session ${memory.sessionId}`);
+  } catch (error) {
+    logger.warn(`Failed to index memory for session ${memory.sessionId}: ${String(error)}`);
+  }
+}
+
+/**
+ * Load past memories for a vault
+ *
+ * Loads relevant past session memories for context injection
+ *
+ * @param bozlyBasePath - Base path to .bozly directory (~/.bozly)
+ * @param nodeId - Node/vault ID
+ * @param limit - Maximum number of memories to load (default: 3)
+ * @returns Array of memory markdown content
+ */
+export async function loadPastMemories(
+  bozlyBasePath: string,
+  nodeId: string,
+  limit = 3
+): Promise<string[]> {
+  try {
+    const sessionsPath = path.join(bozlyBasePath, "sessions");
+    return await MemoryLoader.loadRelevantMemories(sessionsPath, nodeId, {
+      limit,
+      maxAge: 30,
+      sortBy: "recent",
+    });
+  } catch (error) {
+    logger.debug(`Failed to load past memories: ${String(error)}`);
+    return [];
+  }
+}
+
+/**
+ * Inject memories into prompt context
+ *
+ * Prepends past memories to the context for continuity
+ *
+ * @param baseContext - Original context text
+ * @param memories - Array of memory markdown strings
+ * @returns Enhanced context with memories injected
+ */
+export function injectMemoriesIntoContext(baseContext: string, memories: string[]): string {
+  return MemoryLoader.injectMemoriesIntoContext(baseContext, memories);
 }
