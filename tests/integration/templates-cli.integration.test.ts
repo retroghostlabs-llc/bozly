@@ -65,12 +65,12 @@ describe("Templates CLI Integration", () => {
 
   describe("bozly template help", () => {
     it("should show template command help", () => {
-      const output = runCommand(`dist/cli/index.js template --help`);
+      const output = runCommand(`node dist/cli/index.js template --help`);
       expect(output.toLowerCase()).toContain("manage templates");
     });
 
     it("should show subcommand options", () => {
-      const output = runCommand(`dist/cli/index.js template list --help`);
+      const output = runCommand(`node dist/cli/index.js template list --help`);
       expect(output).toBeDefined();
       expect(output).toBeTruthy();
     });

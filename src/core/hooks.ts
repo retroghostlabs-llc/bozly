@@ -181,7 +181,28 @@ async function executeHook(hook: HookMetadata, context: HookContext): Promise<Ho
 
     // Send context via stdin
     if (proc.stdin) {
-      proc.stdin.write(contextJson);
+      // Handle errors when writing to stdin (e.g., if process closes stdin early)
+      proc.stdin.on("error", (error: any) => {
+        // Ignore EPIPE errors - these occur when the process closes stdin before we're done writing
+        if (error?.code !== "EPIPE") {
+          logger
+            .warn(`Hook stdin error: ${error?.message || String(error)}`, {
+              hookName: hook.name,
+              code: error?.code,
+            })
+            .catch(() => {});
+        }
+      });
+
+      proc.stdin.write(contextJson, (error: any) => {
+        if (error && error.code !== "EPIPE") {
+          logger
+            .warn(`Failed to send context to hook: ${error.message}`, {
+              hookName: hook.name,
+            })
+            .catch(() => {});
+        }
+      });
       proc.stdin.end();
     }
 
