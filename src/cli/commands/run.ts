@@ -21,6 +21,7 @@ import { executeHooks, HookContext } from "../../core/hooks.js";
 import { getDefaultProvider, formatProvidersList, validateProvider } from "../../core/providers.js";
 import { loadWorkflow, executeWorkflow } from "../../core/workflows.js";
 import { getNodeConfig, getGlobalConfig } from "../../core/config.js";
+import { NodeInfo } from "../../core/types.js";
 
 export const runCommand = new Command("run")
   .description("Execute a node command with optional AI provider integration")
@@ -32,7 +33,7 @@ export const runCommand = new Command("run")
   .option("--verbose", "Include full prompt/response in session logs")
   .option("--workflow", "Execute as a workflow instead of a command")
   .action(async (commandArg, options) => {
-    let node: NodeInfo; // Will be set after validation
+    let node: NodeInfo | null = null; // Will be set after validation
     let cancelRequested = false;
 
     // Handle Ctrl+C and termination signals for on-cancel hooks

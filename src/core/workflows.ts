@@ -319,7 +319,7 @@ export function interpolateStepContext(
       (_match, stepId, field) => {
         const stepResult = completedSteps.get(stepId);
         if (stepResult?.session && field in stepResult.session) {
-          const val = (stepResult.session as Record<string, unknown>)[field];
+          const val = (stepResult.session as unknown as Record<string, unknown>)[field];
           return typeof val === "string" ? val : JSON.stringify(val);
         }
         return "";

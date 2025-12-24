@@ -14,6 +14,7 @@ import {
   formatDuration,
   getNodeStorageInfo,
 } from "../../core/cleanup.js";
+import { CleanupConfig, NodeStorageInfo } from "../../core/types.js";
 import { homedir } from "os";
 import path from "path";
 
@@ -82,7 +83,7 @@ export const cleanupCommand = new Command("cleanup")
 async function cleanupSingleNode(
   nodePath: string,
   nodeName: string,
-  config: Record<string, unknown>,
+  config: CleanupConfig,
   olderThanDays: number,
   isDryRun: boolean,
   force: boolean
@@ -152,7 +153,7 @@ async function cleanupSingleNode(
  * Clean up all vaults
  */
 async function cleanupAllVaults(
-  config: Record<string, unknown>,
+  config: CleanupConfig,
   olderThanDays: number,
   isDryRun: boolean,
   force: boolean
@@ -251,17 +252,9 @@ async function cleanupAllVaults(
 /**
  * Display storage info in a formatted way
  */
-function displayStorageInfo(storageInfo: Record<string, unknown>): void {
-  interface StorageUsage {
-    totalSizeMB: number;
-    maxStorageMB: number;
-    percentUsed: number;
-    activeSessions: Record<string, number>;
-    archivedSessions: Record<string, number>;
-    backupsSizeMB: number;
-  }
-  const usage = storageInfo.usage as StorageUsage;
-  const nodeName = String(storageInfo.nodeName);
+function displayStorageInfo(storageInfo: NodeStorageInfo): void {
+  const usage = storageInfo.usage;
+  const nodeName = storageInfo.nodeName;
 
   console.log(`  Node: ${nodeName}`);
   console.log(
