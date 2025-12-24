@@ -19,6 +19,7 @@ export interface NodeConfig {
     sessionEnd?: string;
     postTool?: string;
   };
+  timezone?: string; // e.g., "America/New_York", defaults to system timezone
 }
 
 /**
@@ -53,6 +54,7 @@ export interface GlobalConfig {
   theme?: string;
   editor?: string;
   cleanup?: CleanupConfig;
+  timezone?: string; // e.g., "America/New_York", auto-detected from system if not set
 }
 
 /**
@@ -275,6 +277,7 @@ export interface Session {
     nodeVersion: string;
     bozlyVersion: string;
     platform: string;
+    timezone?: string; // User's configured timezone (e.g., "America/New_York")
   };
 
   // Metadata (tags, related sessions for Phase 2)

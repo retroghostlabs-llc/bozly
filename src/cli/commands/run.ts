@@ -19,6 +19,7 @@ import { recordSession } from "../../core/sessions.js";
 import { executeHooks, HookContext } from "../../core/hooks.js";
 import { getDefaultProvider, formatProvidersList, validateProvider } from "../../core/providers.js";
 import { loadWorkflow, executeWorkflow } from "../../core/workflows.js";
+import { getNodeConfig, getGlobalConfig } from "../../core/config.js";
 
 export const runCommand = new Command("run")
   .description("Execute a node command with optional AI provider integration")
@@ -225,6 +226,19 @@ export const runCommand = new Command("run")
           // Output was streamed during execution
           // Record session for audit trail
           try {
+            // Get timezone from node config, fall back to global config
+            let timezone: string | undefined;
+            try {
+              const nodeConfig = await getNodeConfig();
+              timezone = nodeConfig.timezone;
+            } catch {
+              // If node config fails, try global config
+            }
+            if (!timezone) {
+              const globalConfig = await getGlobalConfig();
+              timezone = globalConfig.timezone;
+            }
+
             await recordSession(
               node.path,
               node.id,
@@ -239,7 +253,10 @@ export const runCommand = new Command("run")
               {
                 text: result.output ?? "",
                 duration: result.duration ?? 0,
-              }
+              },
+              [],
+              [],
+              timezone
             );
 
             await logger.debug("Session recorded", {

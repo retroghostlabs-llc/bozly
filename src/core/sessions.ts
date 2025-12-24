@@ -196,6 +196,7 @@ export async function loadSessionFiles(sessionPath: string): Promise<SessionFile
  * @param response - Response from provider
  * @param executionLog - Timeline of execution events
  * @param filesChanged - Files modified by command
+ * @param timezone - User's configured timezone (e.g., "America/New_York")
  * @returns Recorded session
  */
 export async function recordSession(
@@ -215,7 +216,8 @@ export async function recordSession(
     duration: number;
   },
   executionLog: ExecutionLogEntry[] = [],
-  filesChanged: FileChange[] = []
+  filesChanged: FileChange[] = [],
+  timezone?: string
 ): Promise<Session> {
   const now = getCurrentTimestamp();
   const sessionId = randomUUID();
@@ -265,6 +267,7 @@ export async function recordSession(
       nodeVersion: process.version.replace(/^v/, ""),
       bozlyVersion: getPackageVersion(),
       platform: process.platform,
+      timezone: timezone,
     },
   };
 

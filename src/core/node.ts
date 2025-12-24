@@ -31,6 +31,7 @@ import {
   buildTemplateContext,
   applyTemplate,
 } from "./templates.js";
+import { getSystemTimezone } from "../utils/timezone.js";
 
 const BOZLY_DIR = ".bozly";
 const CONFIG_FILE = "config.json";
@@ -211,6 +212,7 @@ export async function initNode(options: InitOptions): Promise<NodeInfo> {
     type: templateType,
     version: "0.3.0",
     created: new Date().toISOString(),
+    timezone: getSystemTimezone(),
     ai: {
       defaultProvider: "claude",
       providers: ["claude", "gpt", "gemini", "ollama"],
