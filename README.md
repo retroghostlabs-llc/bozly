@@ -256,64 +256,77 @@ See [CLI-DESIGN.md](docs/CLI-DESIGN.md) for full command reference.
 
 ## Project Status
 
-**Current Phase:** Phase 1: Beta — ✅ 100% COMPLETE
+**Current Phase:** Phase 1: Beta — ✅ 100% COMPLETE | Phase 2: Automation & Integrations — 🔄 83% IN PROGRESS
 
-**Released:** v0.3.0-rc.1 (December 22, 2025) 🚀
+**Released:** v0.3.0-beta.1 (Dec 21, 2025) ✅ | v0.4.0-beta.1 ✅ | v0.4.1-beta.1 ✅ | v0.5.0-beta.1 ✅ (Available Now)
 
-**Next:** Phase 2 - Automation & Integrations (v0.4.0-v0.5.0) starting January 2026 | v1.0 Public Launch June 2026
+**Next:** Phase 2 remaining features (2 sub-phases, ~6-8 hrs) | Phase 3 - Ecosystem & Community | v1.0 Public Launch May 2026
 
 ### Development Progress
 
-**Phase 1: Beta (v0.3.0-rc.1) — ✅ COMPLETE**
+**Phase 1: Beta (v0.3.0-beta.1) — ✅ COMPLETE**
 ```
 Sprint 1: Foundation           ✅ COMPLETE
-  ✅ 11 CLI commands fully working
+  ✅ 15 CLI commands fully working (init, add, remove, list, status, context, run, logs, diff, config, version, command, template, cleanup, workflow)
   ✅ Core modules: node, registry, config, context (3,000+ lines)
   ✅ Comprehensive logging system with BOZLY_DEBUG
   ✅ 4 node templates + 2 example nodes
-  ✅ 372 unit tests passing (100% success rate)
+  ✅ 1,186+ unit tests passing (100% success rate)
 
 Sprint 2: Execution            ✅ COMPLETE
   ✅ Context loading & validation
   ✅ Domain models (Pattern 7, 800+ lines, YAML support)
   ✅ AI provider integration (Claude, ChatGPT, Gemini, Ollama)
-  ✅ Session recording architecture design
+  ✅ Session recording architecture & implementation
 
 Sprint 3: Patterns             ✅ COMPLETE
-  ✅ Session recording implementation (32 tests)
-  ✅ Session transparency - Pattern 2 (37 tests total)
-  ✅ Versioning system - Pattern 4 (39 tests, 600+ lines docs)
+  ✅ Session recording implementation (multi-file, hierarchical)
+  ✅ Session transparency - Pattern 2 (audit trail, change tracking)
+  ✅ Versioning system - Pattern 4 (semantic versioning, history)
 
 Sprint 4: Release              ✅ COMPLETE
-  ✅ CLAUDE.md optimization & timeline updates
-  ✅ ESLint cleanup & vitest 4.0 upgrade
-  ✅ Manual CLI testing (all scenarios passing)
-  ✅ Vault removal with backup support
+  ✅ Memory system (extraction, indexing, injection)
+  ✅ Hooks system (4 trigger points: session-start/end, pre/post-execution)
+  ✅ Workflows with task chains and conditions
+  ✅ Auto-cleanup with duration parsing and storage monitoring
   ✅ npm publish & beta release
 ```
 
-**Key Features Implemented:**
-- 11 CLI commands: init, list, add, remove, status, context, run, logs, diff, config, version
-- Multi-file session recording with full audit trail
+**Key Features Implemented (Phase 1):**
+- 15 CLI commands fully working (all Phase 1 features)
+- Multi-file session recording with full audit trail (hierarchical organization)
 - Semantic versioning and version history
-- Domain models integration
-- AI-agnostic provider support (4 providers)
+- Domain models integration (YAML-based)
+- AI-agnostic provider support (4 providers: Claude, GPT, Gemini, Ollama)
+- Memory system with extraction, indexing, injection
+- Hooks system (4 trigger points)
+- Workflows with task chains and conditions
+- Auto-cleanup with duration parsing and storage monitoring
 - Node removal with backup support
 
-**Phase 2: Automation & Integrations (v0.4.0-v0.5.0) — 6-8 weeks**
-- [ ] Node Server UI (`bozly serve`) — Visual node management
-- [ ] Smart Routing — Per-node provider config, fallback chains
-- [ ] Usage Metrics — Track costs and usage across providers
-- [ ] Hooks system (session-start, session-end, post-execution)
-- [ ] Workflows (multi-step processes)
-- [ ] Cross-node queries (`bozly search --all`)
-- [ ] Auto-Cleanup — Session archival, disk management
+**Phase 2: Automation & Integrations (v0.4.0-v0.5.0) — 🔄 83% IN PROGRESS (9/11 sub-phases)**
 
-**Phase 3: Ecosystem & Community (v1.0.0) — 8-12 weeks**
+**Completed (v0.4.0-beta.1 through v0.5.0-beta.1):**
+- ✅ Hooks system (4 trigger points)
+- ✅ Workflows (multi-step processes, task chains, conditions)
+- ✅ Auto-Cleanup (duration parsing, storage monitoring, disk management)
+- ✅ Templates system (variable substitution, template tooling)
+- ✅ Commands tooling (command discovery, creation, metadata)
+- ✅ Memory system (extraction, indexing, injection, cross-node search)
+- ✅ Smart routing (per-node AI provider config)
+- ✅ Vault Intelligence (suggestions, search)
+- ✅ Test Coverage verification & CI/CD fixes
+
+**Remaining (2 sub-phases, ~6-8 hrs):**
+- [ ] Server UI (`bozly serve`) — Visual node management
+- [ ] Final polish & optimization before v1.0
+
+**Phase 3: Ecosystem & Community (v1.0.0) — 35-55 hours (May 2026)**
 - [ ] Community node registry
 - [ ] `bozly search` / `bozly install` node publishing
-- [ ] MCP server integration (UniFi, Slack, Discord, GitHub)
+- [ ] MCP server integration
 - [ ] Obsidian plugin
+- [ ] Public launch with marketing
 
 See [ROADMAP.md](docs/ROADMAP.md) for full timeline.
 
@@ -394,7 +407,7 @@ See [LICENSE](LICENSE) for details.
 
 *Built by [RetroGhostLabs](https://github.com/RetroGhostLabs) | MIT License*
 
-*Last updated: 2025-12-22* | *Status: Phase 1 ✅ COMPLETE | Released: v0.3.0-rc.1 (Dec 22, 2025) | Next: Phase 2 (v0.4.0, Jan 2026) | v1.0: June 2026*
+*Last updated: 2025-12-24 (Session 96)* | *Status: Phase 1 ✅ COMPLETE | Phase 2 🔄 83% IN PROGRESS | Released: v0.5.0-beta.1 (Available Now) | Next: Phase 3 (v1.0, May 2026)*
 
 ---
 

@@ -2,18 +2,18 @@
 
 **Build. OrganiZe. Link. Yield.**
 
-*Last updated: December 23, 2025 (AI-Assisted Timeline Update)*
+*Last updated: December 24, 2025 (Session 96 - CI/CD & Documentation Audit)*
 
 **Development Model:** AI-assisted (Claude does coding, 3-4x faster than manual)
-**Total Remaining to v1.0:** 85-128 hours | **Target:** May 2026
+**Total Remaining to v1.0:** 60-87 hours | **Target:** May 2026
 
 ---
 
 ## Current Status
 
-**Phase:** 1 Complete (Beta Released)
-**Version:** 0.3.0-beta.1
-**Status:** Framework production-ready, beta published to npm. Phase 2 planning in progress.
+**Phase:** 1 Complete ✅ (Beta Released) | Phase 2 83% IN PROGRESS 🔄 (9/11 sub-phases)
+**Version:** v0.3.0-beta.1 ✅ | v0.4.0-beta.1 ✅ | v0.4.1-beta.1 ✅ | v0.5.0-beta.1 ✅
+**Status:** Phase 1 production-ready (released Dec 21). Phase 2 automation features nearly complete. Available for testing now.
 
 ### What's Done (Sessions 37-61)
 
@@ -44,13 +44,31 @@
 - npm publish preparation
 - Beta v0.3.0-beta.1 released
 
-### What's Next (Phase 2+)
+### What's Done (Phase 2 - Sessions 82-96)
 
-- **Vault Server UI** (`bozly serve`) — Local web dashboard for visual node management
-- **Smart Routing** — Per-vault/per-command AI provider routing with fallbacks
-- **Auto-Cleanup** — Session retention, archival, and disk management
-- **n8n Integration** — Workflow orchestration with 5 integration patterns
-- **Session Memory** — Claude-style auto-extraction and cross-node knowledge
+**Completed (v0.4.0-beta.1 through v0.5.0-beta.1):**
+- ✅ Hooks system (4 trigger points: session-start, session-end, pre-execution, post-execution)
+- ✅ Workflows (multi-step processes, task chains, conditional execution)
+- ✅ Auto-Cleanup (duration parsing, storage monitoring, disk management)
+- ✅ Templates system (variable substitution, template tooling, interactive creation)
+- ✅ Commands tooling (command discovery, creation, metadata, resolution priority)
+- ✅ Memory system (extraction, indexing, injection, cross-node search)
+- ✅ Smart routing (per-node AI provider config, fallback chains)
+- ✅ Vault Intelligence (suggestions, search across nodes)
+- ✅ Test Coverage verification & CI/CD fixes
+
+### What's Next (Phase 2 Final + Phase 3)
+
+**Phase 2 Remaining (2 sub-phases, ~6-8 hrs):**
+- [ ] Node Server UI (`bozly serve`) — Local web dashboard for visual node management
+- [ ] Final polish & optimization before v1.0
+
+**Phase 3: Ecosystem & Community (v1.0.0, 35-55 hrs):**
+- [ ] Community node registry
+- [ ] `bozly search` / `bozly install` node publishing
+- [ ] MCP server integrations
+- [ ] Obsidian plugin
+- [ ] Public marketing campaign
 
 ---
 
