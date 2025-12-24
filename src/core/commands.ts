@@ -88,8 +88,12 @@ export async function getCommand(
 
 /**
  * Get all global commands from ~/.bozly/commands/
+ * Initializes default commands on first run
  */
 export async function getGlobalCommands(): Promise<NodeCommand[]> {
+  // Initialize default commands if not already present
+  await initializeDefaultCommands();
+
   const globalPath = path.join(os.homedir(), ".bozly", "commands");
   const commands: NodeCommand[] = [];
 
@@ -409,4 +413,66 @@ function extractDescription(content: string): string {
   }
 
   return "No description";
+}
+
+/**
+ * Initialize default global commands on first run
+ * Copies default commands from package to ~/.bozly/commands/ if not already present
+ */
+export async function initializeDefaultCommands(): Promise<void> {
+  const globalPath = path.join(os.homedir(), ".bozly", "commands");
+
+  try {
+    // Check if global commands directory exists
+    try {
+      await fs.access(globalPath);
+      // Directory exists, check if it already has commands
+      const files = await fs.readdir(globalPath);
+      if (files.length > 0) {
+        // Commands already initialized
+        return;
+      }
+    } catch {
+      // Directory doesn't exist, create it
+      await fs.mkdir(globalPath, { recursive: true });
+    }
+
+    // Copy default commands from package
+    const defaultCommandsPath = path.join(
+      path.dirname(new URL(import.meta.url).pathname),
+      "..",
+      "..",
+      "default-commands"
+    );
+
+    try {
+      const defaultFiles = await fs.readdir(defaultCommandsPath);
+
+      for (const file of defaultFiles) {
+        if (file.endsWith(".md")) {
+          const sourcePath = path.join(defaultCommandsPath, file);
+          const targetPath = path.join(globalPath, file);
+
+          // Skip if already exists
+          try {
+            await fs.access(targetPath);
+            continue;
+          } catch {
+            // File doesn't exist, OK to copy
+          }
+
+          // Copy the file
+          const content = await fs.readFile(sourcePath, "utf-8");
+          await fs.writeFile(targetPath, content, "utf-8");
+        }
+      }
+    } catch (error) {
+      // Default commands directory not found (might be in different build/install location)
+      // This is not fatal - just means default commands aren't initialized
+      // User can create commands manually with 'bozly command create'
+    }
+  } catch (error) {
+    // Initialization failed but not fatal - user can still use BOZLY
+    // Just log at debug level
+  }
 }

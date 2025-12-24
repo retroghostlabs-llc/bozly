@@ -31,7 +31,8 @@
   },
   "files": [
     "dist",
-    "templates"
+    "templates",
+    "default-commands"
   ],
   "scripts": {
     "prepare": "husky install",
