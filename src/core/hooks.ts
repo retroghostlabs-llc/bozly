@@ -194,8 +194,8 @@ async function executeHook(hook: HookMetadata, context: HookContext): Promise<Ho
         }
       });
 
-      proc.stdin.write(contextJson, "utf8", (error: NodeJS.ErrnoException | null) => {
-        if (error && error.code !== "EPIPE") {
+      proc.stdin.write(contextJson, "utf8", (error?: Error | null) => {
+        if (error && "code" in error && error.code !== "EPIPE") {
           logger
             .warn(`Failed to send context to hook: ${error.message}`, {
               hookName: hook.name,

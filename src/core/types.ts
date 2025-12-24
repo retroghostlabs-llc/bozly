@@ -866,3 +866,70 @@ export interface MemoryNodeConfig {
     directory?: string; // Path to custom memory templates
   };
 }
+
+/**
+ * Suggestion types for command improvement recommendations
+ */
+export type SuggestionType =
+  | "pattern" // Error patterns, failure trends
+  | "context" // Context optimization (unused content)
+  | "provider" // Provider/model recommendations
+  | "prompt" // Prompt refinement keywords
+  | "splitting"; // Command splitting suggestions
+
+/**
+ * Analysis data for a suggestion (type-specific)
+ */
+export interface SuggestionAnalysisData {
+  samplesAnalyzed: number;
+  confidence: number; // 0-1
+  data: Record<string, unknown>; // Type-specific analysis
+}
+
+/**
+ * Recommendation details in a suggestion
+ */
+export interface SuggestionRecommendation {
+  action: string; // What to do
+  example?: string; // Before/after example
+  rationale: string; // Why this helps
+}
+
+/**
+ * Impact assessment for a suggestion
+ */
+export interface SuggestionImpact {
+  expectedImprovement: string; // e.g., "+20% faster"
+  riskLevel: "low" | "medium" | "high";
+  reversible: boolean; // Can user undo?
+}
+
+/**
+ * Command suggestion with analysis and recommendation
+ * Stored in .bozly/suggestions-history.json
+ */
+export interface Suggestion {
+  id: string; // UUID
+  commandName: string;
+  type: SuggestionType;
+  priority: "high" | "medium" | "low";
+  title: string; // Short title for CLI
+  description: string; // Longer explanation
+  analysis: SuggestionAnalysisData;
+  recommendation: SuggestionRecommendation;
+  impact: SuggestionImpact;
+  createdAt: ISODateTime;
+  appliedAt?: ISODateTime; // When user approved
+  nodeId?: string; // Which node (optional, for global commands)
+}
+
+/**
+ * History of all suggestions (applied and rejected)
+ * Stored in .bozly/suggestions-history.json
+ */
+export interface SuggestionsHistory {
+  version: string;
+  created: ISODateTime;
+  updated: ISODateTime;
+  suggestions: Suggestion[];
+}
