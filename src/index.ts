@@ -35,4 +35,4 @@ export {
 } from "./core/index.js";
 
 // Version
-export const VERSION = "0.3.0-alpha.1";
+export const VERSION = "0.3.0-rc.1";

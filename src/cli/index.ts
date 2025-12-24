@@ -31,6 +31,8 @@ import { cleanupCommand } from "./commands/cleanup.js";
 import { commandCommand } from "./commands/command.js";
 import { templateCommand } from "./commands/template.js";
 import { suggestCommand } from "./commands/suggest.js";
+import { searchCommand } from "./commands/search.js";
+import { historyCommand } from "./commands/history.js";
 
 // Package info
 const VERSION = "0.3.0-alpha.1";
@@ -110,6 +112,8 @@ async function main(): Promise<void> {
   program.addCommand(commandCommand);
   program.addCommand(templateCommand);
   program.addCommand(suggestCommand);
+  program.addCommand(searchCommand);
+  program.addCommand(historyCommand);
 
   // Default action (no command specified)
   program.action(() => {

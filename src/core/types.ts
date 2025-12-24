@@ -933,3 +933,152 @@ export interface SuggestionsHistory {
   updated: ISODateTime;
   suggestions: Suggestion[];
 }
+
+/**
+ * Cross-node search types (Phase 2j)
+ */
+
+/**
+ * Search target types for cross-vault search
+ */
+export type SearchTarget = "sessions" | "memories" | "commands";
+
+/**
+ * Session status for filtering
+ */
+export type SessionStatus = "completed" | "failed" | "dry_run";
+
+/**
+ * Cross-node search query
+ */
+export interface SearchQuery {
+  text?: string; // Full-text search term
+  command?: string; // Specific command filter
+  provider?: AIProvider; // claude, gpt, gemini, ollama
+  nodeId?: string; // Specific vault/node ID
+  status?: SessionStatus; // completed, failed, dry_run
+  startDate?: ISODateTime; // ISO 8601
+  endDate?: ISODateTime; // ISO 8601
+  searchIn?: SearchTarget[]; // What to search (default: all)
+  limit?: number; // Max results (default: 50)
+  offset?: number; // Pagination offset (default: 0)
+  fuzzy?: boolean; // Fuzzy matching (default: false)
+}
+
+/**
+ * Individual session search result with relevance
+ */
+export interface SessionSearchResult {
+  type: "session";
+  session: Session;
+  matchedFields: string[]; // Which fields matched the query
+  relevanceScore: number; // 0-1, for ranking
+  nodeInfo: {
+    nodeId: string;
+    nodeName: string;
+    nodePath: string;
+  };
+}
+
+/**
+ * Memory index entry reference in search results
+ */
+export interface MemorySearchResult {
+  type: "memory";
+  memory: {
+    sessionId: string;
+    nodeId: string;
+    nodeName: string;
+    timestamp: ISODateTime;
+    command: string;
+    summary: string;
+    tags: string[];
+    filePath: string;
+  };
+  matchedFields: string[]; // summary, tags, command
+  relevanceScore: number;
+  sessionPath: string; // Path to the session that generated this memory
+}
+
+/**
+ * Command search result with relevance
+ */
+export interface CommandSearchResult {
+  type: "command";
+  command: NodeCommand;
+  matchedFields: string[]; // name, description, tags
+  relevanceScore: number;
+  sourceNode?: {
+    nodeId: string;
+    nodeName: string;
+  }; // undefined for global commands
+}
+
+/**
+ * Aggregated search results from all targets
+ */
+export interface AggregatedSearchResults {
+  query: SearchQuery;
+  timestamp: ISODateTime;
+  queryTimeMs: number;
+  counts: {
+    sessions: number;
+    memories: number;
+    commands: number;
+    total: number;
+  };
+  results: {
+    sessions: SessionSearchResult[];
+    memories: MemorySearchResult[];
+    commands: CommandSearchResult[];
+  };
+  groupedByNode?: Record<
+    string,
+    {
+      sessions: SessionSearchResult[];
+      memories: MemorySearchResult[];
+      commands: CommandSearchResult[];
+    }
+  >;
+}
+
+/**
+ * Options for history command
+ */
+export interface HistoryOptions {
+  limit?: number; // Default: 10, Max: 100
+  offset?: number; // Pagination
+  provider?: AIProvider; // Filter by provider
+  command?: string; // Filter by command name
+  status?: SessionStatus; // Filter by status
+  older?: number; // Days to look back
+}
+
+/**
+ * History result item (session with node info)
+ */
+export interface HistoryResult {
+  session: Session;
+  nodeInfo: {
+    nodeId: string;
+    nodeName: string;
+  };
+  memory?: {
+    sessionId: string;
+    summary: string;
+  }; // If memory was extracted for this session
+}
+
+/**
+ * Statistics for search results
+ */
+export interface SearchStats {
+  totalResults: number;
+  byType: Record<SearchTarget, number>;
+  byNode: Record<string, number>;
+  byProvider: Record<AIProvider, number>;
+  dateRange: {
+    oldest?: ISODateTime;
+    newest?: ISODateTime;
+  };
+}

@@ -380,7 +380,7 @@ export function isVersionCompatible(currentVersion: SemVer, minimumRequired: Sem
  */
 export function getFrameworkVersion(): FrameworkVersionInfo {
   return {
-    bozlyVersion: "0.3.0-alpha.1",
+    bozlyVersion: "0.3.0-rc.1",
     nodeVersion: process.version,
     platform: process.platform,
   };

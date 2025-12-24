@@ -329,7 +329,7 @@ describe("Framework Version Information", () => {
   it("should get framework version info", () => {
     const info = getFrameworkVersion();
 
-    expect(info.bozlyVersion).toBe("0.3.0-alpha.1");
+    expect(info.bozlyVersion).toBe("0.3.0-rc.1");
     expect(info.nodeVersion).toBeDefined();
     expect(info.platform).toBeDefined();
   });
