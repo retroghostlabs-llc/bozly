@@ -178,9 +178,7 @@ Started: ${new Date().toISOString()}
 
     if (entry.error) {
       output += "\n" + chalk.red(`Error: ${entry.error}`);
-      if (entry.stack) {
-        output += "\n" + chalk.gray(entry.stack);
-      }
+      // Note: Stack trace is logged to file but not console to avoid test runner interference
     }
 
     return output;
