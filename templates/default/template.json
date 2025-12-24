@@ -1,0 +1,10 @@
+{
+  "name": "default",
+  "displayName": "Default Template",
+  "description": "A basic template with essential commands, models, and workflows for any domain.",
+  "version": "1.0.0",
+  "category": "general",
+  "requires": {
+    "bozly": ">=0.3.0"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "content",
+  "displayName": "Content Creation Template",
+  "description": "A template for managing content creation workflows, editing, and audience analysis.",
+  "version": "1.0.0",
+  "category": "creative",
+  "tags": ["content", "writing", "editing", "creation"],
+  "requires": {
+    "bozly": ">=0.3.0"
+  }
+}

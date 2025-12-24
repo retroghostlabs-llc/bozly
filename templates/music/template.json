@@ -1,0 +1,11 @@
+{
+  "name": "music",
+  "displayName": "Music Production Template",
+  "description": "A specialized template for music discovery, analysis, curation, and production workflow.",
+  "version": "1.0.0",
+  "category": "creative",
+  "tags": ["music", "discovery", "production", "curation"],
+  "requires": {
+    "bozly": ">=0.3.0"
+  }
+}

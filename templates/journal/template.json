@@ -1,0 +1,11 @@
+{
+  "name": "journal",
+  "displayName": "Journal & Reflection Template",
+  "description": "A personal journaling template for daily reflections, weekly reviews, and life tracking.",
+  "version": "1.0.0",
+  "category": "personal",
+  "tags": ["journal", "reflection", "personal", "diary"],
+  "requires": {
+    "bozly": ">=0.3.0"
+  }
+}

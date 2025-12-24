@@ -29,6 +29,7 @@ import { versionCommand } from "./commands/version.js";
 import { workflowsCommand } from "./commands/workflows.js";
 import { cleanupCommand } from "./commands/cleanup.js";
 import { commandCommand } from "./commands/command.js";
+import { templateCommand } from "./commands/template.js";
 
 // Package info
 const VERSION = "0.3.0-alpha.1";
@@ -106,6 +107,7 @@ async function main(): Promise<void> {
   program.addCommand(workflowsCommand);
   program.addCommand(cleanupCommand);
   program.addCommand(commandCommand);
+  program.addCommand(templateCommand);
 
   // Default action (no command specified)
   program.action(() => {
