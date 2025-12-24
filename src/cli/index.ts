@@ -26,6 +26,8 @@ import { configCommand } from "./commands/config.js";
 import { logsCommand } from "./commands/logs.js";
 import { diffCommand } from "./commands/diff.js";
 import { versionCommand } from "./commands/version.js";
+import { workflowsCommand } from "./commands/workflows.js";
+import { cleanupCommand } from "./commands/cleanup.js";
 
 // Package info
 const VERSION = "0.3.0-alpha.1";
@@ -100,6 +102,8 @@ async function main(): Promise<void> {
   program.addCommand(logsCommand);
   program.addCommand(diffCommand);
   program.addCommand(versionCommand);
+  program.addCommand(workflowsCommand);
+  program.addCommand(cleanupCommand);
 
   // Default action (no command specified)
   program.action(() => {

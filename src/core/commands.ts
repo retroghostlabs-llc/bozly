@@ -13,11 +13,13 @@
 
 import fs from "fs/promises";
 import path from "path";
+import * as os from "os";
 import { spawn } from "child_process";
-import { NodeInfo, NodeCommand, RunOptions, RunResult } from "./types.js";
+import { NodeInfo, NodeCommand, RunOptions, RunResult, HookContext } from "./types.js";
 import { generateContext } from "./context.js";
 import { loadModel, modelExists, formatModelForPrompt } from "./models.js";
 import { validateProvider, getProviderConfig } from "./providers.js";
+import { executeHooks } from "./hooks.js";
 
 /**
  * Get all commands for a vault
@@ -51,12 +53,14 @@ export async function getNodeCommands(vaultPath: string): Promise<NodeCommand[]>
 }
 
 /**
- * Get a specific command
+ * Get a specific command (vault first, then global)
+ * Searches in order: vault local → global → null
  */
 export async function getCommand(
   vaultPath: string,
   commandName: string
 ): Promise<NodeCommand | null> {
+  // Try vault-local first
   const commandsPath = path.join(vaultPath, ".bozly", "commands");
   const filePath = path.join(commandsPath, `${commandName}.md`);
 
@@ -69,10 +73,95 @@ export async function getCommand(
       description,
       file: filePath,
       content,
+      source: "vault",
     };
   } catch {
+    // Try global commands
+    const globalCommands = await getGlobalCommands();
+    const globalCommand = globalCommands.find((c) => c.name === commandName);
+    if (globalCommand) {
+      return globalCommand;
+    }
     return null;
   }
+}
+
+/**
+ * Get all global commands from ~/.bozly/commands/
+ */
+export async function getGlobalCommands(): Promise<NodeCommand[]> {
+  const globalPath = path.join(os.homedir(), ".bozly", "commands");
+  const commands: NodeCommand[] = [];
+
+  try {
+    const files = await fs.readdir(globalPath);
+    for (const file of files) {
+      if (file.endsWith(".md")) {
+        const name = file.replace(".md", "");
+        const filePath = path.join(globalPath, file);
+        const content = await fs.readFile(filePath, "utf-8");
+        const description = extractDescription(content);
+
+        commands.push({
+          name,
+          description,
+          file: filePath,
+          content,
+          source: "global",
+        });
+      }
+    }
+  } catch {
+    // Global commands directory may not exist yet
+  }
+
+  return commands;
+}
+
+/**
+ * Get all available commands (vault + global with resolution)
+ * Vault commands override global commands of the same name
+ */
+export async function getAllCommands(vaultPath: string): Promise<NodeCommand[]> {
+  const commandsByName = new Map<string, NodeCommand>();
+
+  // Load global commands first (lowest priority)
+  const globalCommands = await getGlobalCommands();
+  for (const cmd of globalCommands) {
+    commandsByName.set(cmd.name, cmd);
+  }
+
+  // Load vault commands (override global)
+  const vaultCommands = await getNodeCommands(vaultPath);
+  for (const cmd of vaultCommands) {
+    commandsByName.set(cmd.name, { ...cmd, source: "vault" });
+  }
+
+  return Array.from(commandsByName.values());
+}
+
+/**
+ * Create a new global command file
+ */
+export async function createGlobalCommand(
+  name: string,
+  description: string,
+  content: string
+): Promise<void> {
+  const globalPath = path.join(os.homedir(), ".bozly", "commands");
+
+  // Create directory if not exists
+  await fs.mkdir(globalPath, { recursive: true });
+
+  // Create command file with frontmatter
+  const fullContent = `---
+description: ${description}
+---
+
+${content}`;
+
+  const filePath = path.join(globalPath, `${name}.md`);
+  await fs.writeFile(filePath, fullContent, "utf-8");
 }
 
 /**
@@ -136,10 +225,45 @@ export async function runNodeCommand(
     };
   }
 
+  // Execute pre-execution hooks (before calling AI)
+  const preContext: HookContext = {
+    nodeId: vault.id,
+    nodeName: vault.name,
+    nodePath: vault.path,
+    command: commandName,
+    provider,
+    timestamp: new Date().toISOString(),
+    prompt,
+    promptSize: prompt.length,
+  };
+
+  await executeHooks(vault.path, "pre-execution", preContext);
+
   // Execute with AI provider and measure duration
   const startTime = Date.now();
   const output = await executeWithProvider(provider, prompt);
   const duration = Date.now() - startTime;
+
+  // Execute post-execution hooks (after AI completes successfully)
+  const postContext: HookContext = {
+    nodeId: vault.id,
+    nodeName: vault.name,
+    nodePath: vault.path,
+    command: commandName,
+    provider,
+    timestamp: new Date().toISOString(),
+    prompt,
+    promptSize: prompt.length,
+    session: {
+      id: "pre-recording", // Will be created in run.ts after recordSession
+      sessionPath: vault.path,
+      status: "completed",
+      duration,
+      output,
+    },
+  };
+
+  await executeHooks(vault.path, "post-execution", postContext);
 
   return {
     provider,

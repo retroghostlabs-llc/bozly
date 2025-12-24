@@ -26,6 +26,7 @@ import path from "path";
 import os from "os";
 import { logger } from "./logger.js";
 import { GlobalConfig, NodeConfig } from "./types.js";
+import { DEFAULT_CLEANUP_CONFIG } from "./cleanup.js";
 
 const BOZLY_HOME = path.join(os.homedir(), ".bozly");
 const GLOBAL_CONFIG_FILE = "bozly-config.json";
@@ -67,6 +68,7 @@ export async function getGlobalConfig(): Promise<GlobalConfig> {
       const defaultConfig: GlobalConfig = {
         version: "0.3.0",
         defaultAI: "claude",
+        cleanup: DEFAULT_CLEANUP_CONFIG,
       };
       await ensureBozlyHome();
       await fs.writeFile(configPath, JSON.stringify(defaultConfig, null, 2));

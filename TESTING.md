@@ -1,7 +1,7 @@
 # BOZLY Testing Guide
 
 **Status:** Active
-**Last Updated:** 2025-12-18
+**Last Updated:** 2025-12-24 (Session 85 - Hooks & Workflows Integration Tests)
 
 Comprehensive testing guide for BOZLY contributors.
 
@@ -216,6 +216,139 @@ describe("bozly list command", () => {
 });
 ```
 
+### Hooks Integration Testing
+
+Location: `tests/integration/hooks.integration.test.ts`
+
+Tests the complete hook lifecycle within the BOZLY framework:
+
+**Coverage:**
+- ✅ Complete hook lifecycle (session-start → pre-execution → post-execution → session-end)
+- ✅ Multi-hook orchestration (multiple hooks of same type)
+- ✅ Hook context passing (environment variables, JSON stdin)
+- ✅ Error handling (on-error hooks, failed hooks)
+- ✅ Hook failure handling (non-fatal failures, stderr capture)
+- ✅ Hook performance (duration measurement, efficient execution)
+
+**Example:**
+```typescript
+describe("Complete Hook Lifecycle", () => {
+  it("executes all hooks in sequence", async () => {
+    // Create hooks for full lifecycle
+    const hooks = {
+      "session-start.init.sh": '#!/bin/bash\necho "1-start"',
+      "pre-execution.validate.sh": '#!/bin/bash\necho "2-pre"',
+      "post-execution.process.sh": '#!/bin/bash\necho "3-post"',
+      "session-end.finalize.sh": '#!/bin/bash\necho "4-end"',
+    };
+    // ... setup and verify execution
+  });
+});
+```
+
+### Workflows Integration Testing
+
+Location: `tests/integration/workflows.integration.test.ts`
+
+Tests the complete workflow system including discovery, loading, validation, and execution:
+
+**Coverage:**
+- ✅ Complete workflow lifecycle (load, execute, track results)
+- ✅ Workflow discovery (node-level and global locations)
+- ✅ Multi-step execution with context passing
+- ✅ Error handling (stop/continue strategies)
+- ✅ Validation against registry
+- ✅ Execution features (dry-run, skip steps, timing)
+- ✅ Context features (static, nested objects, arrays, templates)
+- ✅ Metadata and configuration handling
+- ✅ Performance measurements
+- ✅ Edge cases (unicode, long IDs, malformed files)
+
+**Test Categories:**
+1. **Complete Workflow Lifecycle** (5 tests)
+   - Load and execute workflows from filesystem
+   - Discover workflows from multiple locations
+   - Multi-step execution with context passing
+   - Error handling with different strategies
+
+2. **Workflow Discovery and Loading** (4 tests)
+   - Sort workflows alphabetically
+   - Skip invalid workflow files
+   - Handle corrupted files gracefully
+   - Return null for non-existent workflows
+
+3. **Workflow Validation** (5 tests)
+   - Validate structure against registry
+   - Detect missing required fields
+   - Detect invalid node references
+   - Detect duplicate step IDs
+   - Validate error strategies
+
+4. **Workflow Execution Features** (6 tests)
+   - Dry-run mode without side effects
+   - Skip specified steps
+   - Record execution timing
+   - Generate verbose logging
+   - Count all step statuses
+
+5. **Workflow Context Features** (5 tests)
+   - Static context in steps
+   - Nested context objects
+   - Arrays in context
+   - Date template variables
+   - Step output interpolation
+
+6. **Workflow Metadata and Configuration** (3 tests)
+   - Preserve metadata through execution
+   - Handle workflows without metadata
+   - Handle step descriptions
+
+7. **Workflow Performance** (3 tests)
+   - Execute workflows efficiently
+   - Handle complex workflows with many steps
+   - Measure step execution duration
+
+8. **Edge Cases** (2 tests)
+   - Handle unicode characters
+   - Handle long step IDs
+
+**Example:**
+```typescript
+describe("Complete Workflow Lifecycle", () => {
+  it("loads and executes a workflow from filesystem", async () => {
+    const workflow: Workflow = {
+      id: "simple-workflow",
+      name: "Simple Test Workflow",
+      version: "1.0.0",
+      created: new Date().toISOString(),
+      steps: [
+        {
+          id: "step-1",
+          node: "test-node",
+          command: "morning",
+          onError: "stop",
+        },
+      ],
+    };
+
+    // Write to file
+    await fs.writeFile(workflowPath, JSON.stringify(workflow));
+
+    // Discover
+    const discovered = await discoverWorkflows(nodeDir);
+    expect(discovered).toHaveLength(1);
+
+    // Load
+    const loaded = await loadWorkflow(nodeDir, "simple-workflow");
+    expect(loaded).not.toBeNull();
+
+    // Execute
+    const result = await executeWorkflow(loaded!);
+    expect(result.status).toBe("completed");
+  });
+});
+```
+
 ### Mock Node Creation
 
 All integration tests should use mock nodes:
@@ -364,26 +497,27 @@ it("should throw NodeNotFoundError if node doesn't exist", async () => {
 
 ```
 tests/unit/
-├── node.test.ts        # 9+ tests for node operations
-├── registry.test.ts     # 10+ tests for registry management
-├── config.test.ts       # 8+ tests for config handling
-├── context.test.ts      # 10+ tests for context generation
-└── types.test.ts        # 12+ tests for type definitions
-                         ────────────────
-                         49+ unit tests
+├── node.test.ts           # 12+ tests for node operations
+├── registry.test.ts       # 14+ tests for registry management
+├── config.test.ts         # 10+ tests for config handling
+├── context.test.ts        # 11+ tests for context generation
+├── types.test.ts          # 15+ tests for type definitions
+├── logger.test.ts         # 37+ tests for logging
+├── sessions.test.ts       # 37+ tests for session recording
+├── versions.test.ts       # 39+ tests for versioning
+├── workflows.test.ts      # 32+ tests for workflow functions
+└── hooks.test.ts          # 27+ tests for hook functions
+                           ────────────────
+                           244+ unit tests
 
 tests/integration/
-├── cli-init.test.ts     # 5+ tests
-├── cli-list.test.ts     # 5+ tests
-├── cli-add.test.ts      # 3+ tests
-├── cli-status.test.ts   # 3+ tests
-├── cli-context.test.ts  # 3+ tests
-├── cli-run.test.ts      # 3+ tests
-└── cli-config.test.ts   # 2+ tests
-                         ────────────
-                         24+ integration tests
+├── cli.integration.test.ts         # 11+ tests for CLI commands
+├── hooks.integration.test.ts       # 12+ tests for hook lifecycle
+└── workflows.integration.test.ts   # 33+ tests for workflow execution
+                                    ────────────
+                                    56+ integration tests
 
-Total: 73+ tests (target: 80%+ coverage)
+Total: 300+ tests with 80%+ coverage
 ```
 
 ---
@@ -551,6 +685,7 @@ See `MANUAL-TESTING.md` for:
 
 ---
 
-**Last Updated:** 2025-12-18
+**Last Updated:** 2025-12-24
 **Test Execution:** `npm run test`
 **Coverage Report:** `npm run test:coverage`
+**Current Results:** 580+ tests passing, 26 test files, 80%+ coverage

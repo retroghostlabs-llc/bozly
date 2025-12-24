@@ -188,6 +188,12 @@ cleanup() {
     log_warning "Container kept for inspection: bozly-test"
     log_info "To remove container, run: docker-compose -f docker-compose.test.yml down"
   fi
+
+  # Clean up any .tgz files left from npm pack
+  if [ -f "*.tgz" ] || ls *.tgz 1> /dev/null 2>&1; then
+    rm -f ./*.tgz
+    log_success "Cleaned up .tgz artifacts"
+  fi
 }
 
 show_coverage_summary() {

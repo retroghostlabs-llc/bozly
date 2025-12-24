@@ -52,6 +52,7 @@ export interface GlobalConfig {
   defaultAI: string;
   theme?: string;
   editor?: string;
+  cleanup?: CleanupConfig;
 }
 
 /**
@@ -80,6 +81,9 @@ export interface NodeCommand {
   description?: string;
   file: string;
   content?: string;
+  source?: "vault" | "global" | "builtin"; // NEW: where command comes from
+  model?: string; // NEW: reference to domain model
+  tags?: string[]; // NEW: command categorization
 }
 
 /**
@@ -379,4 +383,352 @@ export interface SessionDiff {
       status: boolean; // Status changed?
     };
   };
+}
+
+/**
+ * Hook system types
+ */
+
+/**
+ * Hook types - when hooks execute in the session lifecycle
+ *
+ * - session-start: Before command loading (environment setup)
+ * - pre-execution: Before AI call (prompt ready, can inspect/validate)
+ * - post-execution: After AI succeeds (process output)
+ * - session-end: After session recorded (archive, notify)
+ * - on-error: When execution fails (error handling)
+ * - on-cancel: When user interrupts Ctrl+C (cleanup)
+ */
+export type HookType =
+  | "session-start"
+  | "pre-execution"
+  | "post-execution"
+  | "session-end"
+  | "on-error"
+  | "on-cancel";
+
+/**
+ * Hook metadata discovered from .bozly/hooks/ directory
+ */
+export interface HookMetadata {
+  name: string;
+  type: HookType;
+  file: string;
+  enabled: boolean;
+  timeout?: number; // milliseconds, default 30000
+}
+
+/**
+ * Context data passed to hooks via environment variables and temp file
+ *
+ * Different hooks receive different subsets of this data:
+ * - All hooks: node info, command, provider, timestamp
+ * - pre-execution, post-execution, session-end: prompt + promptSize
+ * - post-execution, session-end, on-error: session + output/error
+ * - on-error only: error details
+ * - on-cancel only: cancellation reason + partial output
+ */
+export interface HookContext {
+  // Available to all hooks
+  nodeId: string;
+  nodeName: string;
+  nodePath: string;
+  command: string;
+  provider: string;
+  timestamp: string; // ISO 8601
+
+  // Available to pre-execution, post-execution, session-end
+  prompt?: string;
+  promptSize?: number;
+
+  // Available to post-execution, session-end, on-error
+  session?: {
+    id: string;
+    sessionPath: string;
+    status: "completed" | "failed" | "cancelled";
+    duration: number; // milliseconds
+    output?: string;
+    error?: string;
+  };
+
+  // Available to on-error only
+  error?: {
+    message: string;
+    code: string;
+    stack?: string;
+  };
+
+  // Available to on-cancel only
+  cancellationReason?: string; // "SIGINT", "SIGTERM", etc.
+  partialOutput?: string;
+}
+
+/**
+ * Result of executing a single hook
+ */
+export interface HookResult {
+  hookName: string;
+  success: boolean;
+  duration: number; // milliseconds
+  error?: string;
+  stdout?: string;
+  stderr?: string;
+}
+
+/**
+ * Workflow system types
+ */
+
+/**
+ * Error handling strategy for workflow steps
+ * - "stop": Fail entire workflow on step failure
+ * - "continue": Log error and proceed to next step
+ */
+export type WorkflowErrorStrategy = "stop" | "continue";
+
+/**
+ * Single step in a workflow
+ */
+export interface WorkflowStep {
+  id: string; // Unique within workflow (e.g., "journal-entry")
+  description?: string;
+  node: string; // Node ID to run command on
+  command: string; // Command name
+  timeout?: number; // milliseconds, default 300000 (5 min)
+  onError: WorkflowErrorStrategy;
+  context?: Record<string, any>; // Step-specific context
+  conditional?: {
+    requires?: string[]; // IDs of steps that must complete first
+    skip?: string; // Boolean expression to skip step
+  };
+}
+
+/**
+ * Result of executing a single workflow step
+ */
+export interface WorkflowStepResult {
+  stepId: string;
+  status: "completed" | "failed" | "skipped";
+  duration: number; // milliseconds
+  output?: string;
+  error?: string;
+  session?: Session; // Full session object if step ran
+}
+
+/**
+ * A complete workflow definition
+ */
+export interface Workflow {
+  id: string; // Unique identifier (e.g., "daily")
+  name: string;
+  description?: string;
+  version: string;
+  created: string; // ISO 8601
+  updated?: string; // ISO 8601
+
+  steps: WorkflowStep[];
+  onCompleted?: "notify" | "none";
+  metadata?: {
+    frequency?: "once" | "daily" | "weekly" | "manual";
+    bestTime?: string; // HH:MM format
+    tags?: string[];
+  };
+}
+
+/**
+ * Result of executing a complete workflow
+ */
+export interface WorkflowResult {
+  workflowId: string;
+  status: "completed" | "failed" | "partially_completed";
+  startTime: string; // ISO 8601
+  endTime: string; // ISO 8601
+  duration: number; // milliseconds
+  stepsCompleted: number;
+  stepsFailed: number;
+  stepsSkipped: number;
+  steps: WorkflowStepResult[];
+  sessionId?: string; // Parent workflow session ID
+  error?: string; // If workflow itself failed
+}
+
+/**
+ * Options for executing a workflow
+ */
+export interface WorkflowExecutionOptions {
+  dryRun?: boolean;
+  verbose?: boolean;
+  fromStep?: string; // Start from this step
+  skipSteps?: string[]; // Skip specific steps
+  contextOverride?: Record<string, any>; // Override context variables
+}
+
+/**
+ * Validation error for workflow
+ */
+export interface WorkflowValidationError {
+  step: string; // Step ID, or "workflow" for top-level
+  field: string; // Field that failed validation
+  message: string;
+}
+
+/**
+ * Cleanup system types
+ */
+
+/**
+ * Cleanup configuration for session retention and disk management
+ */
+export interface CleanupSessionConfig {
+  enabled: boolean; // Enable cleanup features
+  retentionDays: number; // Days before deletion (default: 90)
+  archiveAfterDays: number; // Days before compression (default: 30)
+  maxStorageMB: number; // Per-node limit (default: 500)
+  keepMinSessions: number; // Always keep N most recent (default: 100)
+}
+
+export interface CleanupBackupConfig {
+  maxCount: number; // Max node backups to keep (default: 10)
+  maxAgeDays: number; // Delete backups older than N days (default: 30)
+}
+
+/**
+ * Global cleanup configuration stored in ~/.bozly/bozly-config.json
+ */
+export interface CleanupConfig {
+  sessions: CleanupSessionConfig;
+  backups: CleanupBackupConfig;
+  autoCleanup: boolean; // Enable automatic cleanup (default: true)
+  warnAtPercent: number; // Warn when storage exceeds % (default: 80)
+}
+
+/**
+ * Storage usage information
+ */
+export interface StorageUsage {
+  sessionsSizeMB: number; // Total size of all sessions
+  activeSessions: {
+    count: number;
+    sizeMB: number;
+  };
+  archivedSessions: {
+    count: number;
+    sizeMB: number;
+  };
+  backupsSizeMB: number;
+  totalSizeMB: number;
+  percentUsed: number; // Percentage of maxStorageMB
+  maxStorageMB: number;
+}
+
+/**
+ * Storage info for a single node
+ */
+export interface NodeStorageInfo {
+  nodeId: string;
+  nodeName: string;
+  nodePath: string;
+  usage: StorageUsage;
+  canClean: {
+    oldSessions: number; // Sessions older than retentionDays
+    archivedSessions: number; // Sessions that can be archived
+  };
+}
+
+/**
+ * Options for cleanup command
+ */
+export interface CleanupOptions {
+  preview?: boolean; // Dry-run mode
+  dryRun?: boolean; // Alias for preview
+  olderThan?: string; // Filter: "90d", "6m", "1y"
+  archive?: boolean; // Archive instead of delete
+  vault?: string; // Clean specific vault
+  all?: boolean; // Clean all vaults
+  force?: boolean; // Skip confirmation
+  toLimit?: boolean; // Clean to storage limit
+}
+
+/**
+ * Result of cleanup operation
+ */
+export interface CleanupResult {
+  sessionsDeleted: number;
+  sessionsArchived: number;
+  backupsDeleted: number;
+  spaceFreedMB: number;
+  duration: number; // milliseconds
+  dryRun: boolean;
+}
+
+/**
+ * Template system types
+ */
+
+/**
+ * Template variable definition
+ */
+export interface TemplateVariable {
+  prompt: string; // Question to ask user
+  default?: string | boolean | number; // Default value
+  type?: "string" | "boolean" | "number"; // Data type
+  required?: boolean; // Whether value is required
+}
+
+/**
+ * Template metadata stored in template.json
+ */
+export interface TemplateMetadata {
+  name: string; // Template ID (e.g., "music-discovery")
+  displayName: string; // Human-readable name
+  description: string;
+  version: string; // SemVer (e.g., "1.0.0")
+  author?: {
+    name: string;
+    url?: string;
+  };
+  license?: string;
+  tags?: string[];
+  category?: string; // e.g., "creative", "productivity", "custom"
+  requires?: {
+    bozly: string; // Min version (e.g., ">=0.3.0")
+  };
+  variables?: Record<string, TemplateVariable>; // User-defined variables
+  postInit?: {
+    message?: string; // Message to show after template applied
+    commands?: string[]; // Commands to suggest running
+  };
+}
+
+/**
+ * Template with metadata and location
+ */
+export interface Template {
+  metadata: TemplateMetadata;
+  path: string; // Absolute path to template directory
+  source: "builtin" | "user"; // Where template came from
+}
+
+/**
+ * Template context for variable substitution
+ * Built with system variables + user variables
+ */
+export interface TemplateContext {
+  VAULT_NAME: string;
+  CREATED_DATE: string; // YYYY-MM-DD format
+  BOZLY_VERSION: string;
+  USER_NAME?: string;
+  [key: string]: string | boolean | number | undefined; // Custom variables
+}
+
+/**
+ * Options for creating a template
+ */
+export interface CreateTemplateOptions {
+  name: string;
+  displayName: string;
+  description: string;
+  author?: string;
+  tags?: string[];
+  category?: string;
 }

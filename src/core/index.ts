@@ -13,3 +13,5 @@ export * from "./models.js";
 export * from "./providers.js";
 export * from "./sessions.js";
 export * from "./versions.js";
+export * from "./hooks.js";
+export * from "./workflows.js";

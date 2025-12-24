@@ -75,6 +75,13 @@ print_error() {
 }
 
 cleanup_on_exit() {
+  # Always clean up .tgz files, even if CLEANUP=false
+  if [ -n "$PACK_FILE" ] && [ -f "$PACK_FILE" ]; then
+    rm -f "$PACK_FILE"
+  fi
+  # Also clean up any other .tgz files in project root
+  rm -f "$PROJECT_ROOT"/*.tgz 2>/dev/null || true
+
   if [ $CLEANUP = true ]; then
     if [ -n "$TEST_DIR" ] && [ -d "$TEST_DIR" ]; then
       print_step "Cleaning up temporary directory"

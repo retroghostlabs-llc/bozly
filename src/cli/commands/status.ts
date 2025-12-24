@@ -7,14 +7,19 @@ import chalk from "chalk";
 import { logger } from "../../core/logger.js";
 import { getCurrentNode } from "../../core/node.js";
 import { getNodeCommands } from "../../core/commands.js";
+import { getCleanupConfig, calculateNodeStorage } from "../../core/cleanup.js";
+import { homedir } from "os";
+import path from "path";
 
 export const statusCommand = new Command("status")
   .description("Show current node status")
   .option("-v, --verbose", "Show detailed information")
+  .option("--storage", "Show storage usage information")
   .action(async (options) => {
     try {
       await logger.debug("bozly status command started", {
         verbose: options.verbose,
+        storage: options.storage,
       });
 
       const node = await getCurrentNode();
@@ -55,7 +60,33 @@ export const statusCommand = new Command("status")
         console.log();
       }
 
-      // Show recent sessions if verbose
+      // Show storage information if requested or verbose
+      if (options.storage || options.verbose) {
+        const globalConfigPath = path.join(homedir(), ".bozly");
+        const cleanupConfig = await getCleanupConfig(globalConfigPath);
+        const storage = await calculateNodeStorage(node.path, cleanupConfig.sessions.maxStorageMB);
+
+        console.log(chalk.bold("Storage Usage:"));
+        console.log(
+          `  Total: ${storage.totalSizeMB} MB / ${storage.maxStorageMB} MB (${storage.percentUsed}%)`
+        );
+        console.log(`  Sessions: ${storage.sessionsSizeMB} MB`);
+        console.log(`    - Active: ${storage.activeSessions.count} sessions`);
+        console.log(`    - Archived: ${storage.archivedSessions.count} sessions`);
+        console.log(`  Backups: ${storage.backupsSizeMB} MB`);
+        console.log();
+
+        if (storage.percentUsed > 80) {
+          const color = storage.percentUsed > 95 ? chalk.red : chalk.yellow;
+          console.log(
+            color(`⚠️  Storage usage is ${storage.percentUsed > 95 ? "critical" : "high"}`)
+          );
+          console.log(color(`  Run 'bozly cleanup --preview' to see cleanup options`));
+          console.log();
+        }
+      }
+
+      // Show configuration if verbose
       if (options.verbose) {
         console.log(chalk.bold("Configuration:"));
         console.log(chalk.gray(`  Config: .bozly/config.json`));
