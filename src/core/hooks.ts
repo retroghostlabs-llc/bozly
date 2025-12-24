@@ -171,7 +171,7 @@ async function executeHook(hook: HookMetadata, context: HookContext): Promise<Ho
           hookName: hook.name,
         })
         .catch(() => {});
-    }, hook.timeout || 30000);
+    }, hook.timeout ?? 30000);
 
     // Spawn hook process
     const proc = spawn("bash", [hook.file], {
@@ -311,7 +311,7 @@ function buildHookEnvironment(context: HookContext): Record<string, string> {
 
   // Prompt data (for pre-execution, post-execution, session-end)
   if (context.prompt !== undefined) {
-    env.BOZLY_PROMPT_SIZE = String(context.promptSize || 0);
+    env.BOZLY_PROMPT_SIZE = String(context.promptSize ?? 0);
   }
 
   // Session data (for post-execution, session-end, on-error)

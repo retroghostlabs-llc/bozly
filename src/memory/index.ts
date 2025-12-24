@@ -285,7 +285,7 @@ export class MemoryIndex {
     newestEntry?: string;
   } {
     return {
-      totalEntries: this.index?.entries.length || 0,
+      totalEntries: this.index?.entries.length ?? 0,
       fileSize: JSON.stringify(this.index).length,
       newestEntry:
         this.index && this.index.entries.length > 0 ? this.index.entries[0].sessionId : undefined,

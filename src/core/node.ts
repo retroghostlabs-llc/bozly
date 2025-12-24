@@ -101,7 +101,7 @@ export async function initNode(options: InitOptions): Promise<NodeInfo> {
   }
 
   // Determine vault name
-  const name = options.name || path.basename(nodePath);
+  const name = options.name ?? path.basename(nodePath);
   await logger.debug("Determined vault name", { name, isDefault: !options.name });
 
   // Try to use template system if available
@@ -114,8 +114,8 @@ export async function initNode(options: InitOptions): Promise<NodeInfo> {
 
     try {
       // Collect template variables
-      let userVariables = options.variables || {};
-      if (Object.keys(template.metadata.variables || {}).length > 0) {
+      let userVariables = options.variables ?? {};
+      if (Object.keys(template.metadata.variables ?? {}).length > 0) {
         const collectedVars = await collectTemplateVariables(template.metadata);
         userVariables = { ...userVariables, ...collectedVars };
       }

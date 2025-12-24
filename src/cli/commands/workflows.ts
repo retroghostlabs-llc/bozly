@@ -188,7 +188,7 @@ function displayWorkflowDetails(workflow: Workflow): void {
       console.log(chalk.dim(`     ${step.description}`));
     }
     console.log(chalk.dim(`     → Run '${step.command}' on node '${step.node}'`));
-    console.log(chalk.dim(`     On error: ${step.onError} (timeout: ${step.timeout || 300000}ms)`));
+    console.log(chalk.dim(`     On error: ${step.onError} (timeout: ${step.timeout ?? 300000}ms)`));
   });
 
   console.log("");

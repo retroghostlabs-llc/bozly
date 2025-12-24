@@ -66,7 +66,7 @@ export interface InitOptions {
   type?: string;
   name?: string;
   force?: boolean;
-  variables?: Record<string, any>; // Template variables from --set flags or interactive prompts
+  variables?: Record<string, unknown>; // Template variables from --set flags or interactive prompts
   skipTemplateVariables?: boolean; // Skip interactive variable collection (for CI/automated)
 }
 
@@ -313,7 +313,7 @@ export interface FileChange {
  * Execution details stored in execution.json
  */
 export interface ExecutionDetails {
-  commandInput: Record<string, any>;
+  commandInput: Record<string, unknown>;
   aiRequest: {
     provider: string;
     model?: string;
@@ -503,7 +503,7 @@ export interface WorkflowStep {
   command: string; // Command name
   timeout?: number; // milliseconds, default 300000 (5 min)
   onError: WorkflowErrorStrategy;
-  context?: Record<string, any>; // Step-specific context
+  context?: Record<string, unknown>; // Step-specific context
   conditional?: {
     requires?: string[]; // IDs of steps that must complete first
     skip?: string; // Boolean expression to skip step
@@ -567,7 +567,7 @@ export interface WorkflowExecutionOptions {
   verbose?: boolean;
   fromStep?: string; // Start from this step
   skipSteps?: string[]; // Skip specific steps
-  contextOverride?: Record<string, any>; // Override context variables
+  contextOverride?: Record<string, unknown>; // Override context variables
 }
 
 /**

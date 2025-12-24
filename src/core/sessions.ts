@@ -238,7 +238,7 @@ export async function recordSession(
     nodeId,
     timestamp: now,
     command,
-    provider: provider as any,
+    provider,
     status: response.error ? "failed" : "completed",
     executionTimeMs: response.duration,
     nodeName,
@@ -300,7 +300,7 @@ Command: ${command}
 `;
 
   // Build prompt.txt (raw prompt for diff)
-  const promptTxt = `${prompt.contextText || ""}
+  const promptTxt = `${prompt.contextText ?? ""}
 ---
 ${prompt.commandText}
 ${prompt.modelsUsed?.length ? `\n---\n${prompt.modelsUsed.join("\n")}` : ""}`;
@@ -341,7 +341,7 @@ ${prompt.modelsUsed?.length ? `\n---\n${prompt.modelsUsed.join("\n")}` : ""}`;
             {
               timestamp: now,
               type: response.error ? "error" : "complete",
-              message: response.error || "Execution completed",
+              message: response.error ?? "Execution completed",
             },
           ],
     timing: {
@@ -1253,7 +1253,7 @@ export async function indexSessionMemory(
       memoryAutoExtracted: true,
       extractionTrigger: "sessionEnd",
       tags: memory.tags,
-      relevantPreviousSessions: memory.relevantSessions || [],
+      relevantPreviousSessions: memory.relevantSessions ?? [],
       summary: memory.summary,
     };
 

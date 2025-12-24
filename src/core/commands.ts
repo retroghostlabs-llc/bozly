@@ -221,7 +221,7 @@ export async function runNodeCommand(
 
   // Build prompt
   const prompt = buildPrompt(context, modelContent, command);
-  const provider = options.provider || "claude";
+  const provider = options.provider ?? "claude";
 
   if (options.dryRun) {
     return {

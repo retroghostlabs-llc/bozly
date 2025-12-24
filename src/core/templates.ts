@@ -86,7 +86,7 @@ export async function getTemplates(): Promise<Template[]> {
  */
 export async function getTemplate(name: string): Promise<Template | null> {
   const templates = await getTemplates();
-  return templates.find((t) => t.metadata.name === name) || null;
+  return templates.find((t) => t.metadata.name === name) ?? null;
 }
 
 /**
@@ -140,8 +140,8 @@ export function substituteVariables(content: string, context: TemplateContext): 
  */
 export async function collectTemplateVariables(
   metadata: TemplateMetadata
-): Promise<Record<string, any>> {
-  const context: Record<string, any> = {};
+): Promise<Record<string, unknown>> {
+  const context: Record<string, unknown> = {};
 
   if (!metadata.variables) {
     return context;
@@ -164,7 +164,7 @@ export async function collectTemplateVariables(
  */
 export function buildTemplateContext(
   vaultName: string,
-  userVariables: Record<string, any>,
+  userVariables: Record<string, unknown>,
   bozlyVersion: string
 ): TemplateContext {
   const now = new Date();
@@ -173,7 +173,7 @@ export function buildTemplateContext(
     CREATED_DATE: now.toISOString().split("T")[0], // YYYY-MM-DD format
     CREATED_DATETIME: now.toISOString(), // Full ISO datetime format
     BOZLY_VERSION: bozlyVersion,
-    USER_NAME: process.env.USER || "User",
+    USER_NAME: process.env.USER ?? "User",
     ...userVariables,
   };
 }
@@ -335,7 +335,7 @@ Version: {{BOZLY_VERSION}}
 
 ## Domain
 
-This is a ${category || "custom"} vault for managing ${description.toLowerCase()}.
+This is a ${category ?? "custom"} vault for managing ${description.toLowerCase()}.
 
 ## Commands
 

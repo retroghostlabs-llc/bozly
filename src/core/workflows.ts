@@ -44,7 +44,7 @@ export async function discoverWorkflows(nodePath: string): Promise<Workflow[]> {
   nodeWorkflows.forEach((w) => discovered.set(w.id, w));
 
   // Global workflows
-  const globalWorkflowsPath = path.join(process.env.HOME || "/root", ".bozly", "workflows");
+  const globalWorkflowsPath = path.join(process.env.HOME ?? "/root", ".bozly", "workflows");
   const globalWorkflows = await discoverWorkflowsInDirectory(globalWorkflowsPath);
   globalWorkflows.forEach((w) => {
     // Node-level workflows override global
@@ -114,7 +114,7 @@ export async function loadWorkflow(nodePath: string, workflowId: string): Promis
   if (!exists) {
     // Try global
     workflowPath = path.join(
-      process.env.HOME || "/root",
+      process.env.HOME ?? "/root",
       ".bozly",
       "workflows",
       `${workflowId}.json`
@@ -274,7 +274,7 @@ export function validateWorkflow(
 export function interpolateStepContext(
   step: WorkflowStep,
   completedSteps: Map<string, WorkflowStepResult>
-): Record<string, any> {
+): Record<string, unknown> {
   if (!step.context) {
     return {};
   }
@@ -283,7 +283,7 @@ export function interpolateStepContext(
   const now = new Date();
 
   // Helper function to process template strings
-  const processValue = (value: any): any => {
+  const processValue = (value: unknown): unknown => {
     if (typeof value !== "string") {
       if (Array.isArray(value)) {
         return value.map(processValue);
@@ -310,7 +310,7 @@ export function interpolateStepContext(
     // Process {{ steps.{stepId}.output }} templates
     result = result.replace(/\{\{\s*steps\.([a-zA-Z0-9-_]+)\.output\s*\}\}/g, (_match, stepId) => {
       const stepResult = completedSteps.get(stepId);
-      return stepResult?.output || "";
+      return stepResult?.output ?? "";
     });
 
     // Process {{ steps.{stepId}.session.id }} templates
@@ -319,7 +319,7 @@ export function interpolateStepContext(
       (_match, stepId, field) => {
         const stepResult = completedSteps.get(stepId);
         if (stepResult?.session && field in stepResult.session) {
-          const val = (stepResult.session as any)[field];
+          const val = (stepResult.session as Record<string, unknown>)[field];
           return typeof val === "string" ? val : JSON.stringify(val);
         }
         return "";
@@ -329,7 +329,7 @@ export function interpolateStepContext(
     return result;
   };
 
-  return processValue(context) as Record<string, any>;
+  return processValue(context) as Record<string, unknown>;
 }
 
 /**
@@ -397,7 +397,7 @@ export async function executeWorkflow(
   await logger.info("Executing workflow", {
     id: workflow.id,
     steps: workflow.steps.length,
-    dryRun: options?.dryRun || false,
+    dryRun: options?.dryRun ?? false,
   });
 
   for (const step of workflow.steps) {

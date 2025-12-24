@@ -32,7 +32,7 @@ export const runCommand = new Command("run")
   .option("--verbose", "Include full prompt/response in session logs")
   .option("--workflow", "Execute as a workflow instead of a command")
   .action(async (commandArg, options) => {
-    let node: any; // Will be set after validation
+    let node: NodeInfo; // Will be set after validation
     let cancelRequested = false;
 
     // Handle Ctrl+C and termination signals for on-cancel hooks
@@ -293,12 +293,12 @@ export const runCommand = new Command("run")
               provider: result.provider,
               timestamp: new Date().toISOString(),
               prompt: result.prompt,
-              promptSize: result.prompt?.length || 0,
+              promptSize: result.prompt?.length ?? 0,
               session: {
                 id: "recorded", // Real session ID would come from recordSession response
                 sessionPath: node.path,
                 status: "completed",
-                duration: result.duration || 0,
+                duration: result.duration ?? 0,
                 output: result.output,
               },
             };

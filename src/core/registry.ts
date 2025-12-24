@@ -36,7 +36,7 @@ const REGISTRY_FILE = "bozly-registry.json";
  * Falls back to ~/.bozly if not set
  */
 function getBozlyHome(): string {
-  return process.env.BOZLY_HOME || path.join(os.homedir(), ".bozly");
+  return process.env.BOZLY_HOME ?? path.join(os.homedir(), ".bozly");
 }
 
 /**
@@ -172,9 +172,9 @@ export async function addNode(options: AddNodeOptions): Promise<NodeInfo> {
   }
 
   return addNodeToRegistry({
-    name: options.name || config.name || path.basename(nodePath),
+    name: options.name ?? config.name ?? path.basename(nodePath),
     path: nodePath,
-    type: config.type || "default",
+    type: config.type ?? "default",
   });
 }
 

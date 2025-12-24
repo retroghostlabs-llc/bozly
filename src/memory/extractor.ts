@@ -44,7 +44,7 @@ interface MemoryTemplate {
  */
 function detectVaultType(vaultName: string, context?: string): string {
   const lowerName = vaultName.toLowerCase();
-  const lowerContext = (context || "").toLowerCase();
+  const lowerContext = (context ?? "").toLowerCase();
 
   if (
     lowerName.includes("music") ||
@@ -256,7 +256,7 @@ export class MemoryExtractor {
       memoryAutoExtracted: true,
       extractionTrigger: trigger,
       tags: memory.tags,
-      relevantPreviousSessions: memory.relevantSessions || [],
+      relevantPreviousSessions: memory.relevantSessions ?? [],
       summary: memory.summary,
       vaultType,
     };
@@ -269,22 +269,22 @@ export class MemoryExtractor {
     return `# Session: ${memory.nodeName} — ${memory.title}
 
 ## Current State
-${memory.currentState || "No state information"}
+${memory.currentState ?? "No state information"}
 
 ## Task Specification
-${memory.taskSpec || "No task specification"}
+${memory.taskSpec ?? "No task specification"}
 
 ## Workflow
-${memory.workflow || "No workflow information"}
+${memory.workflow ?? "No workflow information"}
 
 ## Errors & Corrections
-${memory.errors || "No errors encountered"}
+${memory.errors ?? "No errors encountered"}
 
 ## Learnings
-${memory.learnings || "No learnings recorded"}
+${memory.learnings ?? "No learnings recorded"}
 
 ## Key Results
-${memory.keyResults || "No results recorded"}
+${memory.keyResults ?? "No results recorded"}
 
 ## Metadata
 - Session ID: ${metadata.sessionId}

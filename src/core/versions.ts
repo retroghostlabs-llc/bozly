@@ -321,7 +321,7 @@ export async function trackModelVersion(vaultPath: string, model: Model): Promis
     };
   }
 
-  const hash = model.hash || computeHash(JSON.stringify(model));
+  const hash = model.hash ?? computeHash(JSON.stringify(model));
   const timestamp = new Date().toISOString();
 
   // Check if model already exists in history

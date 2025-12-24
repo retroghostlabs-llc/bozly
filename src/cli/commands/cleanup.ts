@@ -82,7 +82,7 @@ export const cleanupCommand = new Command("cleanup")
 async function cleanupSingleNode(
   nodePath: string,
   nodeName: string,
-  config: any,
+  config: Record<string, unknown>,
   olderThanDays: number,
   isDryRun: boolean,
   force: boolean
@@ -152,7 +152,7 @@ async function cleanupSingleNode(
  * Clean up all vaults
  */
 async function cleanupAllVaults(
-  config: any,
+  config: Record<string, unknown>,
   olderThanDays: number,
   isDryRun: boolean,
   force: boolean
@@ -251,16 +251,25 @@ async function cleanupAllVaults(
 /**
  * Display storage info in a formatted way
  */
-function displayStorageInfo(storageInfo: any): void {
-  const { usage } = storageInfo;
+function displayStorageInfo(storageInfo: Record<string, unknown>): void {
+  interface StorageUsage {
+    totalSizeMB: number;
+    maxStorageMB: number;
+    percentUsed: number;
+    activeSessions: Record<string, number>;
+    archivedSessions: Record<string, number>;
+    backupsSizeMB: number;
+  }
+  const usage = storageInfo.usage as StorageUsage;
+  const nodeName = String(storageInfo.nodeName);
 
-  console.log(`  Node: ${storageInfo.nodeName}`);
+  console.log(`  Node: ${nodeName}`);
   console.log(
-    `  Total size: ${usage.totalSizeMB} MB / ${usage.maxStorageMB} MB (${usage.percentUsed}%)`
+    `  Total size: ${String(usage.totalSizeMB)} MB / ${String(usage.maxStorageMB)} MB (${String(usage.percentUsed)}%)`
   );
   console.log(`  Active sessions: ${usage.activeSessions.count}`);
   console.log(`  Archived: ${usage.archivedSessions.count}`);
-  console.log(`  Backups: ${usage.backupsSizeMB} MB`);
+  console.log(`  Backups: ${String(usage.backupsSizeMB)} MB`);
 
   if (usage.percentUsed > 95) {
     console.log();

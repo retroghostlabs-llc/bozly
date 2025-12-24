@@ -130,7 +130,7 @@ Started: ${new Date().toISOString()}
    * Get caller information (file, function, line)
    */
   private getCallerInfo(): { file?: string; function?: string; line?: number } {
-    const stack = new Error().stack || "";
+    const stack = new Error().stack ?? "";
     const lines = stack.split("\n");
 
     // Find the first stack frame outside of this logger
@@ -204,8 +204,10 @@ Started: ${new Date().toISOString()}
       const level = entry.level as unknown as LogLevel;
 
       if (level >= LogLevel.ERROR) {
+        // eslint-disable-next-line no-console
         console.error(output);
       } else {
+        // eslint-disable-next-line no-console
         console.log(output);
       }
     }
@@ -333,7 +335,7 @@ Started: ${new Date().toISOString()}
     const duration = Date.now() - start;
     this.performanceMarkers.delete(label);
 
-    await this.info(message || `Completed: ${label}`, {
+    await this.info(message ?? `Completed: ${label}`, {
       duration: `${duration}ms`,
       label,
     });

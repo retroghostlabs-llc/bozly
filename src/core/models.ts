@@ -79,8 +79,8 @@ export async function loadModel(vaultPath: string, modelName: string): Promise<M
 
     // Construct model object with file info
     const model: Model = {
-      name: parsed.name || modelName,
-      version: parsed.version || "1.0.0",
+      name: parsed.name ?? modelName,
+      version: parsed.version ?? "1.0.0",
       description: parsed.description,
       domain: parsed.domain,
       type: parsed.type,
