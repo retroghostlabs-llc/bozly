@@ -167,9 +167,11 @@ export function buildTemplateContext(
   userVariables: Record<string, any>,
   bozlyVersion: string
 ): TemplateContext {
+  const now = new Date();
   return {
     VAULT_NAME: vaultName,
-    CREATED_DATE: new Date().toISOString().split("T")[0],
+    CREATED_DATE: now.toISOString().split("T")[0], // YYYY-MM-DD format
+    CREATED_DATETIME: now.toISOString(), // Full ISO datetime format
     BOZLY_VERSION: bozlyVersion,
     USER_NAME: process.env.USER || "User",
     ...userVariables,

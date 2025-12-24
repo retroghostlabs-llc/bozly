@@ -25,10 +25,24 @@ import path from "path";
 import { addNodeToRegistry } from "./registry.js";
 import { logger } from "./logger.js";
 import { NodeConfig, NodeInfo, InitOptions } from "./types.js";
+import {
+  getTemplate,
+  collectTemplateVariables,
+  buildTemplateContext,
+  applyTemplate,
+} from "./templates.js";
 
 const BOZLY_DIR = ".bozly";
 const CONFIG_FILE = "config.json";
 const CONTEXT_FILE = "context.md";
+const BOZLY_VERSION = "0.3.0-rc.1";
+
+/**
+ * Get the current BOZLY framework version
+ */
+function getBozlyVersion(): string {
+  return BOZLY_VERSION;
+}
 
 /**
  * Initialize a new node in the specified directory
@@ -55,13 +69,15 @@ const CONTEXT_FILE = "context.md";
 export async function initNode(options: InitOptions): Promise<NodeInfo> {
   const nodePath = path.resolve(options.path);
   const bozlyPath = path.join(nodePath, BOZLY_DIR);
+  const templateType = options.type ?? "default";
 
   // Log function entry with parameters
   await logger.debug("Initializing node", {
     nodePath,
     name: options.name,
-    type: options.type,
+    type: templateType,
     force: options.force,
+    useTemplate: true,
   });
 
   // Check if .bozly already exists
@@ -83,7 +99,94 @@ export async function initNode(options: InitOptions): Promise<NodeInfo> {
     }
   }
 
-  // Create .bozly directory structure
+  // Determine vault name
+  const name = options.name || path.basename(nodePath);
+  await logger.debug("Determined vault name", { name, isDefault: !options.name });
+
+  // Try to use template system if available
+  const template = await getTemplate(templateType);
+  if (template && !options.skipTemplateVariables) {
+    await logger.info("Using template system", {
+      templateName: template.metadata.name,
+      templateDisplay: template.metadata.displayName,
+    });
+
+    try {
+      // Collect template variables
+      let userVariables = options.variables || {};
+      if (Object.keys(template.metadata.variables || {}).length > 0) {
+        const collectedVars = await collectTemplateVariables(template.metadata);
+        userVariables = { ...userVariables, ...collectedVars };
+      }
+
+      // Build template context with all variables
+      const bozlyVersion = getBozlyVersion();
+      const context = buildTemplateContext(name, userVariables, bozlyVersion);
+
+      // Create .bozly directory in node
+      await fs.mkdir(bozlyPath, { recursive: true });
+      await logger.debug("Created main .bozly directory", { bozlyPath });
+
+      // Apply template with variable substitution
+      await applyTemplate(template.path, bozlyPath, context);
+      await logger.debug("Template applied", { templateName: template.metadata.name });
+
+      // Create core subdirectories (ensure they exist even if template doesn't include them)
+      const subdirs = ["sessions", "tasks", "commands", "workflows", "hooks"];
+      for (const dir of subdirs) {
+        const dirPath = path.join(bozlyPath, dir);
+        try {
+          await fs.access(dirPath);
+        } catch {
+          // Directory doesn't exist, create it
+          await fs.mkdir(dirPath, { recursive: true });
+        }
+      }
+      await logger.debug("Ensured core subdirectories exist", { subdirs });
+
+      // Create index.json if it doesn't exist
+      const indexPath = path.join(bozlyPath, "index.json");
+      try {
+        await fs.access(indexPath);
+      } catch {
+        await fs.writeFile(
+          indexPath,
+          JSON.stringify({ tasks: [], lastUpdated: new Date().toISOString() }, null, 2)
+        );
+        await logger.debug("Created index.json");
+      }
+
+      // Register vault with template type
+      try {
+        const vault = await addNodeToRegistry({
+          name,
+          path: nodePath,
+          type: templateType,
+        });
+
+        await logger.info("Vault initialized successfully with template", {
+          nodeId: vault.id,
+          nodeName: vault.name,
+          nodePath: vault.path,
+          templateName: template.metadata.name,
+        });
+
+        return vault;
+      } catch (error) {
+        await logger.error("Failed to register vault", { nodePath }, error as Error);
+        throw error;
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      await logger.warn("Failed to apply template, falling back to hardcoded context", {
+        templateName: templateType,
+        error: errorMsg,
+      });
+      // Fall through to hardcoded context
+    }
+  }
+
+  // Fallback: Use hardcoded context if template not found or skipTemplateVariables is true
   try {
     await fs.mkdir(bozlyPath, { recursive: true });
     await logger.debug("Created main .bozly directory", { bozlyPath });
@@ -102,14 +205,10 @@ export async function initNode(options: InitOptions): Promise<NodeInfo> {
     throw error;
   }
 
-  // Determine vault name
-  const name = options.name || path.basename(nodePath);
-  await logger.debug("Determined vault name", { name, isDefault: !options.name });
-
   // Create config.json
   const config: NodeConfig = {
     name,
-    type: options.type ?? "default",
+    type: templateType,
     version: "0.3.0",
     created: new Date().toISOString(),
     ai: {
@@ -132,9 +231,9 @@ export async function initNode(options: InitOptions): Promise<NodeInfo> {
 
   // Create context.md
   try {
-    const contextContent = generateDefaultContext(name, options.type ?? "default");
+    const contextContent = generateDefaultContext(name, templateType);
     await fs.writeFile(path.join(bozlyPath, CONTEXT_FILE), contextContent);
-    await logger.debug("Created node context file", { type: options.type ?? "default" });
+    await logger.debug("Created node context file", { type: templateType });
   } catch (error) {
     await logger.error("Failed to write vault context", { nodePath }, error as Error);
     throw error;
@@ -157,10 +256,10 @@ export async function initNode(options: InitOptions): Promise<NodeInfo> {
     const vault = await addNodeToRegistry({
       name,
       path: nodePath,
-      type: options.type ?? "default",
+      type: templateType,
     });
 
-    await logger.info("Vault initialized successfully", {
+    await logger.info("Vault initialized successfully (fallback)", {
       nodeId: vault.id,
       nodeName: vault.name,
       nodePath: vault.path,

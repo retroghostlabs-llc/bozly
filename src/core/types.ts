@@ -63,6 +63,8 @@ export interface InitOptions {
   type?: string;
   name?: string;
   force?: boolean;
+  variables?: Record<string, any>; // Template variables from --set flags or interactive prompts
+  skipTemplateVariables?: boolean; // Skip interactive variable collection (for CI/automated)
 }
 
 /**
@@ -716,6 +718,7 @@ export interface Template {
 export interface TemplateContext {
   VAULT_NAME: string;
   CREATED_DATE: string; // YYYY-MM-DD format
+  CREATED_DATETIME: string; // Full ISO datetime format
   BOZLY_VERSION: string;
   USER_NAME?: string;
   [key: string]: string | boolean | number | undefined; // Custom variables
