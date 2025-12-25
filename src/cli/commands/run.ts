@@ -21,6 +21,7 @@ import { executeHooks, HookContext } from "../../core/hooks.js";
 import { getDefaultProvider, formatProvidersList, validateProvider } from "../../core/providers.js";
 import { loadWorkflow, executeWorkflow } from "../../core/workflows.js";
 import { getNodeConfig, getGlobalConfig } from "../../core/config.js";
+import { resolveProvider } from "../../core/routing.js";
 import { NodeInfo } from "../../core/types.js";
 
 export const runCommand = new Command("run")
@@ -157,11 +158,22 @@ export const runCommand = new Command("run")
         }
       } else {
         // Handle normal command execution
-        // Determine provider
+        // Use smart routing to determine provider
         let provider = options.ai;
+        let resolvedFrom = "cli";
+
         if (!provider) {
-          provider = getDefaultProvider();
-          await logger.info("Using default provider", { provider });
+          // Use smart routing hierarchy: command > vault > global > default
+          const resolution = await resolveProvider(commandArg, undefined);
+          provider = resolution.selectedProvider;
+          resolvedFrom = resolution.resolvedFrom;
+          await logger.info("Smart routing resolved provider", {
+            provider,
+            resolvedFrom,
+            command: commandArg,
+          });
+        } else {
+          await logger.info("Using CLI-provided provider", { provider });
         }
 
         // Validate provider if not doing dry run
@@ -180,6 +192,7 @@ export const runCommand = new Command("run")
           vaultName: node.name,
           command: commandArg,
           provider,
+          resolvedFrom,
           dryRun: options.dry,
         });
 

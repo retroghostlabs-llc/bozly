@@ -3,6 +3,14 @@
  */
 
 /**
+ * Per-command routing configuration
+ */
+export interface CommandRouting {
+  provider?: string; // Override provider for this command
+  model?: string; // Model hint (e.g., "sonnet", "gpt-4o")
+}
+
+/**
  * Node configuration stored in .bozly/config.json
  */
 export interface NodeConfig {
@@ -21,6 +29,11 @@ export interface NodeConfig {
   };
   timezone?: string; // e.g., "America/New_York", defaults to system timezone
   memory?: MemoryNodeConfig;
+
+  // Smart Routing (Phase 2c)
+  provider?: string; // Node-level default provider override
+  model?: string; // Node-level default model hint
+  commands?: Record<string, CommandRouting>; // Per-command provider/model overrides
 }
 
 /**
@@ -47,6 +60,14 @@ export interface Registry {
 }
 
 /**
+ * Routing strategy configuration
+ */
+export interface RoutingConfig {
+  strategy?: "manual" | "complexity-based"; // Default: "manual" (per-vault/command config)
+  fallbackChain?: string[]; // Providers to try if primary fails (e.g., ["claude", "gpt", "ollama"])
+}
+
+/**
  * Global config stored in ~/.bozly/bozly-config.json
  */
 export interface GlobalConfig {
@@ -56,6 +77,9 @@ export interface GlobalConfig {
   editor?: string;
   cleanup?: CleanupConfig;
   timezone?: string; // e.g., "America/New_York", auto-detected from system if not set
+
+  // Smart Routing (Phase 2c)
+  routing?: RoutingConfig;
 }
 
 /**
