@@ -313,6 +313,253 @@ curl http://127.0.0.1:3847/api/vaults/my-music/commands
 curl http://127.0.0.1:3847/api/health
 ```
 
+## REST API Reference
+
+### Response Format
+
+All API responses follow a consistent JSON format:
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "data": { /* varies by endpoint */ }
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "error": "Human-readable error message"
+}
+```
+
+### Endpoints
+
+#### Vaults
+
+**GET /api/vaults** — List all registered vaults
+
+Response:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "my-music",
+      "path": "/home/user/music",
+      "name": "Music Vault"
+    }
+  ]
+}
+```
+
+**GET /api/vaults/:id** — Get vault details
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "my-music",
+    "path": "/home/user/music",
+    "name": "Music Vault",
+    "config": { /* vault configuration */ }
+  }
+}
+```
+
+**GET /api/vaults/:id/context** — Generate AI context for vault
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "content": "# AI context generated from vault...",
+    "length": 2048
+  }
+}
+```
+
+#### Sessions
+
+**GET /api/vaults/:id/sessions?limit=20&offset=0** — Paginated session list
+
+Query parameters:
+- `limit` (default: 20) — Number of sessions to return
+- `offset` (default: 0) — Pagination offset
+
+Response:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "session-uuid",
+      "command": "daily",
+      "timestamp": "2025-12-25T12:00:00Z",
+      "status": "completed",
+      "provider": "claude",
+      "model": "claude-3-sonnet"
+    }
+  ],
+  "pagination": {
+    "limit": 20,
+    "offset": 0,
+    "total": 150
+  }
+}
+```
+
+**GET /api/vaults/:id/sessions/:sessionId** — Full session details
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "session-uuid",
+    "command": "daily",
+    "timestamp": "2025-12-25T12:00:00Z",
+    "status": "completed",
+    "provider": "claude",
+    "model": "claude-3-sonnet",
+    "context": "# Context provided to AI...",
+    "prompt": "Raw user prompt text...",
+    "results": "AI response with markdown...",
+    "execution": {
+      "duration": 2.5,
+      "inputTokens": 1500,
+      "outputTokens": 800,
+      "cost": 0.0125
+    },
+    "changes": [
+      {
+        "path": "file.txt",
+        "type": "modified",
+        "diff": "..."
+      }
+    ]
+  }
+}
+```
+
+**GET /api/vaults/:id/sessions/stats** — Session statistics
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "total": 150,
+    "successful": 145,
+    "failed": 3,
+    "cancelled": 2,
+    "byProvider": {
+      "claude": 100,
+      "gpt": 50
+    }
+  }
+}
+```
+
+#### Commands
+
+**GET /api/vaults/:id/commands** — List all commands
+
+Response:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "name": "daily",
+      "description": "Run daily journal prompt",
+      "source": "builtin"
+    }
+  ]
+}
+```
+
+**GET /api/vaults/:id/commands/:name** — Get command details
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "name": "daily",
+    "description": "Run daily journal prompt",
+    "source": "builtin",
+    "content": "Full command content..."
+  }
+}
+```
+
+#### System
+
+**GET /api/providers** — List available AI providers
+
+Response:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "name": "claude",
+      "type": "anthropic",
+      "models": ["claude-3-sonnet", "claude-3-opus"]
+    }
+  ]
+}
+```
+
+**GET /api/health** — Server health check
+
+Response:
+```json
+{
+  "success": true,
+  "status": "ok",
+  "timestamp": "2025-12-25T12:00:00.000Z"
+}
+```
+
+### Error Codes
+
+| Status | Error | Solution |
+|--------|-------|----------|
+| `"Vault not found"` | Vault ID doesn't exist | Check `bozly list` for valid IDs |
+| `"Session not found"` | Session ID doesn't exist | Verify session ID from sessions list |
+| `"Command not found"` | Command name doesn't exist | Check `GET /api/vaults/:id/commands` |
+| `"Failed to load context"` | Error generating context | Check vault configuration and permissions |
+| `"Failed to list sessions"` | Error reading sessions | Check disk space and file permissions |
+
+## Performance Tuning
+
+### API Response Times
+
+Typical response times on modern hardware:
+
+| Endpoint | Small Vault | Large Vault |
+|----------|-------------|-------------|
+| `/api/vaults` | < 10ms | < 10ms |
+| `/api/vaults/:id/sessions` | 50-100ms | 200-500ms |
+| `/api/vaults/:id/session/:id` | 10-50ms | 10-50ms |
+| `/api/vaults/:id/context` | 100-500ms | 1-3 sec |
+| `/api/health` | < 5ms | < 5ms |
+
+**Large vault:** 1000+ sessions, 10MB+ context files
+
+### Optimization Tips
+
+1. **Use pagination** — Always specify `limit` and `offset` for session lists
+2. **Cache results** — Browser caches API responses automatically
+3. **Filter by status** — Use `/api/vaults/:id/sessions?status=completed` when available
+4. **Lazy load details** — Only fetch session details when needed
+
 ## Future Enhancements
 
 Planned for upcoming releases:
