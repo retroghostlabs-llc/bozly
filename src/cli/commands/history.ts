@@ -12,10 +12,10 @@
  */
 
 import { Command } from "commander";
-import chalk from "chalk";
 import { logger } from "../../core/logger.js";
 import { CrossNodeSearcher } from "../../core/search.js";
 import { HistoryOptions, HistoryResult } from "../../core/types.js";
+import { errorBox, warningBox, theme } from "../../cli/ui/index.js";
 import path from "path";
 
 export const historyCommand = new Command("history")
@@ -59,7 +59,12 @@ export const historyCommand = new Command("history")
 
       if (options.status) {
         if (!["completed", "failed", "dry_run"].includes(options.status)) {
-          console.error(chalk.red("Invalid status. Must be one of: completed, failed, dry_run"));
+          console.error(
+            errorBox("Invalid status", {
+              valid: "completed, failed, dry_run",
+              received: options.status,
+            })
+          );
           process.exit(1);
         }
         historyOptions.status = options.status;
@@ -73,7 +78,7 @@ export const historyCommand = new Command("history")
       const results = await searcher.getRecentSessions(historyOptions, nodeId);
 
       if (results.length === 0) {
-        console.log(chalk.yellow(`No sessions found${nodeId ? ` for node '${nodeId}'` : ""}`));
+        console.log(warningBox(`No sessions found${nodeId ? ` for node '${nodeId}'` : ""}`));
         return;
       }
 
@@ -89,9 +94,11 @@ export const historyCommand = new Command("history")
         error: errorMsg,
       });
 
-      if (error instanceof Error) {
-        console.error(chalk.red(error.message));
-      }
+      console.error(
+        errorBox("History command failed", {
+          error: errorMsg,
+        })
+      );
       process.exit(1);
     }
   });
@@ -103,12 +110,12 @@ function displayHistory(results: HistoryResult[], singleNode?: string): void {
   console.log();
 
   if (singleNode) {
-    console.log(chalk.cyan(`HISTORY: ${singleNode} (${results.length})`));
+    console.log(theme.info(`HISTORY: ${singleNode} (${results.length})`));
   } else {
-    console.log(chalk.cyan(`RECENT SESSIONS (last ${results.length})`));
+    console.log(theme.info(`RECENT SESSIONS (last ${results.length})`));
   }
 
-  console.log(chalk.gray("─".repeat(Math.min(process.stdout.columns || 120, 120))));
+  console.log(theme.muted("─".repeat(Math.min(process.stdout.columns || 120, 120))));
   console.log();
 
   if (singleNode) {
@@ -127,13 +134,13 @@ function displayHistory(results: HistoryResult[], singleNode?: string): void {
 
     for (const sessions of Object.values(byNode)) {
       const nodeName = sessions[0].nodeInfo.nodeName;
-      console.log(chalk.bold.cyan(`${nodeName} (${sessions.length})`));
+      console.log(theme.bold(theme.info(`${nodeName} (${sessions.length})`)));
       displayNodeSessions(sessions);
       console.log();
     }
   }
 
-  console.log(chalk.gray(`Total: ${results.length} session${results.length === 1 ? "" : "s"}`));
+  console.log(theme.muted(`Total: ${results.length} session${results.length === 1 ? "" : "s"}`));
   console.log();
 }
 
@@ -159,14 +166,14 @@ function displayNodeSessions(results: HistoryResult[]): void {
       : "?";
 
     console.log(
-      `  ${chalk.gray(timeStr)} ${chalk.cyan(
+      `  ${theme.muted(timeStr)} ${theme.info(
         commandName.padEnd(15)
-      )} ${status.padEnd(15)} ${chalk.dim(`[${provider}]`)} ${chalk.dim(`${duration}`)}`
+      )} ${status.padEnd(15)} ${theme.muted(`[${provider}]`)} ${theme.muted(`${duration}`)}`
     );
 
     // Show memory summary if available
     if (result.memory) {
-      console.log(chalk.gray(`    → ${result.memory.summary.substring(0, 70)}`));
+      console.log(theme.muted(`    → ${result.memory.summary.substring(0, 70)}`));
     }
   }
 }
@@ -177,11 +184,11 @@ function displayNodeSessions(results: HistoryResult[]): void {
 function formatStatus(status: string): string {
   switch (status) {
     case "completed":
-      return chalk.green("✓ completed");
+      return theme.success("✓ completed");
     case "failed":
-      return chalk.red("✗ failed");
+      return theme.error("✗ failed");
     case "dry_run":
-      return chalk.yellow("• dry_run");
+      return theme.warning("• dry_run");
     default:
       return status;
   }

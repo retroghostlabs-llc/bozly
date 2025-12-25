@@ -11,7 +11,6 @@
  */
 
 import { Command } from "commander";
-import chalk from "chalk";
 import path from "path";
 import { logger } from "../../core/logger.js";
 import { getCurrentNode } from "../../core/node.js";
@@ -22,6 +21,7 @@ import { getDefaultProvider, formatProvidersList, validateProvider } from "../..
 import { loadWorkflow, executeWorkflow } from "../../core/workflows.js";
 import { getNodeConfig, getGlobalConfig } from "../../core/config.js";
 import { resolveProvider } from "../../core/routing.js";
+import { errorBox, warningBox, successBox, infoBox, theme } from "../../cli/ui/index.js";
 import { NodeInfo } from "../../core/types.js";
 
 export const runCommand = new Command("run")
@@ -84,10 +84,13 @@ export const runCommand = new Command("run")
 
       // Require command argument
       if (!commandArg) {
-        console.error(chalk.red("Error: command argument is required"));
-        console.log("\nUsage: bozly run <command> [options]");
-        console.log("       bozly run --list-providers");
-        console.log("       bozly run --workflow <id> [options]");
+        console.error(
+          errorBox("Command argument is required", {
+            usage1: "bozly run <command> [options]",
+            usage2: "bozly run --list-providers",
+            usage3: "bozly run --workflow <id> [options]",
+          })
+        );
         process.exit(1);
       }
 
@@ -104,8 +107,11 @@ export const runCommand = new Command("run")
 
       if (!node) {
         await logger.warn("Not in a node directory");
-        console.log(chalk.yellow("✗ Not in a node directory"));
-        console.log("  Run 'bozly init' to initialize a node here.");
+        console.error(
+          warningBox("Not in a node directory", {
+            hint: "Run 'bozly init' to initialize a node here",
+          })
+        );
         process.exit(1);
       }
 
@@ -114,7 +120,7 @@ export const runCommand = new Command("run")
         try {
           const workflow = await loadWorkflow(node.path, commandArg);
           if (!workflow) {
-            console.error(chalk.red(`Workflow not found: ${commandArg}`));
+            console.error(errorBox(`Workflow not found: ${commandArg}`));
             process.exit(1);
           }
 
@@ -131,29 +137,40 @@ export const runCommand = new Command("run")
 
           // Display results
           console.log("");
-          console.log(chalk.bold(`Workflow '${workflow.id}' completed`));
-          console.log(
-            chalk.dim(
-              `${result.stepsCompleted}/${workflow.steps.length} steps completed in ${result.duration}ms`
-            )
-          );
+          const workflowBox =
+            result.stepsFailed > 0
+              ? warningBox(`Workflow '${workflow.id}' completed`, {
+                  Steps: `${result.stepsCompleted}/${workflow.steps.length}`,
+                  Duration: `${result.duration}ms`,
+                  Failed: String(result.stepsFailed),
+                })
+              : successBox(`Workflow '${workflow.id}' completed`, {
+                  Steps: `${result.stepsCompleted}/${workflow.steps.length}`,
+                  Duration: `${result.duration}ms`,
+                });
+          console.log(workflowBox);
 
           if (result.stepsFailed > 0) {
-            console.log(chalk.yellow(`⚠️  ${result.stepsFailed} step(s) failed`));
+            console.log("\nFailed steps:");
             result.steps
               .filter((s) => s.status === "failed")
               .forEach((s) => {
-                console.log(chalk.dim(`  - ${s.stepId}: ${s.error}`));
+                console.log(`  ✗ ${s.stepId}: ${s.error}`);
               });
           }
 
           process.exit(result.stepsFailed > 0 ? 1 : 0);
         } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : String(error);
           await logger.error("Workflow execution failed", {
             workflow: commandArg,
-            error: (error as Error).message,
+            error: errorMsg,
           });
-          console.error(chalk.red("Workflow execution failed:"), (error as Error).message);
+          console.error(
+            errorBox("Workflow execution failed", {
+              error: errorMsg,
+            })
+          );
           process.exit(1);
         }
       } else {
@@ -181,9 +198,12 @@ export const runCommand = new Command("run")
           try {
             await validateProvider(provider);
           } catch (error) {
-            if (error instanceof Error) {
-              console.error(chalk.red(error.message));
-            }
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            console.error(
+              errorBox("Provider validation failed", {
+                error: errorMsg,
+              })
+            );
             process.exit(1);
           }
         }
@@ -197,7 +217,7 @@ export const runCommand = new Command("run")
         });
 
         if (options.dry) {
-          console.log(chalk.cyan("▶ Dry run mode — showing what would be executed\n"));
+          console.log(infoBox("Dry run mode — showing what would be executed\n"));
         }
 
         // Execute session-start hooks
@@ -246,16 +266,19 @@ export const runCommand = new Command("run")
 
         if (options.dry) {
           // Display dry-run preview
-          console.log(chalk.bold("Command:"), commandArg);
-          console.log(chalk.bold("Provider:"), result.provider);
-          console.log(chalk.bold("Context size:"), `${result.contextSize} characters`);
-          console.log();
-          console.log(chalk.bold("─ Full Prompt (will be sent to AI)"));
-          console.log(chalk.gray("─────────────────────────────────"));
+          console.log(
+            infoBox("Dry Run Details", {
+              Command: commandArg,
+              Provider: result.provider,
+              "Context size": `${result.contextSize} characters`,
+            })
+          );
+          console.log("\nFull Prompt (will be sent to AI):");
+          console.log("─".repeat(35));
           console.log(result.prompt);
-          console.log(chalk.gray("─────────────────────────────────"));
+          console.log("─".repeat(35));
           console.log();
-          console.log(chalk.dim(`To execute: bozly run ${commandArg} --ai ${result.provider}`));
+          console.log(theme.muted(`To execute: bozly run ${commandArg} --ai ${result.provider}`));
         } else {
           // Output was streamed during execution
           // Record session for audit trail
@@ -326,7 +349,7 @@ export const runCommand = new Command("run")
           }
 
           console.log();
-          console.log(chalk.green("✓ Command completed successfully"));
+          console.log(successBox("Command completed successfully"));
         }
       } // End else for normal command execution
     } catch (error) {
@@ -362,10 +385,11 @@ export const runCommand = new Command("run")
       }
 
       console.error();
-      console.error(chalk.red("✗ Command execution failed:"));
-      if (error instanceof Error) {
-        console.error(chalk.red(`  ${error.message}`));
-      }
+      console.error(
+        errorBox("Command execution failed", {
+          error: errorMsg,
+        })
+      );
       process.exit(1);
     }
   });

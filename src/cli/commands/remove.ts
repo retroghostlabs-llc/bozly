@@ -3,8 +3,8 @@
  */
 
 import { Command } from "commander";
-import chalk from "chalk";
 import ora from "ora";
+import { errorBox, warningBox, successBox, theme } from "../../cli/ui/index.js";
 import path from "path";
 import fs from "fs/promises";
 import { execSync } from "child_process";
@@ -39,29 +39,35 @@ export const removeCommand = new Command("remove")
       );
 
       if (!node) {
-        spinner.fail(chalk.red("Node not found"));
+        spinner.fail("Node not found");
         await logger.error("Node not found in registry", { nameOrPath });
-        console.error(chalk.red(`\nNo node found matching: ${nameOrPath}`));
-        console.error("Run 'bozly list' to see available nodes.\n");
+        console.error(
+          errorBox(`No node found matching: ${nameOrPath}`, {
+            hint: "Run 'bozly list' to see available nodes",
+          })
+        );
         process.exit(1);
       }
 
       // Show node info
       spinner.stop();
       console.log();
-      console.log(chalk.yellow("Node to remove:"));
-      console.log(chalk.gray("  Name:"), node.name);
-      console.log(chalk.gray("  Path:"), node.path);
-      console.log(chalk.gray("  Type:"), node.type || "unknown");
+      console.log(
+        warningBox("Node to remove", {
+          Name: node.name,
+          Path: node.path,
+          Type: node.type || "unknown",
+        })
+      );
       console.log();
 
       // Confirmation
       if (!options.force) {
         const answer = await ask(
-          `${chalk.red("This will remove the node from BOZLY registry.")} Continue? (yes/no): `
+          `${errorBox("This will remove the node from BOZLY registry")} Continue? (yes/no): `
         );
         if (answer.toLowerCase() !== "yes") {
-          console.log(chalk.gray("Cancelled."));
+          console.log(theme.muted("Cancelled"));
           process.exit(0);
         }
       }
@@ -99,18 +105,24 @@ export const removeCommand = new Command("remove")
       spinner.text = "Removing from registry...";
       await removeNode(node.id || node.path);
 
-      spinner.succeed(chalk.green("Node removed successfully!"));
+      spinner.succeed("Node removed successfully");
       console.log();
 
       if (backupPath) {
-        console.log(chalk.cyan("Backup created:"));
-        console.log(chalk.gray(`  ${backupPath}`));
+        console.log(
+          successBox("Backup created", {
+            path: backupPath,
+          })
+        );
         console.log();
       }
 
       if (options.keepFiles) {
-        console.log(chalk.cyan("Node files preserved at:"));
-        console.log(chalk.gray(`  ${node.path}`));
+        console.log(
+          successBox("Node files preserved at", {
+            path: node.path,
+          })
+        );
         console.log();
       }
 
@@ -120,7 +132,7 @@ export const removeCommand = new Command("remove")
         backup: backupPath,
       });
     } catch (error) {
-      spinner.fail(chalk.red("Failed to remove node"));
+      spinner.fail("Failed to remove node");
 
       const errorMsg = error instanceof Error ? error.message : String(error);
       await logger.error("Node removal failed", {
@@ -128,9 +140,11 @@ export const removeCommand = new Command("remove")
         error: errorMsg,
       });
 
-      if (error instanceof Error) {
-        console.error(chalk.red(error.message));
-      }
+      console.error(
+        errorBox("Node removal failed", {
+          error: errorMsg,
+        })
+      );
       process.exit(1);
     }
   });

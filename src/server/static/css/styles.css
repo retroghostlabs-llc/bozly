@@ -1,0 +1,305 @@
+/* BOZLY Dashboard Custom Styles */
+
+:root {
+  --pico-spacing: 1rem;
+  --pico-form-element-spacing-vertical: 0.5rem;
+  --pico-form-element-spacing-horizontal: 0.75rem;
+  --pico-border-radius: 0.25rem;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+  padding: 2rem 0;
+}
+
+footer {
+  background-color: var(--pico-form-element-background-color);
+  border-top: 1px solid var(--pico-border-color);
+  padding: 1rem 0;
+  margin-top: 3rem;
+  text-align: center;
+}
+
+/* Navigation */
+nav {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+nav a {
+  text-decoration: none;
+}
+
+nav strong {
+  font-size: 1.25rem;
+}
+
+/* Dashboard Grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+/* Vault Cards */
+.vault-card,
+.command-card {
+  border: 1px solid var(--pico-border-color);
+  border-radius: var(--pico-border-radius);
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
+}
+
+.vault-card:hover,
+.command-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  text-decoration: none;
+}
+
+.vault-card h3,
+.command-card h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.vault-card p,
+.command-card p {
+  margin: 0.25rem 0;
+  font-size: 0.875rem;
+  color: var(--pico-muted-color);
+}
+
+/* Quick Stats */
+#quick-stats .grid > div {
+  background-color: var(--pico-form-element-background-color);
+  border-radius: var(--pico-border-radius);
+  padding: 1.5rem;
+  text-align: center;
+}
+
+#quick-stats strong {
+  display: block;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+#quick-stats small {
+  display: block;
+  color: var(--pico-muted-color);
+}
+
+/* Tables */
+table {
+  width: 100%;
+  margin: 1rem 0;
+}
+
+table thead {
+  background-color: var(--pico-form-element-background-color);
+}
+
+table tr:hover {
+  background-color: var(--pico-form-element-background-color);
+}
+
+table td {
+  padding: 0.75rem;
+  vertical-align: middle;
+}
+
+/* Filters Section */
+.filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.filters input,
+.filters select {
+  flex: 1;
+  min-width: 150px;
+}
+
+/* Session Tabs */
+.session-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--pico-border-color);
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 0.75rem 1rem;
+  color: var(--pico-muted-color);
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  color: var(--pico-form-element-valid-border-color);
+}
+
+.tab-button.active {
+  color: var(--pico-form-element-valid-border-color);
+  border-bottom-color: var(--pico-form-element-valid-border-color);
+}
+
+/* Tab Content */
+.session-tabs-content {
+  margin-bottom: 2rem;
+}
+
+.tab-content {
+  display: none;
+  animation: fadeIn 0.2s ease;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.tab-content pre {
+  background-color: var(--pico-form-element-background-color);
+  border-radius: var(--pico-border-radius);
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* Session Header */
+.session-header {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--pico-border-color);
+  padding-bottom: 1rem;
+}
+
+.session-header h1 {
+  margin-bottom: 0.5rem;
+}
+
+.session-header p {
+  margin: 0;
+  color: var(--pico-muted-color);
+}
+
+/* Session Actions */
+.session-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.session-actions button {
+  flex: 1;
+  min-width: 150px;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+
+.pagination button,
+.pagination a {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--pico-border-color);
+  background: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.pagination button:hover,
+.pagination a:hover {
+  background-color: var(--pico-form-element-background-color);
+}
+
+.pagination button.active,
+.pagination a.active {
+  background-color: var(--pico-form-element-valid-border-color);
+  color: white;
+  border-color: var(--pico-form-element-valid-border-color);
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-success {
+  background-color: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+}
+
+.status-error {
+  background-color: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+}
+
+.status-cancelled {
+  background-color: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .filters {
+    flex-direction: column;
+  }
+
+  .filters input,
+  .filters select {
+    width: 100%;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .session-tabs {
+    flex-direction: column;
+  }
+
+  .tab-button {
+    border-bottom: none;
+    border-left: 3px solid transparent;
+    padding-left: 1rem;
+  }
+
+  .tab-button.active {
+    border-left-color: var(--pico-form-element-valid-border-color);
+    border-bottom-color: transparent;
+  }
+}

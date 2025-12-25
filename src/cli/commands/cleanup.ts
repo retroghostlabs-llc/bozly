@@ -3,7 +3,6 @@
  */
 
 import { Command } from "commander";
-import chalk from "chalk";
 import { logger } from "../../core/logger.js";
 import { getCurrentNode } from "../../core/node.js";
 import { getRegistry } from "../../core/registry.js";
@@ -15,6 +14,14 @@ import {
   getNodeStorageInfo,
 } from "../../core/cleanup.js";
 import { CleanupConfig, NodeStorageInfo } from "../../core/types.js";
+import {
+  infoBox,
+  warningBox,
+  errorBox,
+  successBox,
+  formatStatsTable,
+  theme,
+} from "../../cli/ui/index.js";
 import { homedir } from "os";
 import path from "path";
 
@@ -45,7 +52,7 @@ export const cleanupCommand = new Command("cleanup")
         olderThanNum = parseDuration(olderThanDays);
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
-        console.error(chalk.red(`Invalid duration: ${msg}`));
+        console.error(errorBox("Invalid duration", { error: msg }));
         process.exit(1);
       }
 
@@ -56,7 +63,11 @@ export const cleanupCommand = new Command("cleanup")
         // Cleanup current vault
         const node = await getCurrentNode();
         if (!node) {
-          console.log(chalk.yellow("Not in a node directory. Use --all to clean all nodes."));
+          console.log(
+            warningBox("Not in a node directory", {
+              hint: "Use --all to clean all nodes",
+            })
+          );
           process.exit(1);
         }
 
@@ -72,7 +83,7 @@ export const cleanupCommand = new Command("cleanup")
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       await logger.error("Cleanup failed", { error: errorMsg });
-      console.error(chalk.red(`Cleanup failed: ${errorMsg}`));
+      console.error(errorBox("Cleanup failed", { error: errorMsg }));
       process.exit(1);
     }
   });
@@ -97,34 +108,35 @@ async function cleanupSingleNode(
   );
 
   console.log();
-  console.log(chalk.cyan.bold("Cleanup Analysis"));
-  console.log(chalk.gray("═".repeat(50)));
+  console.log(infoBox("Cleanup Analysis"));
 
   displayStorageInfo(storageInfo);
 
   // Show what would be cleaned
   console.log();
-  console.log(
-    chalk.bold(`Sessions older than ${chalk.yellow(formatDuration(`${olderThanDays}d`))}:`)
-  );
+  console.log(theme.bold(`Sessions older than ${formatDuration(`${olderThanDays}d`)}:`));
   console.log(`  Sessions: ${storageInfo.canClean.oldSessions}`);
 
   // Show backups
   console.log();
-  console.log(chalk.bold("Backups:"));
+  console.log(theme.bold("Backups:"));
   console.log(`  Max to keep: 10`);
 
   // Require --force flag for actual cleanup
   if (!isDryRun && !force) {
     console.log();
-    console.log(chalk.yellow("Add --force flag to proceed with cleanup (cleanup is destructive)"));
+    console.log(
+      warningBox("Cleanup is destructive", {
+        hint: "Add --force flag to proceed",
+      })
+    );
     return;
   }
 
   // Perform cleanup
-  const mode = isDryRun ? chalk.gray("[PREVIEW]") : chalk.green("[CLEANUP]");
+  const mode = isDryRun ? theme.muted("[PREVIEW]") : theme.success("[CLEANUP]");
   console.log();
-  console.log(chalk.cyan(mode + " Running cleanup..."));
+  console.log(`${mode} Running cleanup...`);
 
   const result = await cleanupNode(nodePath, {
     olderThan: olderThanDays,
@@ -134,16 +146,22 @@ async function cleanupSingleNode(
 
   // Show results
   console.log();
-  console.log(chalk.cyan.bold("Cleanup Results"));
-  console.log(chalk.gray("═".repeat(50)));
-  console.log(`  Sessions deleted: ${result.sessionsDeleted}`);
-  console.log(`  Backups deleted: ${result.backupsDeleted}`);
-  console.log(`  Space freed: ${result.spaceFreedMB} MB`);
-  console.log(`  Duration: ${result.duration}ms`);
+  console.log(
+    successBox("Cleanup Results", {
+      "Sessions deleted": result.sessionsDeleted,
+      "Backups deleted": result.backupsDeleted,
+      "Space freed": `${result.spaceFreedMB} MB`,
+      Duration: `${result.duration}ms`,
+    })
+  );
 
   if (isDryRun) {
     console.log();
-    console.log(chalk.yellow("This is a preview. Run without --preview to perform cleanup."));
+    console.log(
+      warningBox("This is a preview", {
+        hint: "Run without --preview to perform cleanup",
+      })
+    );
   }
 
   console.log();
@@ -161,12 +179,12 @@ async function cleanupAllVaults(
   const registry = await getRegistry();
 
   if (registry.nodes.length === 0) {
-    console.log(chalk.yellow("No nodes registered."));
+    console.log(warningBox("No nodes registered"));
     return;
   }
 
   console.log();
-  console.log(chalk.cyan.bold(`Analyzing ${registry.nodes.length} node(s)...`));
+  console.log(infoBox(`Analyzing ${registry.nodes.length} node(s)...`));
   console.log();
 
   let totalSessions = 0;
@@ -187,36 +205,38 @@ async function cleanupAllVaults(
   }
 
   // Show summary
-  console.log(chalk.cyan.bold("Cleanup Summary"));
-  console.log(chalk.gray("═".repeat(50)));
-  for (const { node, storage } of analyses) {
-    const backupSize = storage.usage.backupsSizeMB;
-    console.log(
-      `${node.name.padEnd(20)} - ${storage.canClean.oldSessions} old sessions, ${backupSize} MB backups`
-    );
-  }
-
-  console.log(chalk.gray("═".repeat(50)));
-  console.log(`Total sessions to clean: ${totalSessions}`);
+  console.log(infoBox("Cleanup Summary"));
+  const summaryData = Object.fromEntries(
+    analyses.map(({ node, storage }) => [
+      node.name,
+      `${storage.canClean.oldSessions} old, ${storage.usage.backupsSizeMB} MB backups`,
+    ])
+  );
+  console.log(formatStatsTable(summaryData));
+  console.log();
+  console.log(theme.muted(`Total sessions to clean: ${totalSessions}`));
 
   // Require --force flag for actual cleanup
   if (!isDryRun && !force) {
     console.log();
     console.log(
-      chalk.yellow("Add --force flag to proceed with cleanup on all nodes (cleanup is destructive)")
+      warningBox("Cleanup is destructive", {
+        hint: "Add --force flag to proceed with cleanup on all nodes",
+      })
     );
     return;
   }
 
   // Perform cleanup on all nodes
   console.log();
-  console.log(chalk.cyan("Running cleanup on all nodes..."));
+  console.log(theme.info("Running cleanup on all nodes..."));
   console.log();
 
   let totalDeleted = 0;
   let totalBackupsDeleted = 0;
   let totalSpaceFreed = 0;
 
+  const resultsData = [];
   for (const { node } of analyses) {
     const result = await cleanupNode(node.path, {
       olderThan: olderThanDays,
@@ -224,9 +244,12 @@ async function cleanupAllVaults(
       keepMinSessions: config.sessions.keepMinSessions,
     });
 
-    console.log(
-      `${node.name.padEnd(20)} - ${result.sessionsDeleted} sessions, ${result.backupsDeleted} backups, ${result.spaceFreedMB} MB`
-    );
+    resultsData.push({
+      Node: node.name,
+      Sessions: result.sessionsDeleted,
+      Backups: result.backupsDeleted,
+      "Space (MB)": result.spaceFreedMB,
+    });
 
     totalDeleted += result.sessionsDeleted;
     totalBackupsDeleted += result.backupsDeleted;
@@ -235,15 +258,21 @@ async function cleanupAllVaults(
 
   // Show totals
   console.log();
-  console.log(chalk.cyan.bold("Total Results"));
-  console.log(chalk.gray("═".repeat(50)));
-  console.log(`  Sessions deleted: ${totalDeleted}`);
-  console.log(`  Backups deleted: ${totalBackupsDeleted}`);
-  console.log(`  Space freed: ${totalSpaceFreed} MB`);
+  console.log(
+    successBox("Total Results", {
+      "Sessions deleted": totalDeleted,
+      "Backups deleted": totalBackupsDeleted,
+      "Space freed": `${totalSpaceFreed} MB`,
+    })
+  );
 
   if (isDryRun) {
     console.log();
-    console.log(chalk.yellow("This is a preview. Run without --preview to perform cleanup."));
+    console.log(
+      warningBox("This is a preview", {
+        hint: "Run without --preview to perform cleanup",
+      })
+    );
   }
 
   console.log();
@@ -256,19 +285,29 @@ function displayStorageInfo(storageInfo: NodeStorageInfo): void {
   const usage = storageInfo.usage;
   const nodeName = storageInfo.nodeName;
 
-  console.log(`  Node: ${nodeName}`);
-  console.log(
-    `  Total size: ${String(usage.totalSizeMB)} MB / ${String(usage.maxStorageMB)} MB (${String(usage.percentUsed)}%)`
-  );
-  console.log(`  Active sessions: ${usage.activeSessions.count}`);
-  console.log(`  Archived: ${usage.archivedSessions.count}`);
-  console.log(`  Backups: ${String(usage.backupsSizeMB)} MB`);
+  const storageData = {
+    Node: nodeName,
+    "Total size": `${usage.totalSizeMB} MB / ${usage.maxStorageMB} MB (${usage.percentUsed}%)`,
+    "Active sessions": usage.activeSessions.count,
+    Archived: usage.archivedSessions.count,
+    Backups: `${usage.backupsSizeMB} MB`,
+  };
+
+  console.log(formatStatsTable(storageData));
 
   if (usage.percentUsed > 95) {
     console.log();
-    console.log(chalk.red("⚠️  CRITICAL: Storage usage is critically high!"));
+    console.log(
+      errorBox("CRITICAL: Storage usage is critically high!", {
+        hint: "Cleanup urgently to prevent data loss",
+      })
+    );
   } else if (usage.percentUsed > 80) {
     console.log();
-    console.log(chalk.yellow("⚠️  WARNING: Storage usage is high"));
+    console.log(
+      warningBox("Storage usage is high", {
+        hint: "Consider running cleanup soon",
+      })
+    );
   }
 }

@@ -4,7 +4,6 @@
  */
 
 import { Command } from "commander";
-import chalk from "chalk";
 import { confirm } from "@inquirer/prompts";
 import { logger } from "../../core/logger.js";
 import { getCurrentNode } from "../../core/node.js";
@@ -14,6 +13,15 @@ import {
   saveSuggestionToHistory,
   applySuggestion,
 } from "../../core/suggestions.js";
+import {
+  errorBox,
+  warningBox,
+  successBox,
+  infoBox,
+  formatSection,
+  theme,
+  symbols,
+} from "../../cli/ui/index.js";
 import type { Suggestion } from "../../core/types.js";
 
 export const suggestCommand = new Command("suggest")
@@ -27,15 +35,17 @@ export const suggestCommand = new Command("suggest")
       const node = await getCurrentNode();
 
       if (!node) {
-        console.log(chalk.yellow("Not in a node directory."));
-        console.log("To initialize a node here:");
-        console.log("  bozly init");
+        console.error(
+          warningBox("Not in a node directory", {
+            hint: "Run 'bozly init' to initialize a node here",
+          })
+        );
         return;
       }
 
       const nodeConfig = await getNodeConfig();
       if (!nodeConfig) {
-        console.log(chalk.red("Error: Could not load node configuration"));
+        console.error(errorBox("Could not load node configuration"));
         return;
       }
 
@@ -44,12 +54,12 @@ export const suggestCommand = new Command("suggest")
       if (!targetCommand) {
         targetCommand = await selectCommand();
         if (!targetCommand) {
-          console.log(chalk.yellow("No command selected."));
+          console.log(warningBox("No command selected"));
           return;
         }
       }
 
-      console.log(chalk.cyan(`\nAnalyzing sessions for command: ${chalk.bold(targetCommand)}...`));
+      console.log(infoBox(`Analyzing sessions for command: ${theme.bold(targetCommand)}...`));
 
       // Create suggestion engine and analyze
       const engine = new SuggestionEngine(node.path, nodeConfig);
@@ -59,15 +69,16 @@ export const suggestCommand = new Command("suggest")
       });
 
       if (suggestions.length === 0) {
-        console.log(chalk.yellow(`\nNo suggestions found for '${targetCommand}'.`));
-        console.log(chalk.gray("Try running the command a few times to generate session history."));
+        console.log(
+          warningBox(`No suggestions found for '${targetCommand}'`, {
+            hint: "Try running the command a few times to generate session history",
+          })
+        );
         return;
       }
 
       console.log(
-        chalk.green(
-          `\nFound ${suggestions.length} suggestion${suggestions.length === 1 ? "" : "s"}\n`
-        )
+        successBox(`Found ${suggestions.length} suggestion${suggestions.length === 1 ? "" : "s"}`)
       );
 
       // Display all suggestions
@@ -75,12 +86,12 @@ export const suggestCommand = new Command("suggest")
 
       // If dry-run, stop here
       if (options.dryRun) {
-        console.log(chalk.gray("\nDry-run mode: No suggestions were saved."));
+        console.log(infoBox("Dry-run mode: No suggestions were saved"));
         return;
       }
 
       // Interactive approval flow
-      console.log(chalk.cyan("\nReview suggestions:\n"));
+      console.log(formatSection("Review suggestions", ""));
 
       let appliedCount = 0;
       for (let i = 0; i < suggestions.length; i++) {
@@ -97,35 +108,46 @@ export const suggestCommand = new Command("suggest")
           await applySuggestion(node.path, suggestion.id);
           appliedCount++;
 
-          console.log(chalk.green(`✓ Saved: ${suggestion.title}`));
-          console.log(chalk.gray(`  Action: ${suggestion.recommendation.action}`));
+          console.log(
+            successBox(`Saved: ${suggestion.title}`, {
+              action: suggestion.recommendation.action,
+            })
+          );
         } else {
           // Still save to history, but mark as not applied
           await saveSuggestionToHistory(node.path, suggestion);
-          console.log(chalk.gray(`⊘ Skipped: ${suggestion.title}`));
+          console.log(warningBox(`Skipped: ${suggestion.title}`));
         }
         console.log();
       }
 
       // Summary
-      console.log(chalk.cyan("Summary:"));
-      console.log(chalk.green(`Reviewed: ${suggestions.length}`));
-      console.log(chalk.green(`Applied: ${appliedCount}`));
-      console.log(chalk.gray(`Skipped: ${suggestions.length - appliedCount}`));
-      console.log();
+      console.log(formatSection("Summary", ""));
+      console.log(
+        infoBox("", {
+          Reviewed: String(suggestions.length),
+          Applied: String(appliedCount),
+          Skipped: String(suggestions.length - appliedCount),
+        })
+      );
 
       if (appliedCount > 0) {
         console.log(
-          chalk.yellow(
-            "Next steps: Review the suggested changes in your command context or configuration."
+          warningBox(
+            "Next steps: Review the suggested changes in your command context or configuration"
           )
         );
       }
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
       await logger.error("suggest command failed", {
-        error: error instanceof Error ? error.message : String(error),
+        error: errorMsg,
       });
-      console.log(chalk.red("Error: Failed to analyze sessions"));
+      console.error(
+        errorBox("Failed to analyze sessions", {
+          error: errorMsg,
+        })
+      );
       process.exit(1);
     }
   });
@@ -136,8 +158,11 @@ export const suggestCommand = new Command("suggest")
 function selectCommand(): Promise<string | null> {
   // For now, return null - in full implementation,
   // would list available commands from context/history
-  console.log(chalk.yellow("Please specify a command name:"));
-  console.log(chalk.gray("  bozly suggest <command>"));
+  console.log(
+    warningBox("Please specify a command name", {
+      usage: "bozly suggest <command>",
+    })
+  );
   return Promise.resolve(null);
 }
 
@@ -147,37 +172,35 @@ function selectCommand(): Promise<string | null> {
 function displaySuggestions(suggestions: Suggestion[], verbose: boolean): Promise<void> {
   for (let i = 0; i < suggestions.length; i++) {
     const s = suggestions[i];
-    const priorityColor =
+    const prioritySymbol =
       s.priority === "high"
-        ? chalk.red("🔴 HIGH")
+        ? symbols.error
         : s.priority === "medium"
-          ? chalk.yellow("🟡 MEDIUM")
-          : chalk.green("🟢 LOW");
+          ? symbols.warning
+          : symbols.success;
 
-    console.log(`${priorityColor} [${i + 1}] ${s.title}`);
-    console.log(chalk.gray(`  Description: ${s.description}`));
-    console.log(chalk.gray(`  Type: ${s.type}`));
-    console.log(chalk.gray(`  Confidence: ${Math.round(s.analysis.confidence * 100)}%`));
+    const details: Record<string, string> = {
+      Description: s.description,
+      Type: s.type,
+      Confidence: `${Math.round(s.analysis.confidence * 100)}%`,
+      Action: s.recommendation.action,
+    };
 
-    console.log(chalk.cyan(`  Recommendation:`));
-    console.log(chalk.gray(`    Action: ${s.recommendation.action}`));
     if (s.recommendation.example) {
-      console.log(chalk.gray(`    Example: ${s.recommendation.example}`));
+      details["Example"] = s.recommendation.example;
     }
-    console.log(chalk.gray(`    Rationale: ${s.recommendation.rationale}`));
 
-    console.log(chalk.cyan(`  Impact:`));
-    console.log(chalk.gray(`    Expected: ${s.impact.expectedImprovement}`));
-    console.log(
-      chalk.gray(
-        `    Risk: ${s.impact.riskLevel} (${s.impact.reversible ? "reversible" : "not reversible"})`
-      )
-    );
+    details["Rationale"] = s.recommendation.rationale;
+    details["Impact"] = s.impact.expectedImprovement;
+    details["Risk"] =
+      `${s.impact.riskLevel} (${s.impact.reversible ? "reversible" : "not reversible"})`;
 
     if (verbose && s.analysis.data) {
-      console.log(chalk.gray(`  Analysis: ${JSON.stringify(s.analysis.data, null, 2)}`));
+      details["Analysis"] = JSON.stringify(s.analysis.data, null, 2);
     }
 
+    console.log(`${prioritySymbol} [${i + 1}/${suggestions.length}] ${s.title}`);
+    console.log(formatSection("Details", theme.muted(JSON.stringify(details, null, 2))));
     console.log();
   }
   return Promise.resolve();

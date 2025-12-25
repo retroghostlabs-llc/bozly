@@ -1,0 +1,96 @@
+<div class="session-detail-container">
+  <div class="session-header">
+    <h1 id="session-title">Session Detail</h1>
+    <p id="session-meta">
+      <small>
+        <span id="session-id">ID: —</span> •
+        <span id="session-date">Date: —</span> •
+        <span id="session-status">Status: —</span>
+      </small>
+    </p>
+  </div>
+
+  <div class="session-tabs">
+    <button
+      class="tab-button active"
+      data-tab="metadata"
+      onclick="window.app.switchTab('metadata')"
+    >
+      Metadata
+    </button>
+    <button
+      class="tab-button"
+      data-tab="context"
+      onclick="window.app.switchTab('context')"
+    >
+      Context
+    </button>
+    <button
+      class="tab-button"
+      data-tab="prompt"
+      onclick="window.app.switchTab('prompt')"
+    >
+      Prompt
+    </button>
+    <button
+      class="tab-button"
+      data-tab="results"
+      onclick="window.app.switchTab('results')"
+    >
+      Results
+    </button>
+    <button
+      class="tab-button"
+      data-tab="execution"
+      onclick="window.app.switchTab('execution')"
+    >
+      Execution
+    </button>
+    <button
+      class="tab-button"
+      data-tab="changes"
+      onclick="window.app.switchTab('changes')"
+    >
+      Changes
+    </button>
+  </div>
+
+  <div class="session-tabs-content">
+    <div id="tab-metadata" class="tab-content active">
+      <table>
+        <tbody id="metadata-table">
+          <!-- Metadata populated by JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <div id="tab-context" class="tab-content">
+      <pre id="context-content"></pre>
+    </div>
+
+    <div id="tab-prompt" class="tab-content">
+      <pre id="prompt-content"></pre>
+    </div>
+
+    <div id="tab-results" class="tab-content">
+      <div id="results-content"></div>
+    </div>
+
+    <div id="tab-execution" class="tab-content">
+      <table>
+        <tbody id="execution-table">
+          <!-- Execution details populated by JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <div id="tab-changes" class="tab-content">
+      <pre id="changes-content"></pre>
+    </div>
+  </div>
+
+  <div class="session-actions">
+    <button id="session-back-btn" onclick="window.history.back()">← Back</button>
+    <button id="session-obsidian-btn" class="secondary">Open in Obsidian</button>
+  </div>
+</div>

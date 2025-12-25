@@ -3,10 +3,10 @@
  */
 
 import { Command } from "commander";
-import chalk from "chalk";
 import ora from "ora";
 import { logger } from "../../core/logger.js";
 import { initNode } from "../../core/node.js";
+import { successBox, errorBox } from "../../cli/ui/index.js";
 
 export const initCommand = new Command("init")
   .description("Initialize a new node in the current directory")
@@ -36,19 +36,23 @@ export const initCommand = new Command("init")
         type: result.type,
       });
 
-      spinner.succeed(chalk.green("Node initialized successfully!"));
+      spinner.succeed("Node initialized successfully!");
       console.log();
-      console.log(chalk.gray("Created:"), result.path);
-      console.log(chalk.gray("Type:"), result.type);
-      console.log(chalk.gray("Config:"), ".bozly/config.json");
-      console.log(chalk.gray("Context:"), ".bozly/context.md");
+      console.log(
+        successBox("Node initialized successfully!", {
+          Path: result.path,
+          Type: result.type,
+          Config: ".bozly/config.json",
+          Context: ".bozly/context.md",
+        })
+      );
       console.log();
-      console.log(chalk.yellow("Next steps:"));
+      console.log("Next steps:");
       console.log("  1. Edit .bozly/context.md to customize AI context");
       console.log("  2. Add commands in .bozly/commands/");
       console.log("  3. Run 'bozly status' to verify setup");
     } catch (error) {
-      spinner.fail(chalk.red("Failed to initialize vault"));
+      spinner.fail("Failed to initialize node");
 
       const errorMsg = error instanceof Error ? error.message : String(error);
       await logger.error("Node initialization failed", {
@@ -56,7 +60,8 @@ export const initCommand = new Command("init")
       });
 
       if (error instanceof Error) {
-        console.error(chalk.red(error.message));
+        console.log();
+        console.log(errorBox("Failed to initialize node", { error: errorMsg }));
       }
       process.exit(1);
     }

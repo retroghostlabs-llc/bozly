@@ -3,8 +3,8 @@
  */
 
 import { Command } from "commander";
-import chalk from "chalk";
 import { logger } from "../../core/logger.js";
+import { errorBox, warningBox, successBox, infoBox, theme } from "../../cli/ui/index.js";
 import { getTemplates, createTemplate } from "../../core/templates.js";
 import {
   promptText,
@@ -35,9 +35,11 @@ function createListCommand(): Command {
         const templates = await getTemplates();
 
         if (templates.length === 0) {
-          console.log(chalk.yellow("No templates found."));
-          console.log();
-          console.log("Create one with: bozly template create");
+          console.log(
+            warningBox("No templates found", {
+              hint: "Create one with: bozly template create",
+            })
+          );
           return;
         }
 
@@ -47,12 +49,12 @@ function createListCommand(): Command {
           filtered = templates.filter((t) => t.metadata.category === options.category);
 
           if (filtered.length === 0) {
-            console.log(chalk.yellow(`No templates found in category '${options.category}'.`));
+            console.log(warningBox(`No templates found in category '${options.category}'`));
             return;
           }
         }
 
-        console.log(chalk.cyan("Available Templates:\n"));
+        console.log(infoBox("Available Templates", {}));
 
         // Group by source
         const bySource = {
@@ -62,18 +64,16 @@ function createListCommand(): Command {
 
         // Show builtin templates
         if (bySource.builtin.length > 0) {
-          console.log(chalk.bold(chalk.green("Builtin Templates:")));
+          console.log(theme.bold("Builtin Templates:"));
           for (const template of bySource.builtin) {
-            const category = template.metadata.category
-              ? chalk.dim(` [${template.metadata.category}]`)
-              : "";
+            const category = template.metadata.category ? ` [${template.metadata.category}]` : "";
             console.log(
-              chalk.cyan(`  ${template.metadata.displayName}`) +
-                category +
+              theme.primary(`  ${template.metadata.displayName}`) +
+                theme.muted(category) +
                 `\n    ${template.metadata.description}`
             );
             if (template.metadata.version) {
-              console.log(chalk.gray(`    Version: ${template.metadata.version}`));
+              console.log(theme.muted(`    Version: ${template.metadata.version}`));
             }
             console.log();
           }
@@ -81,18 +81,16 @@ function createListCommand(): Command {
 
         // Show user templates
         if (bySource.user.length > 0) {
-          console.log(chalk.bold(chalk.blue("User Templates:")));
+          console.log(theme.bold("User Templates:"));
           for (const template of bySource.user) {
-            const category = template.metadata.category
-              ? chalk.dim(` [${template.metadata.category}]`)
-              : "";
+            const category = template.metadata.category ? ` [${template.metadata.category}]` : "";
             console.log(
-              chalk.cyan(`  ${template.metadata.displayName}`) +
-                category +
+              theme.primary(`  ${template.metadata.displayName}`) +
+                theme.muted(category) +
                 `\n    ${template.metadata.description}`
             );
             if (template.metadata.version) {
-              console.log(chalk.gray(`    Version: ${template.metadata.version}`));
+              console.log(theme.muted(`    Version: ${template.metadata.version}`));
             }
             console.log();
           }
@@ -100,17 +98,20 @@ function createListCommand(): Command {
 
         console.log();
         console.log(
-          chalk.gray(
+          theme.muted(
             `Found ${filtered.length} template(s). ` +
               `Use 'bozly init --type <name>' to create a node from a template.`
           )
         );
       } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
         await logger.error("Failed to list templates", {
-          error: error instanceof Error ? error.message : String(error),
+          error: errorMsg,
         });
         console.error(
-          chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`)
+          errorBox("Failed to list templates", {
+            error: errorMsg,
+          })
         );
         process.exit(1);
       }
@@ -125,7 +126,7 @@ function createCreateCommand(): Command {
     try {
       await logger.debug("bozly template create started");
 
-      console.log(chalk.cyan("\n📋 Create New Template\n"));
+      console.log(infoBox("Create New Template", {}));
 
       // Get template name
       const name = await promptText(
@@ -164,17 +165,24 @@ function createCreateCommand(): Command {
       });
 
       console.log();
-      console.log(chalk.green(`✓ Template created: ${displayName}`));
-      console.log(chalk.dim(`  Name: ${name}`));
-      console.log(chalk.dim(`  Category: ${category}`));
-      console.log();
-      console.log(chalk.gray(`Create a node from this template with:`));
-      console.log(chalk.gray(`  bozly init --type ${name} ~/my-${name}-node`));
+      console.log(
+        successBox(`Template created: ${displayName}`, {
+          Name: name,
+          Category: category,
+        })
+      );
+      console.log(theme.muted(`Create a node from this template with:`));
+      console.log(theme.muted(`  bozly init --type ${name} ~/my-${name}-node`));
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
       await logger.error("Failed to create template", {
-        error: error instanceof Error ? error.message : String(error),
+        error: errorMsg,
       });
-      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      console.error(
+        errorBox("Failed to create template", {
+          error: errorMsg,
+        })
+      );
       process.exit(1);
     }
   });

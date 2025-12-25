@@ -221,6 +221,24 @@ bozly diff                    # Compare session executions
 bozly version                 # Show framework version
 ```
 
+### Dashboard & Analytics
+
+```bash
+bozly serve                   # Start interactive web dashboard (http://localhost:3847)
+bozly serve --port 3000       # Start on custom port
+bozly serve --host 0.0.0.0    # Make accessible on network
+bozly serve --no-open         # Don't auto-open browser
+```
+
+**Dashboard Features:**
+- 📊 **Session Browser** — View all sessions with filtering and pagination
+- 📋 **Session Details** — Full 6-tab view (metadata, context, prompt, results, execution, changes)
+- 🔍 **Search & Filter** — Find sessions by command, status, or provider
+- 📈 **Analytics** — Session stats, success rates, provider breakdown
+- 🎯 **Command Browser** — Browse and inspect all commands
+
+**Full Documentation:** See [SERVE.md](docs/SERVE.md)
+
 ### AI Selection
 
 ```bash

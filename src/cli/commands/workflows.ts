@@ -9,12 +9,12 @@
  */
 
 import { Command } from "commander";
-import chalk from "chalk";
 import { logger } from "../../core/logger.js";
 import { discoverWorkflows, loadWorkflow, validateWorkflow } from "../../core/workflows.js";
 import { getCurrentNode } from "../../core/node.js";
 import { getRegistry } from "../../core/registry.js";
 import { Workflow } from "../../core/types.js";
+import { infoBox, errorBox, successBox, warningBox, theme, symbols } from "../../cli/ui/index.js";
 
 export const workflowsCommand = new Command("workflows").description(
   "List, show, and manage workflows"
@@ -35,38 +35,49 @@ workflowsCommand
 
       const node = await getCurrentNode();
       if (!node) {
-        console.error(chalk.red("❌ Error: No node found. Run 'bozly init' first."));
+        console.error(
+          errorBox("No node found", {
+            hint: "Run 'bozly init' first",
+          })
+        );
         process.exit(1);
       }
 
       const workflows = await discoverWorkflows(node.path);
 
       if (workflows.length === 0) {
-        console.log(chalk.yellow("⚠️  No workflows found in this node or globally."));
-        console.log(chalk.dim("Create a workflow: mkdir -p " + node.path + "/.bozly/workflows"));
+        console.log(
+          warningBox("No workflows found in this node or globally", {
+            hint: `Create a workflow: mkdir -p ${node.path}/.bozly/workflows`,
+          })
+        );
         return;
       }
 
-      console.log("");
-      console.log(chalk.bold("📋 Available Workflows:"));
-      console.log("");
+      console.log(infoBox("Available Workflows"));
 
       workflows.forEach((workflow) => {
-        console.log(chalk.cyan(`  ${workflow.id}`));
-        console.log(chalk.dim(`    ${workflow.name}`));
+        console.log(theme.info(`  ${workflow.id}`));
+        console.log(theme.muted(`    ${workflow.name}`));
         if (workflow.description) {
-          console.log(chalk.dim(`    ${workflow.description}`));
+          console.log(theme.muted(`    ${workflow.description}`));
         }
-        console.log(chalk.dim(`    v${workflow.version} • ${workflow.steps.length} steps`));
+        console.log(
+          theme.muted(`    v${workflow.version} ${symbols.bullet} ${workflow.steps.length} steps`)
+        );
         console.log("");
       });
 
-      console.log(chalk.dim(`Total: ${workflows.length} workflow(s)`));
+      console.log(theme.muted(`Total: ${workflows.length} workflow(s)`));
     } catch (error) {
       await logger.error("Failed to list workflows", {
         error: (error as Error).message,
       });
-      console.error(chalk.red("❌ Error listing workflows:"), (error as Error).message);
+      console.error(
+        errorBox("Failed to list workflows", {
+          error: (error as Error).message,
+        })
+      );
       process.exit(1);
     }
   });
@@ -83,13 +94,17 @@ workflowsCommand
 
       const node = await getCurrentNode();
       if (!node) {
-        console.error(chalk.red("❌ Error: No node found. Run 'bozly init' first."));
+        console.error(
+          errorBox("No node found", {
+            hint: "Run 'bozly init' first",
+          })
+        );
         process.exit(1);
       }
 
       const workflow = await loadWorkflow(node.path, id);
       if (!workflow) {
-        console.error(chalk.red(`❌ Workflow not found: ${id}`));
+        console.error(errorBox(`Workflow not found: ${id}`));
         process.exit(1);
       }
 
@@ -99,7 +114,11 @@ workflowsCommand
         id,
         error: (error as Error).message,
       });
-      console.error(chalk.red("❌ Error showing workflow:"), (error as Error).message);
+      console.error(
+        errorBox("Failed to show workflow", {
+          error: (error as Error).message,
+        })
+      );
       process.exit(1);
     }
   });
@@ -116,13 +135,17 @@ workflowsCommand
 
       const node = await getCurrentNode();
       if (!node) {
-        console.error(chalk.red("❌ Error: No node found. Run 'bozly init' first."));
+        console.error(
+          errorBox("No node found", {
+            hint: "Run 'bozly init' first",
+          })
+        );
         process.exit(1);
       }
 
       const workflow = await loadWorkflow(node.path, id);
       if (!workflow) {
-        console.error(chalk.red(`❌ Workflow not found: ${id}`));
+        console.error(errorBox(`Workflow not found: ${id}`));
         process.exit(1);
       }
 
@@ -130,16 +153,20 @@ workflowsCommand
       const errors = validateWorkflow(workflow, registry);
 
       if (errors.length === 0) {
-        console.log(chalk.green(`✅ Workflow '${id}' is valid`));
-        console.log(chalk.dim(`${workflow.steps.length} steps, v${workflow.version}`));
+        console.log(
+          successBox(`Workflow '${id}' is valid`, {
+            Steps: workflow.steps.length,
+            Version: workflow.version,
+          })
+        );
         return;
       }
 
-      console.error(chalk.red(`❌ Workflow '${id}' has ${errors.length} error(s):`));
+      console.error(errorBox(`Workflow '${id}' has ${errors.length} error(s)`));
       console.log("");
 
       errors.forEach((error) => {
-        console.log(chalk.red(`  [${error.step}] ${error.field}: ${error.message}`));
+        console.log(theme.error(`  [${error.step}] ${error.field}: ${error.message}`));
       });
 
       process.exit(1);
@@ -148,7 +175,11 @@ workflowsCommand
         id,
         error: (error as Error).message,
       });
-      console.error(chalk.red("❌ Error validating workflow:"), (error as Error).message);
+      console.error(
+        errorBox("Failed to validate workflow", {
+          error: (error as Error).message,
+        })
+      );
       process.exit(1);
     }
   });
@@ -158,9 +189,9 @@ workflowsCommand
  */
 function displayWorkflowDetails(workflow: Workflow): void {
   console.log("");
-  console.log(chalk.bold.cyan(`📋 ${workflow.name}`));
-  console.log(chalk.dim(`ID: ${workflow.id}`));
-  console.log(chalk.dim(`Version: ${workflow.version}`));
+  console.log(theme.bold(theme.info(`${workflow.name}`)));
+  console.log(theme.muted(`ID: ${workflow.id}`));
+  console.log(theme.muted(`Version: ${workflow.version}`));
 
   if (workflow.description) {
     console.log("");
@@ -170,29 +201,31 @@ function displayWorkflowDetails(workflow: Workflow): void {
   if (workflow.metadata) {
     console.log("");
     if (workflow.metadata.frequency) {
-      console.log(chalk.dim(`Frequency: ${workflow.metadata.frequency}`));
+      console.log(theme.muted(`Frequency: ${workflow.metadata.frequency}`));
     }
     if (workflow.metadata.bestTime) {
-      console.log(chalk.dim(`Best time: ${workflow.metadata.bestTime}`));
+      console.log(theme.muted(`Best time: ${workflow.metadata.bestTime}`));
     }
     if (workflow.metadata.tags && workflow.metadata.tags.length > 0) {
-      console.log(chalk.dim(`Tags: ${workflow.metadata.tags.join(", ")}`));
+      console.log(theme.muted(`Tags: ${workflow.metadata.tags.join(", ")}`));
     }
   }
 
   console.log("");
-  console.log(chalk.bold("Steps:"));
+  console.log(theme.bold("Steps:"));
   workflow.steps.forEach((step, index) => {
-    console.log(chalk.cyan(`  ${index + 1}. ${step.id}`));
+    console.log(theme.info(`  ${index + 1}. ${step.id}`));
     if (step.description) {
-      console.log(chalk.dim(`     ${step.description}`));
+      console.log(theme.muted(`     ${step.description}`));
     }
-    console.log(chalk.dim(`     → Run '${step.command}' on node '${step.node}'`));
-    console.log(chalk.dim(`     On error: ${step.onError} (timeout: ${step.timeout ?? 300000}ms)`));
+    console.log(theme.muted(`     → Run '${step.command}' on node '${step.node}'`));
+    console.log(
+      theme.muted(`     On error: ${step.onError} (timeout: ${step.timeout ?? 300000}ms)`)
+    );
   });
 
   console.log("");
-  console.log(chalk.dim(`Created: ${new Date(workflow.created).toLocaleString()}`));
+  console.log(theme.muted(`Created: ${new Date(workflow.created).toLocaleString()}`));
 
   console.log("");
 }

@@ -1,0 +1,24 @@
+<div class="commands-container">
+  <h1>Commands</h1>
+
+  <div class="commands-header">
+    <input
+      type="text"
+      id="commands-search"
+      placeholder="Search commands..."
+      aria-label="Search commands"
+    />
+    <select id="commands-vault-filter" aria-label="Filter by vault">
+      <option value="">All Vaults</option>
+      <!-- Options populated by JS -->
+    </select>
+  </div>
+
+  <div id="commands-grid" class="grid">
+    <!-- Command cards populated by JS -->
+  </div>
+
+  <div id="commands-empty" style="display: none; text-align: center; padding: 2rem;">
+    <p><em>No commands found</em></p>
+  </div>
+</div>

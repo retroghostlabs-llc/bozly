@@ -3,10 +3,10 @@
  */
 
 import { Command } from "commander";
-import chalk from "chalk";
 import { logger } from "../../core/logger.js";
 import { getCurrentNode } from "../../core/node.js";
 import { generateContext } from "../../core/context.js";
+import { errorBox, warningBox, successBox } from "../../cli/ui/index.js";
 
 export const contextCommand = new Command("context")
   .description("Generate AI context from vault")
@@ -25,8 +25,11 @@ export const contextCommand = new Command("context")
 
       if (!node) {
         await logger.warn("Not in a node directory");
-        console.log(chalk.yellow("Not in a node directory."));
-        console.log("Run 'bozly init' to initialize a node here.");
+        console.error(
+          warningBox("Not in a node directory", {
+            hint: "Run 'bozly init' to initialize a node here",
+          })
+        );
         process.exit(1);
       }
 
@@ -46,10 +49,14 @@ export const contextCommand = new Command("context")
         await logger.info("Context written to file", {
           file: options.file,
         });
-        console.log(chalk.green(`Context written to ${options.file}`));
+        console.log(
+          successBox("Context written to file", {
+            path: options.file,
+          })
+        );
       } else if (options.copy) {
         // Copy to clipboard (platform-specific)
-        console.log(chalk.yellow("Clipboard support coming soon"));
+        console.log(warningBox("Clipboard support coming soon"));
         console.log(context);
       } else {
         // Output to stdout
@@ -61,9 +68,11 @@ export const contextCommand = new Command("context")
         error: errorMsg,
       });
 
-      if (error instanceof Error) {
-        console.error(chalk.red(error.message));
-      }
+      console.error(
+        errorBox("Failed to generate context", {
+          error: errorMsg,
+        })
+      );
       process.exit(1);
     }
   });

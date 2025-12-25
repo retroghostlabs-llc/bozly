@@ -15,12 +15,12 @@
  */
 
 import { Command } from "commander";
-import chalk from "chalk";
 import * as fs from "fs";
 import * as path from "path";
 import { logger } from "../../core/logger.js";
 import { CrossNodeSearcher } from "../../core/search.js";
 import { SearchQuery, AggregatedSearchResults } from "../../core/types.js";
+import { formatSearchResultsTable, successBox, errorBox, theme } from "../../cli/ui/index.js";
 
 export const searchCommand = new Command("search")
   .description("Search across all vaults for sessions, memories, and commands")
@@ -71,7 +71,12 @@ export const searchCommand = new Command("search")
 
       if (options.status) {
         if (!["completed", "failed", "dry_run"].includes(options.status)) {
-          console.error(chalk.red("Invalid status. Must be one of: completed, failed, dry_run"));
+          console.error(
+            errorBox("Invalid status", {
+              received: options.status,
+              valid: "completed, failed, dry_run",
+            })
+          );
           process.exit(1);
         }
         searchQuery.status = options.status;
@@ -106,14 +111,14 @@ export const searchCommand = new Command("search")
         const jsonOutput = JSON.stringify(results, null, 2);
         if (options.export) {
           fs.writeFileSync(options.export, jsonOutput);
-          console.log(chalk.green(`✓ Results exported to ${options.export}`));
+          console.log(successBox(`Results exported to ${options.export}`));
         } else {
           console.log(jsonOutput);
         }
       } else if (options.export?.endsWith(".csv")) {
         const csvContent = convertToCsv(results);
         fs.writeFileSync(options.export, csvContent);
-        console.log(chalk.green(`✓ Results exported to ${options.export}`));
+        console.log(successBox(`Results exported to ${options.export}`));
       } else {
         // Display formatted results
         displaySearchResults(results);
@@ -124,9 +129,11 @@ export const searchCommand = new Command("search")
         error: errorMsg,
       });
 
-      if (error instanceof Error) {
-        console.error(chalk.red(error.message));
-      }
+      console.error(
+        errorBox("Search command failed", {
+          error: errorMsg,
+        })
+      );
       process.exit(1);
     }
   });
@@ -139,127 +146,91 @@ function displaySearchResults(results: AggregatedSearchResults): void {
 
   console.log();
   console.log(
-    chalk.cyan(`SEARCH RESULTS: "${query.text ?? "(no text filter)"}" `) +
-      chalk.gray(`(${counts.total} results, ${queryTimeMs}ms)`)
+    theme.info(`SEARCH RESULTS: "${query.text ?? "(no text filter)"}"`) +
+      ` ${theme.muted(`(${counts.total} results, ${queryTimeMs}ms)`)}`
   );
   console.log();
 
-  // Display sessions
-  if (counts.sessions > 0) {
-    console.log(chalk.bold(`SESSIONS (${counts.sessions})`));
-    console.log(chalk.gray("─".repeat(Math.min(process.stdout.columns || 120, 120))));
+  // Build unified results array for formatSearchResultsTable
+  const tableData: Array<{
+    type: "session" | "command" | "memory";
+    command?: string;
+    node: string;
+    date?: string;
+    time?: string;
+    status?: string;
+    name?: string;
+    source?: string;
+    summary?: string;
+    score: number;
+  }> = [];
 
-    const sessionTable = resultsByType.sessions.slice(0, 10).map((result) => {
-      const session = result.session;
-      const timestamp = new Date(session.timestamp);
-      const dateStr = timestamp.toLocaleDateString("en-US", {
-        month: "2-digit",
-        day: "2-digit",
-      });
-      const timeStr = timestamp.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-      return {
-        Command: session.command ?? "?",
-        Node: result.nodeInfo.nodeName,
-        Date: dateStr,
-        Time: timeStr,
-        Status: formatStatus(session.status),
-        Score: (result.relevanceScore * 100).toFixed(0) + "%",
-      };
+  // Add sessions
+  for (const result of resultsByType.sessions.slice(0, 10)) {
+    const session = result.session;
+    const timestamp = new Date(session.timestamp);
+    const dateStr = timestamp.toLocaleDateString("en-US", {
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const timeStr = timestamp.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
     });
 
-    // Simple table display without external lib
-    if (sessionTable.length > 0) {
-      const headers = Object.keys(sessionTable[0]);
-      const colWidths = headers.map((h) =>
-        Math.max(h.length, ...sessionTable.map((r) => String(r[h as keyof typeof r]).length))
-      );
-
-      // Print header
-      console.log("┌" + colWidths.map((w) => "─".repeat(w)).join("─┬─") + "┐");
-      console.log("│ " + headers.map((h, i) => h.padEnd(colWidths[i])).join(" │ ") + " │");
-      console.log("├" + colWidths.map((w) => "─".repeat(w)).join("─┼─") + "┤");
-
-      // Print rows
-      for (const row of sessionTable) {
-        const values = headers.map((h) => String(row[h as keyof typeof row]));
-        console.log("│ " + values.map((v, i) => v.padEnd(colWidths[i])).join(" │ ") + " │");
-      }
-      console.log("└" + colWidths.map((w) => "─".repeat(w)).join("─┴─") + "┘");
-    }
-
-    if (counts.sessions > 10) {
-      console.log(chalk.gray(`... and ${counts.sessions - 10} more sessions`));
-    }
-    console.log();
-  }
-
-  // Display memories
-  if (counts.memories > 0) {
-    console.log(chalk.bold(`MEMORIES (${counts.memories})`));
-    console.log(chalk.gray("─".repeat(Math.min(process.stdout.columns || 120, 120))));
-
-    for (const result of resultsByType.memories.slice(0, 5)) {
-      const timestamp = new Date(result.memory.timestamp);
-      console.log(chalk.gray(`${timestamp.toLocaleString()} [${result.memory.nodeId}]`));
-      console.log(`  ${result.memory.summary.substring(0, 80)}`);
-      if (result.memory.tags?.length > 0) {
-        console.log(chalk.dim(`  Tags: ${result.memory.tags.join(", ")}`));
-      }
-      console.log();
-    }
-
-    if (counts.memories > 5) {
-      console.log(chalk.gray(`... and ${counts.memories - 5} more memories`));
-    }
-    console.log();
-  }
-
-  // Display commands
-  if (counts.commands > 0) {
-    console.log(chalk.bold(`COMMANDS (${counts.commands})`));
-    console.log(chalk.gray("─".repeat(Math.min(process.stdout.columns || 120, 120))));
-
-    const commandTable = resultsByType.commands.slice(0, 10).map((result) => {
-      const cmd = result.command;
-      const source = cmd.source ?? "builtin";
-      return {
-        Name: cmd.name,
-        Source: source,
-        Score: (result.relevanceScore * 100).toFixed(0) + "%",
-        Node: result.sourceNode?.nodeName ?? "global",
-      };
+    tableData.push({
+      type: "session",
+      command: session.command ?? "?",
+      node: result.nodeInfo.nodeName,
+      date: dateStr,
+      time: timeStr,
+      status: session.status,
+      score: result.relevanceScore,
     });
-
-    if (commandTable.length > 0) {
-      const headers = Object.keys(commandTable[0]);
-      const colWidths = headers.map((h) =>
-        Math.max(h.length, ...commandTable.map((r) => String(r[h as keyof typeof r]).length))
-      );
-
-      console.log("┌" + colWidths.map((w) => "─".repeat(w)).join("─┬─") + "┐");
-      console.log("│ " + headers.map((h, i) => h.padEnd(colWidths[i])).join(" │ ") + " │");
-      console.log("├" + colWidths.map((w) => "─".repeat(w)).join("─┼─") + "┤");
-
-      for (const row of commandTable) {
-        const values = headers.map((h) => String(row[h as keyof typeof row]));
-        console.log("│ " + values.map((v, i) => v.padEnd(colWidths[i])).join(" │ ") + " │");
-      }
-      console.log("└" + colWidths.map((w) => "─".repeat(w)).join("─┴─") + "┘");
-    }
-
-    if (counts.commands > 10) {
-      console.log(chalk.gray(`... and ${counts.commands - 10} more commands`));
-    }
   }
+
+  // Add memories
+  for (const result of resultsByType.memories.slice(0, 5)) {
+    tableData.push({
+      type: "memory",
+      summary: result.memory.summary,
+      node: result.memory.nodeName,
+      score: result.relevanceScore,
+    });
+  }
+
+  // Add commands
+  for (const result of resultsByType.commands.slice(0, 10)) {
+    const cmd = result.command;
+    tableData.push({
+      type: "command",
+      name: cmd.name,
+      source: cmd.source ?? "builtin",
+      node: result.sourceNode?.nodeName ?? "global",
+      score: result.relevanceScore,
+    });
+  }
+
+  // Display table
+  if (tableData.length > 0) {
+    console.log(formatSearchResultsTable(tableData));
+  }
+
+  // Show truncation notices
+  if (counts.sessions > 10) {
+    console.log(theme.muted(`... and ${counts.sessions - 10} more sessions`));
+  }
+  if (counts.memories > 5) {
+    console.log(theme.muted(`... and ${counts.memories - 5} more memories`));
+  }
+  if (counts.commands > 10) {
+    console.log(theme.muted(`... and ${counts.commands - 10} more commands`));
+  }
+  console.log();
 
   // Summary
-  console.log();
   console.log(
-    chalk.gray(
+    theme.muted(
       `Total: ${counts.sessions} sessions, ${counts.memories} memories, ${counts.commands} commands`
     )
   );
@@ -332,20 +303,4 @@ function convertToCsv(results: AggregatedSearchResults): string {
   }
 
   return lines.join("\n");
-}
-
-/**
- * Format session status with color
- */
-function formatStatus(status: string): string {
-  switch (status) {
-    case "completed":
-      return chalk.green("✓ completed");
-    case "failed":
-      return chalk.red("✗ failed");
-    case "dry_run":
-      return chalk.yellow("• dry_run");
-    default:
-      return status;
-  }
 }

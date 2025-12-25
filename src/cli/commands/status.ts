@@ -3,13 +3,21 @@
  */
 
 import { Command } from "commander";
-import chalk from "chalk";
 import { logger } from "../../core/logger.js";
 import { getCurrentNode } from "../../core/node.js";
 import { getNodeCommands } from "../../core/commands.js";
 import { getCleanupConfig, calculateNodeStorage } from "../../core/cleanup.js";
 import { homedir } from "os";
 import path from "path";
+import {
+  keyValueBox,
+  formatList,
+  formatSection,
+  warningBox,
+  infoBox,
+  successBox,
+} from "../../cli/ui/index.js";
+import { formatStatsTable } from "../../cli/ui/index.js";
 
 export const statusCommand = new Command("status")
   .description("Show current node status")
@@ -26,10 +34,7 @@ export const statusCommand = new Command("status")
 
       if (!node) {
         await logger.warn("Not in a node directory");
-        console.log(chalk.yellow("Not in a node directory."));
-        console.log();
-        console.log("To initialize a node here:");
-        console.log("  bozly init");
+        console.log(infoBox("Not in a node directory", { suggestion: "Try: bozly init" }));
         return;
       }
 
@@ -39,10 +44,14 @@ export const statusCommand = new Command("status")
         type: node.type,
       });
 
-      console.log(chalk.cyan("Node Status:\n"));
-      console.log(chalk.bold("Name:"), node.name);
-      console.log(chalk.bold("Path:"), node.path);
-      console.log(chalk.bold("Type:"), node.type);
+      // Display node basic info
+      console.log(
+        keyValueBox("Node Status", {
+          Name: node.name,
+          Path: node.path,
+          Type: node.type,
+        })
+      );
       console.log();
 
       // Show commands
@@ -53,11 +62,12 @@ export const statusCommand = new Command("status")
           commands: commands.map((c) => c.name),
         });
 
-        console.log(chalk.bold("Commands:"));
-        for (const cmd of commands) {
-          console.log(chalk.gray(`  /${cmd.name}`) + ` — ${cmd.description ?? "No description"}`);
-        }
-        console.log();
+        const commandItems = commands.map((cmd) => ({
+          label: `/${cmd.name}`,
+          status: "info" as const,
+          details: cmd.description,
+        }));
+        console.log(formatSection("Commands", formatList(commandItems)));
       }
 
       // Show storage information if requested or verbose
@@ -66,37 +76,38 @@ export const statusCommand = new Command("status")
         const cleanupConfig = await getCleanupConfig(globalConfigPath);
         const storage = await calculateNodeStorage(node.path, cleanupConfig.sessions.maxStorageMB);
 
-        console.log(chalk.bold("Storage Usage:"));
-        console.log(
-          `  Total: ${storage.totalSizeMB} MB / ${storage.maxStorageMB} MB (${storage.percentUsed}%)`
-        );
-        console.log(`  Sessions: ${storage.sessionsSizeMB} MB`);
-        console.log(`    - Active: ${storage.activeSessions.count} sessions`);
-        console.log(`    - Archived: ${storage.archivedSessions.count} sessions`);
-        console.log(`  Backups: ${storage.backupsSizeMB} MB`);
-        console.log();
+        const storageStats: Record<string, string | number> = {
+          Total: `${storage.totalSizeMB} MB / ${storage.maxStorageMB} MB (${storage.percentUsed}%)`,
+          "Sessions Size": `${storage.sessionsSizeMB} MB`,
+          "Active Sessions": storage.activeSessions.count,
+          "Archived Sessions": storage.archivedSessions.count,
+          "Backups Size": `${storage.backupsSizeMB} MB`,
+        };
+
+        console.log(formatSection("Storage Usage", formatStatsTable(storageStats)));
 
         if (storage.percentUsed > 80) {
-          const color = storage.percentUsed > 95 ? chalk.red : chalk.yellow;
-          console.log(
-            color(`⚠️  Storage usage is ${storage.percentUsed > 95 ? "critical" : "high"}`)
-          );
-          console.log(color(`  Run 'bozly cleanup --preview' to see cleanup options`));
+          const msg =
+            storage.percentUsed > 95
+              ? "Storage usage is critical (>95%)"
+              : "Storage usage is high (>80%)";
+          console.log(warningBox(msg, { suggestion: "Run: bozly cleanup --preview" }));
           console.log();
         }
       }
 
       // Show configuration if verbose
       if (options.verbose) {
-        console.log(chalk.bold("Configuration:"));
-        console.log(chalk.gray(`  Config: .bozly/config.json`));
-        console.log(chalk.gray(`  Context: .bozly/context.md`));
-        console.log(chalk.gray(`  Sessions: .bozly/sessions/`));
-        console.log(chalk.gray(`  Commands: .bozly/commands/`));
-        console.log();
+        const configItems = [
+          { label: ".bozly/config.json" },
+          { label: ".bozly/context.md" },
+          { label: ".bozly/sessions/" },
+          { label: ".bozly/commands/" },
+        ];
+        console.log(formatSection("Configuration", formatList(configItems)));
       }
 
-      console.log(chalk.green("✓ Node is ready"));
+      console.log(successBox("Node is ready"));
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       await logger.error("Failed to get node status", {
@@ -104,7 +115,7 @@ export const statusCommand = new Command("status")
       });
 
       if (error instanceof Error) {
-        console.error(chalk.red(error.message));
+        console.error(errorMsg);
       }
       process.exit(1);
     }

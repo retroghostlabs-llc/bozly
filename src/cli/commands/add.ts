@@ -3,10 +3,10 @@
  */
 
 import { Command } from "commander";
-import chalk from "chalk";
 import ora from "ora";
 import { logger } from "../../core/logger.js";
 import { addNode } from "../../core/registry.js";
+import { successBox, errorBox } from "../../cli/ui/index.js";
 
 export const addCommand = new Command("add")
   .description("Register an existing vault")
@@ -32,24 +32,29 @@ export const addCommand = new Command("add")
         type: node.type,
       });
 
-      spinner.succeed(chalk.green("Node registered successfully!"));
+      spinner.succeed("Node registered successfully!");
       console.log();
-      console.log(chalk.gray("Name:"), node.name);
-      console.log(chalk.gray("Path:"), node.path);
-      console.log(chalk.gray("Type:"), node.type);
+      console.log(
+        successBox("Node registered successfully!", {
+          Name: node.name,
+          Path: node.path,
+          Type: node.type,
+        })
+      );
       console.log();
-      console.log("Run 'bozly list' to see all registered vaults.");
+      console.log("Run 'bozly list' to see all registered nodes.");
     } catch (error) {
-      spinner.fail(chalk.red("Failed to register vault"));
+      spinner.fail("Failed to register node");
 
       const errorMsg = error instanceof Error ? error.message : String(error);
-      await logger.error("Failed to register vault", {
+      await logger.error("Failed to register node", {
         path,
         error: errorMsg,
       });
 
       if (error instanceof Error) {
-        console.error(chalk.red(error.message));
+        console.log();
+        console.log(errorBox("Failed to register node", { error: errorMsg }));
       }
       process.exit(1);
     }

@@ -1,4 +1,4 @@
-.PHONY: help build dev test test-watch test-ui test-coverage test-isolated test-with-prefix test-docker lint lint-fix format format-check validate clean start
+.PHONY: help build dev test test-watch test-ui test-coverage test-isolated test-with-prefix test-docker lint lint-fix format format-check validate clean start serve serve-dev
 
 help:
 	@echo "BOZLY - Development Commands"
@@ -37,6 +37,8 @@ help:
 	@echo ""
 	@echo "Running:"
 	@echo "  make start           Run the bozly CLI"
+	@echo "  make serve           Start BOZLY dashboard server (port 3847)"
+	@echo "  make serve-dev       Start server in development (watch mode)"
 	@echo ""
 	@echo "Development Loop:"
 	@echo "  Terminal 1:  make dev           (watch mode compilation)"
@@ -91,3 +93,10 @@ test-with-prefix:
 
 test-docker:
 	@docker compose -f docker-compose.yml --profile test up --build
+
+serve:
+	npm start -- serve
+
+serve-dev:
+	npm run dev &
+	npm start -- serve

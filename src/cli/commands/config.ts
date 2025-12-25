@@ -3,9 +3,9 @@
  */
 
 import { Command } from "commander";
-import chalk from "chalk";
 import { logger } from "../../core/logger.js";
 import { getConfig, setConfig, getConfigPath } from "../../core/config.js";
+import { errorBox, infoBox, warningBox, successBox } from "../../cli/ui/index.js";
 
 export const configCommand = new Command("config")
   .description("Manage BOZLY configuration")
@@ -35,8 +35,7 @@ export const configCommand = new Command("config")
       if (options.list || (!key && !value)) {
         const config = await getConfig(isGlobal);
         await logger.debug("Config listed", { isGlobal });
-        console.log(chalk.cyan(isGlobal ? "Global Configuration:" : "Node Configuration:"));
-        console.log();
+        console.log(infoBox(isGlobal ? "Global Configuration" : "Node Configuration"));
         console.log(JSON.stringify(config, null, 2));
         return;
       }
@@ -52,7 +51,7 @@ export const configCommand = new Command("config")
             current = (current as Record<string, unknown>)[k];
           } else {
             await logger.warn("Config key not found", { key });
-            console.log(chalk.yellow(`Key '${key}' not found`));
+            console.error(warningBox(`Key not found: ${key}`));
             return;
           }
         }
@@ -69,7 +68,11 @@ export const configCommand = new Command("config")
           key,
           isGlobal,
         });
-        console.log(chalk.green(`Set ${key} = ${value}`));
+        console.log(
+          successBox(`Configuration updated`, {
+            [key]: value,
+          })
+        );
       }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
@@ -77,9 +80,11 @@ export const configCommand = new Command("config")
         error: errorMsg,
       });
 
-      if (error instanceof Error) {
-        console.error(chalk.red(error.message));
-      }
+      console.error(
+        errorBox("Configuration operation failed", {
+          error: errorMsg,
+        })
+      );
       process.exit(1);
     }
   });

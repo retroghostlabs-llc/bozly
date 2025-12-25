@@ -1,0 +1,30 @@
+<div class="sessions-container">
+  <h1>Sessions</h1>
+
+  <div class="filters">
+    <input
+      type="text"
+      id="sessions-search"
+      placeholder="Search sessions..."
+      aria-label="Search sessions"
+    />
+    <select id="sessions-status-filter" aria-label="Filter by status">
+      <option value="">All Statuses</option>
+      <option value="success">Successful</option>
+      <option value="error">Failed</option>
+      <option value="cancelled">Cancelled</option>
+    </select>
+    <select id="sessions-vault-filter" aria-label="Filter by vault">
+      <option value="">All Vaults</option>
+      <!-- Options populated by JS -->
+    </select>
+  </div>
+
+  <div id="sessions-table-container">
+    <!-- Sessions table populated by JS -->
+  </div>
+
+  <div id="sessions-pagination" class="pagination">
+    <!-- Pagination controls populated by JS -->
+  </div>
+</div>
