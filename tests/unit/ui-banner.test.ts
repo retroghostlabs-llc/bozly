@@ -33,9 +33,11 @@ describe('Banner Rendering', () => {
       const banner = renderBanner();
       expect(banner).toBeTruthy();
       expect(typeof banner).toBe('string');
-      // Fancy banner should contain the ASCII art with underscores and pipes
-      expect(banner).toContain('____');
+      // Fancy banner should contain the tagline text (ANSI codes wrap individual chars)
       expect(banner).toContain('Build');
+      expect(banner).toContain('OrganiZe');
+      expect(banner).toContain('Link');
+      expect(banner).toContain('Yield');
     });
 
     it('returns simple banner in CI environment', () => {
