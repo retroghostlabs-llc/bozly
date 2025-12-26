@@ -274,11 +274,11 @@ See [CLI-DESIGN.md](docs/CLI-DESIGN.md) for full command reference.
 
 ## Project Status
 
-**Current Phase:** Phase 1: Beta — ✅ 100% COMPLETE | Phase 2: Automation & Integrations — 🔄 83% IN PROGRESS
+**Current Phase:** Phase 1: Beta — ✅ 100% COMPLETE | Phase 2: Automation & Integrations — ✅ 100% COMPLETE | Coverage — ✅ 80.06% | Phase 3: Ecosystem & Community — 📋 READY
 
-**Released:** v0.3.0-beta.1 (Dec 21, 2025) ✅ | v0.4.0-beta.1 ✅ | v0.4.1-beta.1 ✅ | v0.5.0-beta.1 ✅ (Available Now)
+**Released:** v0.3.0-beta.1 (Dec 21, 2025) ✅ | v0.4.0-beta.1 ✅ | v0.4.1-beta.1 ✅ | v0.4.2-beta.1 ✅ | v0.5.0-beta.1 ✅ | v0.6.0-beta.1 ✅ (All Available)
 
-**Next:** Phase 2 remaining features (2 sub-phases, ~6-8 hrs) | Phase 3 - Ecosystem & Community | v1.0 Public Launch May 2026
+**Next:** Phase 3 - Ecosystem & Community (35-55 hrs) | v1.0 Public Launch May 2026 | Test Coverage: 1,642/1,642 passing (100%)
 
 ### Development Progress
 
@@ -322,22 +322,20 @@ Sprint 4: Release              ✅ COMPLETE
 - Auto-cleanup with duration parsing and storage monitoring
 - Node removal with backup support
 
-**Phase 2: Automation & Integrations (v0.4.0-v0.5.0) — 🔄 83% IN PROGRESS (9/11 sub-phases)**
+**Phase 2: Automation & Integrations (v0.4.0-v0.6.0) — ✅ 100% COMPLETE (11/11 sub-phases)**
 
-**Completed (v0.4.0-beta.1 through v0.5.0-beta.1):**
-- ✅ Hooks system (4 trigger points)
-- ✅ Workflows (multi-step processes, task chains, conditions)
-- ✅ Auto-Cleanup (duration parsing, storage monitoring, disk management)
-- ✅ Templates system (variable substitution, template tooling)
-- ✅ Commands tooling (command discovery, creation, metadata)
+**Completed (v0.4.0-beta.1 through v0.6.0-beta.1):**
+- ✅ Hooks system (4 trigger points: session-start, pre-execution, post-execution, session-end)
+- ✅ Workflows (multi-step processes with task chains, context passing, conditions)
+- ✅ Auto-Cleanup (duration parsing, storage monitoring, disk management with policies)
+- ✅ Templates system (variable substitution, template tooling, prompt templates)
+- ✅ Commands tooling (command discovery, creation, metadata, 5 default commands)
 - ✅ Memory system (extraction, indexing, injection, cross-node search)
-- ✅ Smart routing (per-node AI provider config)
-- ✅ Vault Intelligence (suggestions, search)
-- ✅ Test Coverage verification & CI/CD fixes
-
-**Remaining (2 sub-phases, ~6-8 hrs):**
-- [ ] Server UI (`bozly serve`) — Visual node management
-- [ ] Final polish & optimization before v1.0
+- ✅ Smart routing (per-node/command AI provider config, fallback chains)
+- ✅ Command Suggestions (AI-powered improvements, pattern detection, user approval)
+- ✅ Cross-Node Search (search across all nodes, session filtering, export)
+- ✅ CLI Visual Polish (gradient banner, formatted tables, graceful degradation)
+- ✅ Server UI (`bozly serve`) — Full web dashboard with REST API (15 endpoints)
 
 **Phase 3: Ecosystem & Community (v1.0.0) — 35-55 hours (May 2026)**
 - [ ] Community node registry
@@ -425,7 +423,7 @@ See [LICENSE](LICENSE) for details.
 
 *Built by [RetroGhostLabs](https://github.com/RetroGhostLabs) | MIT License*
 
-*Last updated: 2025-12-24 (Session 96)* | *Status: Phase 1 ✅ COMPLETE | Phase 2 🔄 83% IN PROGRESS | Released: v0.5.0-beta.1 (Available Now) | Next: Phase 3 (v1.0, May 2026)*
+*Last updated: 2025-12-26 (Session 120)* | *Status: Phase 1 ✅ COMPLETE | Phase 2 ✅ 100% COMPLETE | Coverage ✅ 80.06% (1,642/1,642 tests) | Released: v0.4.0-v0.6.0 (All Available) | Next: Phase 3 (v1.0, May 2026)*
 
 ---
 
