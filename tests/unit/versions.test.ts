@@ -133,7 +133,7 @@ describe("Version History Management", () => {
   it("should save and load version history", async () => {
     const history: VaultVersionHistory = {
       nodeId: "test-vault",
-      vaultVersion: "0.1.0",
+      nodeVersion: "0.1.0",
       created: new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
       frameworkVersion: "0.3.0",
@@ -146,7 +146,7 @@ describe("Version History Management", () => {
 
     expect(loaded).toBeDefined();
     expect(loaded?.nodeId).toBe("test-vault");
-    expect(loaded?.vaultVersion).toBe("0.1.0");
+    expect(loaded?.nodeVersion).toBe("0.1.0");
   });
 
   it("should return undefined for non-existent version file", async () => {
@@ -469,5 +469,251 @@ describe("Integration Tests", () => {
     const history = await getVersionInfo(testDir);
     expect(history?.models.length).toBe(3);
     expect(history?.files.length).toBe(3);
+  });
+});
+
+describe("Edge Cases - Semantic Version Parsing", () => {
+  it("should parse version with leading zeros", () => {
+    const parsed = parseSemVer("0.0.1");
+    expect(parsed.major).toBe(0);
+    expect(parsed.minor).toBe(0);
+    expect(parsed.patch).toBe(1);
+  });
+
+  it("should parse large version numbers", () => {
+    const parsed = parseSemVer("99.99.99");
+    expect(parsed.major).toBe(99);
+    expect(parsed.minor).toBe(99);
+    expect(parsed.patch).toBe(99);
+  });
+
+  it("should parse complex prerelease versions", () => {
+    const parsed = parseSemVer("1.0.0-alpha.1.2.3");
+    expect(parsed.prerelease).toBe("alpha.1.2.3");
+  });
+
+  it("should parse beta and rc versions", () => {
+    expect(parseSemVer("1.0.0-beta").prerelease).toBe("beta");
+    expect(parseSemVer("1.0.0-rc.1").prerelease).toBe("rc.1");
+  });
+
+  it("should throw on versions with invalid characters", () => {
+    expect(() => parseSemVer("1.0.0@")).toThrow();
+    expect(() => parseSemVer("1.0.0-")).toThrow();
+  });
+});
+
+describe("Edge Cases - Version Comparison", () => {
+  it("should handle prerelease version ordering", () => {
+    expect(compareVersions("1.0.0-alpha.1", "1.0.0-alpha.2")).toBe(-1);
+    expect(compareVersions("1.0.0-rc.2", "1.0.0-rc.1")).toBe(1);
+  });
+
+  it("should compare versions with large numbers", () => {
+    expect(compareVersions("10.0.0", "9.99.99")).toBe(1);
+    expect(compareVersions("9.99.99", "10.0.0")).toBe(-1);
+  });
+});
+
+describe("Edge Cases - Hash Computation", () => {
+  it("should handle empty string content", () => {
+    const hash = computeHash("");
+    expect(hash.length).toBe(64);
+    expect(typeof hash).toBe("string");
+  });
+
+  it("should handle very large content", () => {
+    const largeContent = "x".repeat(10000);
+    const hash = computeHash(largeContent);
+    expect(hash.length).toBe(64);
+  });
+
+  it("should handle special characters in content", () => {
+    const specialContent = "!@#$%^&*()_+-={}[]|:;<>?,./";
+    const hash = computeHash(specialContent);
+    expect(hash.length).toBe(64);
+  });
+
+  it("should handle unicode content", () => {
+    const unicodeContent = "Hello 世界 🌍";
+    const hash = computeHash(unicodeContent);
+    expect(hash.length).toBe(64);
+  });
+});
+
+describe("Edge Cases - File Tracking", () => {
+  it("should track file with empty changes array", async () => {
+    await trackFileVersion(testDir, "file.md", "content", "1.0.0", []);
+    const history = await loadVersionHistory(testDir);
+    expect(history?.files[0].changes).toEqual([]);
+  });
+
+  it("should track file with many changes", async () => {
+    const changes = Array.from({ length: 50 }, (_, i) => `Change ${i + 1}`);
+    await trackFileVersion(testDir, "file.md", "content", "1.0.0", changes);
+    const history = await loadVersionHistory(testDir);
+    expect(history?.files[0].changes?.length).toBe(50);
+  });
+
+  it("should update file timestamp on modification", async () => {
+    await trackFileVersion(testDir, "file.md", "version 1");
+    const history1 = await loadVersionHistory(testDir);
+    const timestamp1 = history1?.files[0].timestamp;
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    await trackFileVersion(testDir, "file.md", "version 2");
+    const history2 = await loadVersionHistory(testDir);
+    const timestamp2 = history2?.files[0].timestamp;
+
+    expect(timestamp2).not.toBe(timestamp1);
+  });
+
+  it("should handle files with path separators", async () => {
+    await trackFileVersion(testDir, "models/v1/scoring/model.yaml", "content");
+    const history = await loadVersionHistory(testDir);
+    expect(history?.files[0].file).toBe("models/v1/scoring/model.yaml");
+  });
+});
+
+describe("Edge Cases - Model Tracking", () => {
+  it("should track model with hash in object", async () => {
+    const model: Model = {
+      name: "test",
+      version: "1.0.0",
+      path: "/test",
+      hash: "abc123def456",
+    };
+    await trackModelVersion(testDir, model);
+    const history = await loadVersionHistory(testDir);
+    expect(history?.models[0].hash).toBe("abc123def456");
+  });
+
+  it("should compute hash for model without explicit hash", async () => {
+    const model: Model = {
+      name: "test",
+      version: "1.0.0",
+      path: "/test",
+    };
+    await trackModelVersion(testDir, model);
+    const history = await loadVersionHistory(testDir);
+    expect(history?.models[0].hash.length).toBe(64);
+  });
+
+  it("should track model changelog with multiple versions", async () => {
+    const model: Model = {
+      name: "test",
+      version: "2.0.0",
+      path: "/test",
+      changelog: [
+        {
+          version: "1.0.0",
+          date: "2025-01-01",
+          changes: ["Initial release"],
+        },
+        {
+          version: "2.0.0",
+          date: "2025-12-25",
+          changes: ["Major refactor", "New features"],
+        },
+      ],
+    };
+    await trackModelVersion(testDir, model);
+    const history = await loadVersionHistory(testDir);
+    expect(history?.models[0].changelog?.length).toBe(2);
+  });
+});
+
+describe("Edge Cases - File Change Detection", () => {
+  it("should handle hash comparison with non-existent file", async () => {
+    const hasChanged = await hasFileChanged(
+      testDir,
+      "nonexistent.md",
+      computeHash("content")
+    );
+    expect(hasChanged).toBe(true);
+  });
+
+  it("should handle empty content hash", async () => {
+    const emptyHash = computeHash("");
+    await trackFileVersion(testDir, "file.md", "");
+
+    const hasChanged = await hasFileChanged(testDir, "file.md", emptyHash);
+    expect(hasChanged).toBe(false);
+  });
+});
+
+describe("Edge Cases - Version Compatibility", () => {
+  it("should handle prerelease compatibility checks", () => {
+    expect(isVersionCompatible("1.0.0-alpha", "1.0.0-beta")).toBe(false);
+    expect(isVersionCompatible("1.0.0", "1.0.0-alpha")).toBe(true);
+  });
+
+  it("should handle edge case versions", () => {
+    expect(isVersionCompatible("0.0.1", "0.0.0")).toBe(true);
+    expect(isVersionCompatible("0.0.0", "0.0.1")).toBe(false);
+  });
+});
+
+describe("Edge Cases - Version Formatting", () => {
+  it("should format empty version history", async () => {
+    const history: VaultVersionHistory = {
+      nodeId: "test",
+      nodeVersion: "1.0.0",
+      created: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
+      frameworkVersion: "0.3.0",
+      files: [],
+      models: [],
+    };
+
+    const formatted = formatVersionInfo(history);
+    expect(formatted).toContain("Vault Version");
+    expect(formatted).not.toContain("File Versions:");
+  });
+
+  it("should format version with many file entries", async () => {
+    for (let i = 0; i < 10; i++) {
+      await trackFileVersion(testDir, `file${i}.md`, `content ${i}`);
+    }
+    const history = await getVersionInfo(testDir);
+
+    if (history) {
+      const formatted = formatVersionInfo(history);
+      expect(formatted).toContain("File Versions:");
+      for (let i = 0; i < 10; i++) {
+        expect(formatted).toContain(`file${i}.md`);
+      }
+    }
+  });
+
+  it("should format model with no changelog", async () => {
+    const model: Model = {
+      name: "test",
+      version: "1.0.0",
+      path: "/test",
+    };
+    await trackModelVersion(testDir, model);
+    const history = await getVersionInfo(testDir);
+
+    if (history) {
+      const formatted = formatVersionInfo(history);
+      expect(formatted).toContain("Model Versions:");
+      expect(formatted).toContain("test");
+    }
+  });
+});
+
+describe("Edge Cases - Version Increment", () => {
+  it("should increment from 0.0.0", () => {
+    expect(incrementVersion("0.0.0", "patch")).toBe("0.0.1");
+    expect(incrementVersion("0.0.0", "minor")).toBe("0.1.0");
+    expect(incrementVersion("0.0.0", "major")).toBe("1.0.0");
+  });
+
+  it("should increment large version numbers", () => {
+    expect(incrementVersion("99.99.99", "patch")).toBe("99.99.100");
+    expect(incrementVersion("99.99.99", "minor")).toBe("99.100.0");
+    expect(incrementVersion("99.99.99", "major")).toBe("100.0.0");
   });
 });

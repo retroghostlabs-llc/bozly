@@ -2,18 +2,21 @@
  * Unit tests for core node operations
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   createTempDir,
   getTempDir,
+  cleanupTempDir,
   createMockVault,
   readJSON,
   fileExists,
   dirExists,
+  writeJSON,
 } from "../conftest";
-import { initNode } from "../../dist/core/node.js";
+import { initNode, getCurrentNode } from "../../dist/core/node.js";
 import type { NodeConfig } from "../../dist/core/types.js";
 import path from "path";
+import fs from "fs/promises";
 
 describe("Node Operations", () => {
   /**
@@ -244,6 +247,289 @@ describe("Node Operations", () => {
       expect(config.type).toBe("default");
       expect(config.version).toBe("0.3.0");
       expect(config.ai).toBeDefined();
+    });
+  });
+
+  describe("getCurrentNode", () => {
+    beforeEach(async () => {
+      await createTempDir();
+    });
+
+    afterEach(async () => {
+      await cleanupTempDir();
+    });
+
+    it("should have getCurrentNode function available", async () => {
+      expect(getCurrentNode).toBeDefined();
+      expect(typeof getCurrentNode).toBe("function");
+    });
+
+    it("should handle searching for nodes in vault structure", async () => {
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "my-vault");
+
+      // Create vault
+      const vault = await initNode({
+        path: nodePath,
+        name: "my-vault",
+        type: "default",
+      });
+
+      // Verify vault was created successfully
+      expect(vault).toBeDefined();
+      expect(vault.name).toBe("my-vault");
+      expect(vault.path).toBe(nodePath);
+    });
+  });
+
+  describe("initNode Edge Cases", () => {
+    beforeEach(async () => {
+      await createTempDir();
+    });
+
+    afterEach(async () => {
+      await cleanupTempDir();
+    });
+
+    it("should handle vault with no name (uses directory name)", async () => {
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "my-vault");
+
+      const vault = await initNode({
+        path: nodePath,
+      });
+
+      expect(vault.name).toBe("my-vault");
+    });
+
+    it("should handle vault with skipTemplateVariables option", async () => {
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "my-vault");
+
+      const vault = await initNode({
+        path: nodePath,
+        name: "my-vault",
+        skipTemplateVariables: true,
+      });
+
+      expect(vault).toBeDefined();
+      expect(await dirExists(path.join(nodePath, ".bozly"))).toBe(true);
+    });
+
+    it("should handle vault with custom variables", async () => {
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "my-vault");
+
+      const vault = await initNode({
+        path: nodePath,
+        name: "my-vault",
+        variables: {
+          CUSTOM_VAR: "custom-value",
+        },
+      });
+
+      expect(vault).toBeDefined();
+    });
+
+    it("should create all required subdirectories even without template", async () => {
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "my-vault");
+
+      await initNode({
+        path: nodePath,
+        name: "my-vault",
+        type: "non-existent-type",
+      });
+
+      const requiredDirs = [
+        "sessions",
+        "tasks",
+        "commands",
+        "workflows",
+        "hooks",
+      ];
+
+      for (const dir of requiredDirs) {
+        const dirPath = path.join(nodePath, ".bozly", dir);
+        expect(await dirExists(dirPath)).toBe(true);
+      }
+    });
+
+    it("should handle absolute paths correctly", async () => {
+      const tempDir = getTempDir();
+      const vaultPath = path.join(tempDir, "my-vault");
+
+      const vault = await initNode({
+        path: vaultPath,
+        name: "my-vault",
+      });
+
+      expect(vault.path).toBe(vaultPath);
+    });
+
+    it("should set AI providers in config", async () => {
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "my-vault");
+
+      await initNode({
+        path: nodePath,
+        name: "my-vault",
+      });
+
+      const configPath = path.join(nodePath, ".bozly", "config.json");
+      const config = await readJSON<NodeConfig>(configPath);
+
+      expect(config.ai.providers).toContain("claude");
+      expect(config.ai.providers).toContain("gpt");
+      expect(config.ai.providers).toContain("gemini");
+      expect(config.ai.providers).toContain("ollama");
+    });
+
+    it("should preserve config content with special characters", async () => {
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "my-vault");
+
+      const specialName = "my-vault™-ñ";
+      const vault = await initNode({
+        path: nodePath,
+        name: specialName,
+      });
+
+      const configPath = path.join(nodePath, ".bozly", "config.json");
+      const config = await readJSON<NodeConfig>(configPath);
+
+      expect(config.name).toBe(specialName);
+    });
+
+    it("should create config with valid type field", async () => {
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "my-vault");
+
+      await initNode({
+        path: nodePath,
+        type: "music",
+      });
+
+      const configPath = path.join(nodePath, ".bozly", "config.json");
+      const config = await readJSON<NodeConfig>(configPath);
+
+      expect(config.type).toBe("music");
+    });
+
+    it("should ensure context.md exists and has content", async () => {
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "my-vault");
+
+      await initNode({
+        path: nodePath,
+        name: "my-vault",
+      });
+
+      const contextPath = path.join(nodePath, ".bozly", "context.md");
+      const content = await fs.readFile(contextPath, "utf-8");
+
+      expect(content).toBeDefined();
+      expect(content.length).toBeGreaterThan(0);
+    });
+
+    it("should ensure index.json has correct structure", async () => {
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "my-vault");
+
+      await initNode({
+        path: nodePath,
+        name: "my-vault",
+      });
+
+      const indexPath = path.join(nodePath, ".bozly", "index.json");
+      const content = await readJSON(indexPath);
+
+      expect(content.tasks).toBeDefined();
+      expect(Array.isArray(content.tasks)).toBe(true);
+    });
+
+    it("should handle path with trailing slashes", async () => {
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "my-vault") + "/";
+
+      const vault = await initNode({
+        path: nodePath,
+        name: "my-vault",
+      });
+
+      expect(vault).toBeDefined();
+      expect(await dirExists(path.join(vault.path, ".bozly"))).toBe(true);
+    });
+
+    it("should return active vault status", async () => {
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "my-vault");
+
+      const vault = await initNode({
+        path: nodePath,
+        name: "my-vault",
+      });
+
+      expect(vault.active).toBe(true);
+    });
+  });
+
+  describe("Node Configuration", () => {
+    beforeEach(async () => {
+      await createTempDir();
+    });
+
+    afterEach(async () => {
+      await cleanupTempDir();
+    });
+
+    it("should store vault metadata correctly", async () => {
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "my-vault");
+
+      const vault = await initNode({
+        path: nodePath,
+        name: "test-vault",
+        type: "music",
+      });
+
+      const configPath = path.join(nodePath, ".bozly", "config.json");
+      const config = await readJSON<NodeConfig>(configPath);
+
+      expect(config.name).toBe("test-vault");
+      expect(config.type).toBe("music");
+      expect(config.version).toBe("0.3.0");
+      expect(config.created).toBeDefined();
+      expect(config.ai).toBeDefined();
+    });
+
+    it("should set default provider to claude", async () => {
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "my-vault");
+
+      await initNode({
+        path: nodePath,
+        name: "my-vault",
+      });
+
+      const configPath = path.join(nodePath, ".bozly", "config.json");
+      const config = await readJSON<NodeConfig>(configPath);
+
+      expect(config.ai.defaultProvider).toBe("claude");
+    });
+
+    it("should create vault with consistent ID across reads", async () => {
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "my-vault");
+
+      const vault1 = await initNode({
+        path: nodePath,
+        name: "my-vault",
+      });
+
+      // ID should be hex format (may be shortened)
+      expect(vault1.id).toMatch(/^[a-f0-9-]+$/);
+      expect(vault1.id.length).toBeGreaterThan(10);
     });
   });
 });

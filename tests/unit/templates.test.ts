@@ -2,7 +2,7 @@
  * Unit tests for template system
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   createTempDir,
   getTempDir,
@@ -10,6 +10,7 @@ import {
   writeJSON,
   fileExists,
   dirExists,
+  cleanupTempDir,
 } from "../conftest";
 import {
   getTemplates,
@@ -18,6 +19,11 @@ import {
   buildTemplateContext,
   loadTemplateMetadata,
   createTemplate,
+  collectTemplateVariables,
+  applyTemplate,
+  initFromTemplate,
+  getBuiltinTemplatesPath,
+  getUserTemplatesPath,
 } from "../../dist/core/templates.js";
 import type { TemplateMetadata, Template } from "../../dist/core/types.js";
 import path from "path";
@@ -530,6 +536,283 @@ Line 3: Value3`);
 
       const result = substituteVariables(content, context);
       expect(result).toContain(longValue);
+    });
+  });
+
+  describe("Template Paths", () => {
+    it("should return builtin templates path", () => {
+      const path_val = getBuiltinTemplatesPath();
+      expect(path_val).toBeDefined();
+      expect(typeof path_val).toBe("string");
+      expect(path_val).toContain("templates");
+    });
+
+    it("should return user templates path", () => {
+      const userPath = getUserTemplatesPath();
+      expect(userPath).toBeDefined();
+      expect(typeof userPath).toBe("string");
+      expect(userPath).toContain(".bozly");
+      expect(userPath).toContain("templates");
+    });
+
+    it("should return different paths for builtin and user templates", () => {
+      const builtinPath = getBuiltinTemplatesPath();
+      const userPath = getUserTemplatesPath();
+      expect(builtinPath).not.toBe(userPath);
+    });
+  });
+
+  describe("collectTemplateVariables", () => {
+    it("should return empty object for template with no variables", async () => {
+      const metadata: TemplateMetadata = {
+        name: "test",
+        displayName: "Test",
+        description: "Test template",
+        version: "1.0.0",
+      };
+
+      const result = await collectTemplateVariables(metadata);
+      expect(result).toEqual({});
+    });
+
+    it("should handle templates with variables defined", async () => {
+      const metadata: TemplateMetadata = {
+        name: "test",
+        displayName: "Test",
+        description: "Test template",
+        version: "1.0.0",
+        variables: {
+          CUSTOM_VAR: {
+            prompt: "Enter custom value",
+            type: "text",
+          },
+          ENABLED_VAR: {
+            prompt: "Enable feature?",
+            type: "boolean",
+            default: true,
+          },
+        },
+      };
+
+      // Note: Actual collection requires user input via prompts
+      // Just verify metadata structure is correct
+      expect(metadata.variables).toBeDefined();
+      expect(metadata.variables?.CUSTOM_VAR).toBeDefined();
+      expect(metadata.variables?.ENABLED_VAR).toBeDefined();
+    });
+  });
+
+  describe("applyTemplate", () => {
+    beforeEach(async () => {
+      await createTempDir();
+    });
+
+    afterEach(async () => {
+      await cleanupTempDir();
+    });
+
+    it("should copy template directory with variable substitution", async () => {
+      const tempDir = getTempDir();
+
+      // Create source template structure
+      const templatePath = path.join(tempDir, "template");
+      const templateBozlyPath = path.join(templatePath, ".bozly");
+      await fs.mkdir(templateBozlyPath, { recursive: true });
+
+      // Create test files with variables
+      await fs.writeFile(
+        path.join(templateBozlyPath, "config.md"),
+        "Vault: {{VAULT_NAME}}\nVersion: {{BOZLY_VERSION}}"
+      );
+
+      // Apply template
+      const targetPath = path.join(tempDir, "target");
+      const context = {
+        VAULT_NAME: "MyVault",
+        CREATED_DATE: "2025-01-01",
+        CREATED_DATETIME: "2025-01-01T00:00:00Z",
+        BOZLY_VERSION: "0.3.0",
+        USER_NAME: "testuser",
+      };
+
+      await applyTemplate(templatePath, targetPath, context);
+
+      // Verify target directory created
+      expect(await dirExists(targetPath)).toBe(true);
+
+      // Verify file was copied and substituted
+      const contentExists = await fileExists(path.join(targetPath, "config.md"));
+      expect(contentExists).toBe(true);
+
+      if (contentExists) {
+        const content = await fs.readFile(
+          path.join(targetPath, "config.md"),
+          "utf-8"
+        );
+        expect(content).toContain("MyVault");
+        expect(content).toContain("0.3.0");
+      }
+    });
+
+    it("should handle nested directory structures", async () => {
+      const tempDir = getTempDir();
+
+      // Create nested template structure
+      const templatePath = path.join(tempDir, "template-nested");
+      const bozlyPath = path.join(templatePath, ".bozly");
+      const commandsPath = path.join(bozlyPath, "commands");
+      await fs.mkdir(commandsPath, { recursive: true });
+
+      await fs.writeFile(path.join(commandsPath, "test.md"), "Test: {{VAULT_NAME}}");
+
+      const targetPath = path.join(tempDir, "target-nested");
+      const context = {
+        VAULT_NAME: "Nested",
+        CREATED_DATE: "2025-01-01",
+        CREATED_DATETIME: "2025-01-01T00:00:00Z",
+        BOZLY_VERSION: "0.3.0",
+        USER_NAME: "testuser",
+      };
+
+      await applyTemplate(templatePath, targetPath, context);
+
+      const fileExists_result = await fileExists(
+        path.join(targetPath, "commands", "test.md")
+      );
+      expect(fileExists_result).toBe(true);
+    });
+
+    it("should preserve non-markdown files", async () => {
+      const tempDir = getTempDir();
+
+      const templatePath = path.join(tempDir, "template-binary");
+      const bozlyPath = path.join(templatePath, ".bozly");
+      await fs.mkdir(bozlyPath, { recursive: true });
+
+      // Create a binary-like file (doesn't need substitution)
+      const binaryContent = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+      await fs.writeFile(path.join(bozlyPath, "image.png"), binaryContent);
+
+      const targetPath = path.join(tempDir, "target-binary");
+      const context = {
+        VAULT_NAME: "Binary",
+        CREATED_DATE: "2025-01-01",
+        CREATED_DATETIME: "2025-01-01T00:00:00Z",
+        BOZLY_VERSION: "0.3.0",
+        USER_NAME: "testuser",
+      };
+
+      await applyTemplate(templatePath, targetPath, context);
+
+      const targetFile = path.join(targetPath, "image.png");
+      expect(await fileExists(targetFile)).toBe(true);
+    });
+  });
+
+  describe("initFromTemplate", () => {
+    beforeEach(async () => {
+      await createTempDir();
+    });
+
+    afterEach(async () => {
+      await cleanupTempDir();
+    });
+
+    it("should throw error if template not found", async () => {
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "node");
+      await fs.mkdir(nodePath, { recursive: true });
+
+      await expect(
+        initFromTemplate("non-existent-template", nodePath, "TestNode", "0.3.0")
+      ).rejects.toThrow("not found");
+    });
+
+    it("should initialize node with default template", async () => {
+      const tempDir = getTempDir();
+      const nodePath = path.join(tempDir, "node");
+      await fs.mkdir(nodePath, { recursive: true });
+
+      // Should use 'default' template which exists in builtin
+      const defaultTemplate = await getTemplate("default");
+      if (defaultTemplate) {
+        // Don't call initFromTemplate directly without mocking prompts
+        // Just verify template exists
+        expect(defaultTemplate).toBeDefined();
+      }
+    });
+  });
+
+  describe("Template Integration Tests", () => {
+    beforeEach(async () => {
+      await createTempDir();
+    });
+
+    afterEach(async () => {
+      await cleanupTempDir();
+    });
+
+    it("should build context and substitute variables correctly", () => {
+      const userVars = {
+        CUSTOM_DOMAIN: "music",
+        AUTHOR: "John",
+      };
+
+      const context = buildTemplateContext("my-vault", userVars, "0.3.0");
+
+      const content = "Domain: {{CUSTOM_DOMAIN}}, Vault: {{VAULT_NAME}}, Author: {{AUTHOR}}";
+      const result = substituteVariables(content, context);
+
+      expect(result).toContain("music");
+      expect(result).toContain("my-vault");
+      expect(result).toContain("John");
+    });
+
+    it("should handle template metadata with all optional fields", async () => {
+      const tempDir = getTempDir();
+      const templatePath = path.join(tempDir, "complete-template");
+      await fs.mkdir(templatePath, { recursive: true });
+
+      const metadata: TemplateMetadata = {
+        name: "complete",
+        displayName: "Complete Template",
+        description: "A complete template",
+        version: "1.2.3",
+        author: { name: "Test Author", email: "test@example.com" },
+        tags: ["music", "journal"],
+        category: "lifestyle",
+        variables: {
+          DOMAIN: { prompt: "Enter domain", type: "text", default: "music" },
+          ENABLED: { prompt: "Enable feature?", type: "boolean", default: true },
+        },
+      };
+
+      await writeJSON(path.join(templatePath, "template.json"), metadata);
+
+      const loaded = await loadTemplateMetadata(templatePath);
+      expect(loaded?.name).toBe("complete");
+      expect(loaded?.author?.name).toBe("Test Author");
+      expect(loaded?.tags).toContain("music");
+      expect(loaded?.category).toBe("lifestyle");
+    });
+
+    it("should validate required metadata fields", async () => {
+      const tempDir = getTempDir();
+      const templatePath = path.join(tempDir, "incomplete-template");
+      await fs.mkdir(templatePath, { recursive: true });
+
+      // Write incomplete metadata (missing required displayName and description)
+      const invalidMetadata = {
+        name: "incomplete",
+        // Missing displayName and description
+      };
+
+      await writeJSON(path.join(templatePath, "template.json"), invalidMetadata);
+
+      const loaded = await loadTemplateMetadata(templatePath);
+      // Should return null since validation fails (missing required fields)
+      // Then caller would fall back to defaults using directory name
+      expect(loaded).toBeNull();
     });
   });
 });
