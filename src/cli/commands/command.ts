@@ -3,11 +3,14 @@
  */
 
 import { Command } from "commander";
+import { confirm } from "@inquirer/prompts";
 import { logger } from "../../core/logger.js";
 import { getCurrentNode } from "../../core/node.js";
 import { getGlobalCommands, getAllCommands, createGlobalCommand } from "../../core/commands.js";
 import { promptText, validateCommandName, validateDescription } from "../../utils/prompts.js";
 import { infoBox, warningBox, errorBox, successBox, theme } from "../../cli/ui/index.js";
+import { generateCommandContent } from "../../core/ai-generation.js";
+import { getDefaultProvider } from "../../core/providers.js";
 import * as fs from "fs/promises";
 import * as path from "path";
 
@@ -160,11 +163,16 @@ function createListCommand(): Command {
  */
 function createCreateCommand(): Command {
   return new Command("create")
-    .description("Create a new command (global)")
+    .description("Create a new command (global or local)")
     .option("-l, --local", "Create in current node instead of global")
+    .option("--ai", "Use AI to generate command prompt")
+    .option("--provider <name>", "AI provider to use (claude, gpt, gemini, ollama)")
     .action(async (options) => {
       try {
-        await logger.debug("bozly command create started", { local: options.local });
+        await logger.debug("bozly command create started", {
+          local: options.local,
+          ai: options.ai,
+        });
 
         console.log(infoBox("Create New Command"));
 
@@ -178,14 +186,21 @@ function createCreateCommand(): Command {
         // Get description
         const description = await promptText("Brief description:", undefined, validateDescription);
 
-        // Get command content
-        console.log();
-        console.log(theme.muted("Enter command prompt (Press Ctrl+D or Ctrl+Z to finish):"));
-        const content = await promptText("> ", "");
+        let content: string;
 
-        if (!content.trim()) {
-          console.log(warningBox("Cancelled: No content provided"));
-          return;
+        if (options.ai) {
+          // AI-assisted command creation
+          content = await createCommandWithAI(description, options.provider);
+        } else {
+          // Manual command creation
+          console.log();
+          console.log(theme.muted("Enter command prompt (Press Ctrl+D or Ctrl+Z to finish):"));
+          content = await promptText("> ", "");
+
+          if (!content.trim()) {
+            console.log(warningBox("Cancelled: No content provided"));
+            return;
+          }
         }
 
         // Determine where to create
@@ -267,4 +282,93 @@ ${content}`;
         process.exit(1);
       }
     });
+}
+
+/**
+ * Create command with AI assistance
+ */
+async function createCommandWithAI(
+  description: string,
+  providerOverride?: string
+): Promise<string> {
+  const provider = providerOverride ?? getDefaultProvider();
+
+  console.log(infoBox(`Generating with ${provider}...`));
+
+  // Get use cases/examples from user
+  const examples = await promptText(
+    "Any specific use cases or examples? (optional):",
+    "",
+    undefined
+  );
+
+  console.log(theme.muted("Generating command prompt..."));
+
+  try {
+    // Generate initial content
+    let content = await generateCommandContent("", description, examples, provider);
+
+    // Show generated content
+    console.log();
+    console.log(theme.bold("Generated Command Prompt:"));
+    console.log("─".repeat(40));
+    console.log(content);
+    console.log("─".repeat(40));
+
+    // Ask if user wants to refine
+    const refineLoop = true;
+    while (refineLoop) {
+      const approve = await confirm({
+        message: "Use this prompt?",
+        default: true,
+      });
+
+      if (approve) {
+        return content;
+      }
+
+      // Get refinement feedback
+      const feedback = await promptText("What would you like to change?", undefined, undefined);
+
+      if (!feedback.trim()) {
+        console.log(warningBox("No feedback provided"));
+        break;
+      }
+
+      console.log(theme.muted("Regenerating with feedback..."));
+
+      try {
+        const refinementPrompt = `Original purpose: ${description}
+
+User feedback for improvement: ${feedback}
+
+Generate an improved version of the command prompt that addresses this feedback. Return only the improved prompt.`;
+
+        content = await generateCommandContent("", refinementPrompt, "", provider);
+
+        console.log();
+        console.log(theme.bold("Refined Command Prompt:"));
+        console.log("─".repeat(40));
+        console.log(content);
+        console.log("─".repeat(40));
+      } catch (error) {
+        console.error(
+          errorBox("Generation failed", {
+            error: error instanceof Error ? error.message : String(error),
+          })
+        );
+        throw error;
+      }
+    }
+
+    return content;
+  } catch (error) {
+    console.error(
+      errorBox("AI generation failed", {
+        error: error instanceof Error ? error.message : String(error),
+        hint: `Make sure ${provider} is installed and configured`,
+      })
+    );
+    throw error;
+  }
 }

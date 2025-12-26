@@ -1,22 +1,31 @@
 /**
- * bozly template - Manage templates (list and create)
+ * bozly template - Manage templates (list, create, and extract from vault)
  */
 
 import { Command } from "commander";
+import { confirm } from "@inquirer/prompts";
 import { logger } from "../../core/logger.js";
 import { errorBox, warningBox, successBox, infoBox, theme } from "../../cli/ui/index.js";
 import { getTemplates, createTemplate } from "../../core/templates.js";
+import { getCurrentNode } from "../../core/node.js";
+import { getNodeConfig } from "../../core/config.js";
 import {
   promptText,
   promptSelect,
   validateTemplateName,
   validateDescription,
 } from "../../utils/prompts.js";
+import { generateTemplateFromVault } from "../../core/ai-generation.js";
+import { getDefaultProvider } from "../../core/providers.js";
+import * as fs from "fs/promises";
+import * as path from "path";
+import * as os from "os";
 
 export const templateCommand = new Command("template")
-  .description("Manage templates (list and create)")
+  .description("Manage templates (list, create, and extract from vault)")
   .addCommand(createListCommand())
-  .addCommand(createCreateCommand());
+  .addCommand(createCreateCommand())
+  .addCommand(createFromVaultCommand());
 
 /**
  * Create 'list' subcommand
@@ -186,4 +195,182 @@ function createCreateCommand(): Command {
       process.exit(1);
     }
   });
+}
+
+/**
+ * Create 'from-vault' subcommand
+ * Extracts current vault structure and uses AI to generalize it into a template
+ */
+function createFromVaultCommand(): Command {
+  return new Command("from-vault")
+    .alias("extract")
+    .description("Extract current vault as a reusable template")
+    .option("--provider <name>", "AI provider to use (claude, gpt, gemini, ollama)")
+    .action(async (options) => {
+      try {
+        await logger.debug("bozly template from-vault started");
+
+        // Ensure we're in a vault
+        const node = await getCurrentNode();
+        if (!node) {
+          console.log(
+            errorBox("Not in a vault directory", {
+              hint: "Run 'bozly init' first to initialize a vault",
+            })
+          );
+          process.exit(1);
+        }
+
+        console.log(infoBox(`Extracting template from vault: ${node.name}`));
+
+        const nodeConfig = await getNodeConfig();
+        if (!nodeConfig) {
+          throw new Error("Could not load vault configuration");
+        }
+
+        // Analyze vault structure
+        console.log(theme.muted("Analyzing vault structure..."));
+        const vaultStructure = await analyzeVaultStructure(node.path);
+
+        // Get template name
+        const templateName = await promptText(
+          "Template name (e.g., music-vault):",
+          node.name.toLowerCase().replace(/\s+/g, "-"),
+          validateTemplateName
+        );
+
+        // Get AI provider
+        const provider = options.provider || getDefaultProvider();
+
+        console.log(theme.muted(`Generating template with ${provider}...`));
+
+        // Generate template using AI
+        const generatedJson = await generateTemplateFromVault(
+          templateName,
+          JSON.stringify(vaultStructure, null, 2),
+          provider
+        );
+
+        // Parse and validate JSON
+        let templateConfig: Record<string, unknown>;
+        try {
+          templateConfig = JSON.parse(generatedJson) as Record<string, unknown>;
+        } catch (error) {
+          throw new Error(
+            `Invalid template JSON from AI: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
+
+        // Show preview
+        console.log();
+        console.log(theme.bold("Template Preview:"));
+        console.log("─".repeat(50));
+        console.log(JSON.stringify(templateConfig, null, 2));
+        console.log("─".repeat(50));
+
+        // Confirm before saving
+        const approve = await confirm({
+          message: "Save this template?",
+          default: true,
+        });
+
+        if (!approve) {
+          console.log(warningBox("Template not saved"));
+          return;
+        }
+
+        // Save template
+        const templatesPath = path.join(os.homedir(), ".bozly", "templates", templateName);
+        await fs.mkdir(templatesPath, { recursive: true });
+
+        // Save template.json
+        const templateFilePath = path.join(templatesPath, "template.json");
+        await fs.writeFile(templateFilePath, JSON.stringify(templateConfig, null, 2), "utf-8");
+
+        // Save metadata
+        const metadataFilePath = path.join(templatesPath, "metadata.json");
+        const metadata = {
+          name: templateName,
+          displayName: templateConfig.displayName || templateName,
+          description: templateConfig.description || `Template extracted from ${node.name}`,
+          version: "1.0.0",
+          created: new Date().toISOString(),
+          source: "user",
+          category: "custom",
+        };
+        await fs.writeFile(metadataFilePath, JSON.stringify(metadata, null, 2), "utf-8");
+
+        await logger.info("Template extracted from vault", {
+          name: templateName,
+          source: node.name,
+        });
+
+        console.log();
+        console.log(
+          successBox(`Template created: ${templateName}`, {
+            Location: templatesPath,
+            "Create from it": `bozly init --type ${templateName} ~/my-vault`,
+          })
+        );
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        await logger.error("Failed to extract template", {
+          error: errorMsg,
+        });
+        console.error(
+          errorBox("Failed to extract template", {
+            error: errorMsg,
+          })
+        );
+        process.exit(1);
+      }
+    });
+}
+
+/**
+ * Analyze vault structure for template extraction
+ */
+async function analyzeVaultStructure(vaultPath: string): Promise<Record<string, unknown>> {
+  const structure: Record<string, unknown> = {
+    directories: [],
+    files: [],
+    commands: [],
+    workflows: [],
+    hooks: [],
+  };
+
+  const bozlyPath = path.join(vaultPath, ".bozly");
+
+  try {
+    // Analyze .bozly structure
+    const entries = await fs.readdir(bozlyPath, { withFileTypes: true });
+
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        structure.directories.push(entry.name);
+
+        // Analyze subdirectories
+        if (entry.name === "commands") {
+          const commands = await fs.readdir(path.join(bozlyPath, entry.name));
+          structure.commands = commands
+            .filter((f) => f.endsWith(".md"))
+            .map((f) => f.replace(".md", ""));
+        } else if (entry.name === "workflows") {
+          const workflows = await fs.readdir(path.join(bozlyPath, entry.name));
+          structure.workflows = workflows
+            .filter((f) => f.endsWith(".json"))
+            .map((f) => f.replace(".json", ""));
+        } else if (entry.name === "hooks") {
+          const hooks = await fs.readdir(path.join(bozlyPath, entry.name));
+          structure.hooks = hooks.map((f) => f.replace(".js", ""));
+        }
+      } else if (entry.name === "context.md" || entry.name === "config.json") {
+        structure.files.push(entry.name);
+      }
+    }
+  } catch (error) {
+    // If .bozly doesn't exist, that's fine
+  }
+
+  return structure;
 }

@@ -1,6 +1,6 @@
 /**
- * bozly suggest - Suggest command improvements based on session analysis
- * Phase 2k: Command Suggestions & Learning
+ * bozly suggest - Suggest command improvements and new commands
+ * Phase 2k & 2.5: Command Suggestions & AI-Assisted Creation
  */
 
 import { Command } from "commander";
@@ -8,6 +8,7 @@ import { confirm } from "@inquirer/prompts";
 import { logger } from "../../core/logger.js";
 import { getCurrentNode } from "../../core/node.js";
 import { getNodeConfig } from "../../core/config.js";
+import { querySessions } from "../../core/sessions.js";
 import {
   SuggestionEngine,
   saveSuggestionToHistory,
@@ -22,14 +23,19 @@ import {
   theme,
   symbols,
 } from "../../cli/ui/index.js";
-import type { Suggestion } from "../../core/types.js";
+import { generateCommandSuggestions } from "../../core/ai-generation.js";
+import { getDefaultProvider } from "../../core/providers.js";
+import { createGlobalCommand } from "../../core/commands.js";
+import type { Suggestion, Session, NodeInfo } from "../../core/types.js";
 
 export const suggestCommand = new Command("suggest")
-  .description("Analyze command sessions and suggest improvements")
+  .description("Analyze sessions and suggest improvements or new commands")
   .argument("[command]", "Command name to analyze (optional)")
   .option("-v, --verbose", "Show detailed analysis data")
   .option("--dry-run", "Preview suggestions without saving")
   .option("--all", "Show all suggestions including low-confidence ones")
+  .option("--ai", "Use AI to suggest NEW commands (instead of improvements)")
+  .option("--provider <name>", "AI provider to use (claude, gpt, gemini, ollama)")
   .action(async (commandName, options) => {
     try {
       const node = await getCurrentNode();
@@ -49,6 +55,13 @@ export const suggestCommand = new Command("suggest")
         return;
       }
 
+      // Handle --ai mode: suggest NEW commands based on session patterns
+      if (options.ai) {
+        await suggestNewCommandsWithAI(node, options.provider);
+        return;
+      }
+
+      // Standard mode: suggest improvements to existing command
       // If no command specified, ask user to select one
       let targetCommand = commandName;
       if (!targetCommand) {
@@ -204,4 +217,156 @@ function displaySuggestions(suggestions: Suggestion[], verbose: boolean): Promis
     console.log();
   }
   return Promise.resolve();
+}
+
+/**
+ * Suggest NEW commands using AI based on session history patterns
+ */
+async function suggestNewCommandsWithAI(node: NodeInfo, providerOverride?: string): Promise<void> {
+  const provider = providerOverride ?? getDefaultProvider();
+
+  console.log(infoBox(`Analyzing session history with ${provider}...`));
+
+  try {
+    // Get recent sessions
+    const sessions = await querySessions(node.path, { limit: 20 });
+
+    if (sessions.length === 0) {
+      console.log(
+        warningBox("No session history found", {
+          hint: "Run some commands first to build up session history",
+        })
+      );
+      return;
+    }
+
+    // Build session summary for AI
+    const sessionSummary = sessions
+      .slice(0, 10)
+      .map((s: Session) => `- Command: ${s.command} (${s.status}, ${s.executionTimeMs}ms)`)
+      .join("\n");
+
+    const historyText = `Recent sessions from node "${node.name}":\n${sessionSummary}\n\nBased on these patterns, suggest 3-5 new commands.`;
+
+    console.log(theme.muted("Generating suggestions..."));
+
+    // Generate suggestions via AI
+    const suggestionsJson = await generateCommandSuggestions(historyText, provider);
+
+    // Parse suggestions
+    interface AISuggestion {
+      name: unknown;
+      purpose?: unknown;
+      rationale?: unknown;
+      confidence?: unknown;
+    }
+    let suggestions: AISuggestion[];
+    try {
+      const parsed = JSON.parse(suggestionsJson);
+      suggestions = Array.isArray(parsed) ? parsed : [parsed];
+    } catch (error) {
+      throw new Error(
+        `Failed to parse AI suggestions: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+
+    if (suggestions.length === 0) {
+      console.log(
+        warningBox("No suggestions generated", {
+          hint: "Try running more commands to build up session history",
+        })
+      );
+      return;
+    }
+
+    console.log(
+      successBox(
+        `Generated ${suggestions.length} command suggestion${suggestions.length === 1 ? "" : "s"}`
+      )
+    );
+    console.log();
+
+    // Display suggestions
+    for (let i = 0; i < suggestions.length; i++) {
+      const suggestion = suggestions[i];
+      const confidencePercent = Math.round(
+        (typeof suggestion.confidence === "number" ? suggestion.confidence : 0) * 100
+      );
+      const name = String(suggestion.name);
+      const purpose = suggestion.purpose ? String(suggestion.purpose) : "N/A";
+      const rationale = suggestion.rationale ? String(suggestion.rationale) : "";
+
+      console.log(`${symbols.info} [${i + 1}/${suggestions.length}] ${theme.bold(name)}`);
+      console.log(theme.muted(`  Purpose: ${purpose}`));
+      console.log(theme.muted(`  Confidence: ${confidencePercent}%`));
+      if (rationale) {
+        console.log(theme.muted(`  Rationale: ${rationale}`));
+      }
+      console.log();
+    }
+
+    // Interactive approval for creating commands
+    console.log(formatSection("Create Commands", ""));
+
+    let createdCount = 0;
+    for (let i = 0; i < suggestions.length; i++) {
+      const suggestion = suggestions[i];
+      const name = String(suggestion.name);
+      const purpose = suggestion.purpose ? String(suggestion.purpose) : "";
+      const confidence = typeof suggestion.confidence === "number" ? suggestion.confidence : 0;
+
+      const create = await confirm({
+        message: `Create command '${name}'?`,
+        default: confidence > 0.7,
+      });
+
+      if (create) {
+        // Generate a basic description if not provided
+        const description = purpose || `AI-suggested command: ${name}`;
+
+        // Create a basic prompt template for the command
+        const content = `You are an expert assistant. Help the user with: ${purpose || name}
+
+Provide clear, actionable guidance. If the user provides context or examples, use them to tailor your response.`;
+
+        try {
+          await createGlobalCommand(name, description, content);
+          createdCount++;
+
+          console.log(
+            successBox(`Created command: /${name}`, {
+              Description: description,
+            })
+          );
+        } catch (error) {
+          console.error(
+            errorBox(`Failed to create command '${name}'`, {
+              error: error instanceof Error ? error.message : String(error),
+            })
+          );
+        }
+      } else {
+        console.log(warningBox(`Skipped command: ${name}`));
+      }
+      console.log();
+    }
+
+    // Summary
+    if (createdCount > 0) {
+      console.log(formatSection("Summary", ""));
+      console.log(
+        successBox(`Created ${createdCount} new command${createdCount === 1 ? "" : "s"}`, {
+          "Try them": `bozly command list`,
+        })
+      );
+    }
+  } catch (error) {
+    console.error(
+      errorBox("AI suggestion failed", {
+        error: error instanceof Error ? error.message : String(error),
+        hint: `Make sure ${provider} is installed and configured`,
+      })
+    );
+    throw error;
+  }
 }
