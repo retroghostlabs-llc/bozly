@@ -37,7 +37,7 @@
   "scripts": {
     "prepare": "husky install",
     "postinstall": "chmod +x dist/cli/index.js || true",
-    "build": "tsc && chmod +x dist/cli/index.js",
+    "build": "tsc && cp -r src/server/views dist/server/ && chmod +x dist/cli/index.js",
     "dev": "tsc --watch",
     "start": "node dist/cli/index.js",
     "test": "vitest run",
