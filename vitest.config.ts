@@ -34,10 +34,12 @@ export default defineConfig({
       exclude: [
         "node_modules/",
         "tests/",
-        "dist/",
         "**/*.d.ts",
+        "**/*.d.ts.map",
         "**/index.ts",
       ],
+      // Instrument source files for proper coverage tracking
+      all: true,
       lines: 80,
       functions: 80,
       branches: 75,
