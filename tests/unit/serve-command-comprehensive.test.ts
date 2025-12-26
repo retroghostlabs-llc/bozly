@@ -55,6 +55,113 @@ describe("Serve CLI Command - Comprehensive Coverage", () => {
   });
 
   // ============================================================================
+  // Actual serveCommand Tests (for code coverage)
+  // ============================================================================
+
+  describe("Actual serveCommand execution and coverage", () => {
+    it("should execute action handler with valid configuration", async () => {
+      const mockFastify = {
+        close: vi.fn().mockResolvedValue(undefined),
+      };
+      const startServerSpy = vi.spyOn(serverIndex, "startServer").mockResolvedValueOnce(mockFastify as any);
+      vi.spyOn(ui, "infoBox").mockImplementation(() => {});
+
+      // Execute serveCommand to trigger action handler
+      await serveCommand.parseAsync(["node", "bozly", "serve", "-p", "9000", "-h", "127.0.0.1"]);
+
+      // Verify startServer was called (exercises the action handler code)
+      expect(startServerSpy).toHaveBeenCalled();
+    });
+
+    it("should validate port and call errorBox on invalid port", async () => {
+      const errorBoxSpy = vi.spyOn(ui, "errorBox").mockImplementation(() => {});
+      const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {});
+
+      await serveCommand.parseAsync(["node", "bozly", "serve", "-p", "99999"]);
+
+      expect(errorBoxSpy).toHaveBeenCalledWith("Invalid port number. Must be between 1 and 65535.");
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    });
+
+    it("should handle server startup errors", async () => {
+      vi.spyOn(serverIndex, "startServer").mockRejectedValueOnce(new Error("Port in use"));
+      const errorBoxSpy = vi.spyOn(ui, "errorBox").mockImplementation(() => {});
+      const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {});
+
+      await serveCommand.parseAsync(["node", "bozly", "serve", "-p", "9001"]);
+
+      expect(errorBoxSpy).toHaveBeenCalledWith("Failed to start server: Port in use");
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    });
+
+    it("should register signal handlers after server startup", async () => {
+      const mockFastify = {
+        close: vi.fn().mockResolvedValue(undefined),
+      };
+      vi.spyOn(serverIndex, "startServer").mockResolvedValueOnce(mockFastify as any);
+      vi.spyOn(ui, "infoBox").mockImplementation(() => {});
+      processOnSpy = vi.spyOn(process, "on").mockImplementation(((signal: string, handler: Function) => {
+        return process;
+      }) as any);
+
+      await serveCommand.parseAsync(["node", "bozly", "serve", "-p", "9002"]);
+
+      // Verify signal handlers were registered
+      expect(processOnSpy).toHaveBeenCalled();
+    });
+
+    it("should pass correct options to startServer", async () => {
+      const mockFastify = {
+        close: vi.fn().mockResolvedValue(undefined),
+      };
+      const startServerSpy = vi.spyOn(serverIndex, "startServer").mockResolvedValueOnce(mockFastify as any);
+      vi.spyOn(ui, "infoBox").mockImplementation(() => {});
+
+      await serveCommand.parseAsync(["node", "bozly", "serve", "-p", "9003", "--no-open"]);
+
+      expect(startServerSpy).toHaveBeenCalled();
+      const args = startServerSpy.mock.calls[0][0];
+      expect(args).toEqual({
+        port: 9003,
+        host: "127.0.0.1",
+        openBrowser: false,
+      });
+    });
+
+    it("should display startup message with correct URL", async () => {
+      const mockFastify = {
+        close: vi.fn().mockResolvedValue(undefined),
+      };
+      vi.spyOn(serverIndex, "startServer").mockResolvedValueOnce(mockFastify as any);
+      const infoBoxSpy = vi.spyOn(ui, "infoBox").mockImplementation(() => {});
+
+      await serveCommand.parseAsync(["node", "bozly", "serve", "-p", "9004", "-h", "0.0.0.0"]);
+
+      expect(infoBoxSpy).toHaveBeenCalledWith("Starting BOZLY Server on http://0.0.0.0:9004");
+    });
+
+    it("should validate port 0 as invalid", async () => {
+      const errorBoxSpy = vi.spyOn(ui, "errorBox").mockImplementation(() => {});
+      const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {});
+
+      await serveCommand.parseAsync(["node", "bozly", "serve", "-p", "0"]);
+
+      expect(errorBoxSpy).toHaveBeenCalledWith("Invalid port number. Must be between 1 and 65535.");
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    });
+
+    it("should validate non-numeric port", async () => {
+      const errorBoxSpy = vi.spyOn(ui, "errorBox").mockImplementation(() => {});
+      const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {});
+
+      await serveCommand.parseAsync(["node", "bozly", "serve", "-p", "invalid"]);
+
+      expect(errorBoxSpy).toHaveBeenCalledWith("Invalid port number. Must be between 1 and 65535.");
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    });
+  });
+
+  // ============================================================================
   // Port Validation Tests
   // ============================================================================
 
