@@ -7,8 +7,6 @@ import {
   generateCommandSuggestions,
 } from "./ai-generation.js";
 
-type MockChildProcess = Partial<ChildProcess>;
-
 describe("ai-generation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -39,7 +37,7 @@ describe("ai-generation", () => {
         kill: vi.fn(),
       };
 
-      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as MockChildProcess);
+      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as unknown as ChildProcess);
 
       // Mock validateProvider to avoid actual provider check
       vi.mock("./providers.js", () => ({
@@ -84,7 +82,7 @@ describe("ai-generation", () => {
         kill: vi.fn(),
       };
 
-      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as MockChildProcess);
+      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as unknown as ChildProcess);
 
       const result = await generateCommandContent("test", "Test purpose", "", "claude");
 
@@ -112,7 +110,7 @@ describe("ai-generation", () => {
         kill: vi.fn(),
       };
 
-      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as MockChildProcess);
+      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as unknown as ChildProcess);
 
       const result = await generateCommandContent("test", "Test purpose", "", "claude");
 
@@ -152,7 +150,7 @@ describe("ai-generation", () => {
         kill: vi.fn(),
       };
 
-      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as MockChildProcess);
+      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as unknown as ChildProcess);
 
       await expect(generateCommandContent("test", "Test purpose", "", "claude")).rejects.toThrow(
         "Provider error"
@@ -179,7 +177,7 @@ describe("ai-generation", () => {
         kill: vi.fn(),
       };
 
-      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as MockChildProcess);
+      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as unknown as ChildProcess);
 
       await generateCommandContent("test", "Test purpose", "Example 1, Example 2", "claude");
 
@@ -211,7 +209,7 @@ describe("ai-generation", () => {
         kill: vi.fn(),
       };
 
-      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as MockChildProcess);
+      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as unknown as ChildProcess);
 
       const result = await generateTemplateFromVault(
         "music-vault",
@@ -243,7 +241,7 @@ describe("ai-generation", () => {
         kill: vi.fn(),
       };
 
-      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as MockChildProcess);
+      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as unknown as ChildProcess);
 
       const result = await generateTemplateFromVault("test", "{}", "claude");
 
@@ -270,7 +268,7 @@ describe("ai-generation", () => {
         kill: vi.fn(),
       };
 
-      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as MockChildProcess);
+      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as unknown as ChildProcess);
 
       await generateTemplateFromVault("my-vault", "{}", "claude");
 
@@ -300,7 +298,7 @@ describe("ai-generation", () => {
         kill: vi.fn(),
       };
 
-      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as MockChildProcess);
+      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as unknown as ChildProcess);
 
       const result = await generateCommandSuggestions(
         "10 sessions, mostly music analysis",
@@ -331,7 +329,7 @@ describe("ai-generation", () => {
         kill: vi.fn(),
       };
 
-      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as MockChildProcess);
+      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as unknown as ChildProcess);
 
       const result = await generateCommandSuggestions("Session history", "claude");
 
@@ -358,7 +356,7 @@ describe("ai-generation", () => {
         kill: vi.fn(),
       };
 
-      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as MockChildProcess);
+      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as unknown as ChildProcess);
 
       const historyText = "Recent sessions: music analysis, text summarization";
       await generateCommandSuggestions(historyText, "claude");
@@ -382,7 +380,7 @@ describe("ai-generation", () => {
             }
           }),
           kill: vi.fn(),
-        } as MockChildProcess;
+        } as unknown as ChildProcess;
         return proc;
       });
 
@@ -409,7 +407,7 @@ describe("ai-generation", () => {
         kill: vi.fn(),
       };
 
-      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as MockChildProcess);
+      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as unknown as ChildProcess);
 
       const promise = generateCommandContent("test", "Test", "", "claude");
 
@@ -439,7 +437,7 @@ describe("ai-generation", () => {
         kill: vi.fn(),
       };
 
-      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as MockChildProcess);
+      vi.spyOn(childProcess, "spawn").mockReturnValue(mockProc as unknown as ChildProcess);
 
       const result = await generateCommandContent("test", "Test", "", "claude");
 

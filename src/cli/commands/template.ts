@@ -331,7 +331,13 @@ function createFromVaultCommand(): Command {
  * Analyze vault structure for template extraction
  */
 async function analyzeVaultStructure(vaultPath: string): Promise<Record<string, unknown>> {
-  const structure: Record<string, unknown> = {
+  const structure: Record<string, unknown> & {
+    directories: string[];
+    files: string[];
+    commands: string[];
+    workflows: string[];
+    hooks: string[];
+  } = {
     directories: [],
     files: [],
     commands: [],
