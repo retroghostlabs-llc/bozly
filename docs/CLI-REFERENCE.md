@@ -1,8 +1,8 @@
 # BOZLY CLI Reference
 
-Complete reference for all 19 BOZLY commands.
+Complete reference for all 20 BOZLY commands.
 
-**Last updated:** 2025-12-27 (Session 122)
+**Last updated:** 2025-12-27 (Session 123)
 
 ---
 
@@ -14,14 +14,15 @@ Complete reference for all 19 BOZLY commands.
 4. [Configuration Commands](#configuration-commands)
 5. [Session Commands](#session-commands)
 6. [Workflow Commands](#workflow-commands)
-7. [Utility Commands](#utility-commands)
-8. [Global Options](#global-options)
+7. [Server Commands](#server-commands)
+8. [Utility Commands](#utility-commands)
+9. [Global Options](#global-options)
 
 ---
 
 ## Command Overview
 
-### All 19 Commands
+### All 20 Commands
 
 | Command | Category | Purpose |
 |---------|----------|---------|
@@ -43,6 +44,7 @@ Complete reference for all 19 BOZLY commands.
 | `suggest` | Intelligence | Get AI suggestions |
 | `workflows` | Automation | Manage workflows |
 | `serve` | Server | Start web dashboard |
+| `tui` | UI | Launch Terminal Dashboard |
 | `version` | Info | Show version info |
 
 ---
@@ -996,6 +998,95 @@ Sessions indexed: 131
 
 Press Ctrl+C to stop
 ```
+
+---
+
+### bozly tui
+
+Launch Terminal UI Dashboard for interactive vault management.
+
+**Syntax:**
+```bash
+bozly tui [OPTIONS]
+```
+
+**Options:**
+```
+--api-url <url>            API server URL (default: http://localhost:3000/api)
+--refresh <ms>             Refresh interval in milliseconds (default: 5000)
+```
+
+**Prerequisites:**
+```bash
+# First, start the API server in another terminal
+bozly serve
+
+# Then, in another terminal, launch the TUI
+bozly tui
+```
+
+**Examples:**
+
+```bash
+# Launch with default settings
+bozly tui
+
+# Custom API server
+bozly tui --api-url http://192.168.1.100:3000/api
+
+# Faster refresh interval (500ms)
+bozly tui --refresh 500
+
+# Custom server with faster refresh
+bozly tui --api-url http://localhost:8080/api --refresh 2000
+```
+
+**Features:**
+- 📊 **Home Screen**: Dashboard with overall statistics and quick actions
+- 🏠 **Vaults Screen**: Browse and manage all registered vaults
+- 📋 **Sessions Screen**: View and filter session history
+- 📝 **Commands Screen**: List and explore available commands
+- 💾 **Memory Screen**: Browse vault intelligence and stored context
+- ⚙️ **Config Screen**: View and manage settings
+- 🏥 **Health Screen**: System diagnostics and stats
+
+**Key Bindings:**
+
+| Key | Action |
+|-----|--------|
+| `j` / `↓` | Scroll down / Next item |
+| `k` / `↑` | Scroll up / Previous item |
+| `n` | Create new session |
+| `r` | Refresh current screen |
+| `q` / `Esc` | Quit TUI |
+| `Tab` | Switch screens |
+| `Enter` | Select/Expand item |
+
+**Output:**
+```
+╔════════════════════════════════════════════════════════════════╗
+║           BOZLY Terminal UI Dashboard                         ║
+║                                                                ║
+║  HOME  VAULTS  SESSIONS  COMMANDS  MEMORY  CONFIG  HEALTH     ║
+║────────────────────────────────────────────────────────────────║
+║                                                                ║
+║  Total Vaults: 3                                              ║
+║  Total Sessions: 47                                           ║
+║  Total Commands: 18                                           ║
+║  Uptime: 2d 5h 32m                                            ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+```
+
+**Troubleshooting:**
+- If TUI won't connect, ensure `bozly serve` is running on the specified port
+- Check with `bozly status` to verify vaults are registered
+- Use `--api-url http://localhost:3000/api` to match the serve command
+
+**See Also:**
+- [TUI Quick Start](./TUI-QUICKSTART.md)
+- [TUI Usage Guide](./TUI-USAGE.md)
+- [TUI Keybindings](./TUI-KEYBINDINGS.md)
 
 ---
 

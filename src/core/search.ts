@@ -43,7 +43,7 @@ export class CrossNodeSearcher {
     const startTime = Date.now();
 
     // Determine which targets to search
-    const searchIn: SearchTarget[] = query.searchIn || ["sessions", "memories", "commands"];
+    const searchIn: SearchTarget[] = query.searchIn ?? ["sessions", "memories", "commands"];
 
     const results: AggregatedSearchResults = {
       query,
@@ -107,6 +107,7 @@ export class CrossNodeSearcher {
       command: query.command,
       provider: query.provider,
       node: query.nodeId,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       status: query.status as any,
       startDate: query.startDate,
       endDate: query.endDate,
@@ -116,7 +117,7 @@ export class CrossNodeSearcher {
 
     // Filter by text if provided
     const filtered = query.text
-      ? sessions.filter((session) => this.matchesQuery(session, query.text || ""))
+      ? sessions.filter((session) => this.matchesQuery(session, query.text ?? ""))
       : sessions;
 
     // Score results by relevance
@@ -151,6 +152,7 @@ export class CrossNodeSearcher {
    */
   async searchMemories(query: SearchQuery): Promise<MemorySearchResult[]> {
     // Query memory index for matching memories
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let entries: any[] = [];
     if (query.text) {
       const result = await this.memoryIndex.search(query.text, query.limit ?? 50);
@@ -167,7 +169,7 @@ export class CrossNodeSearcher {
       }
 
       // Check date range if provided
-      if (query.startDate || query.endDate) {
+      if (query.startDate ?? query.endDate) {
         const entryDate = new Date(entry.timestamp);
         if (query.startDate && entryDate < new Date(query.startDate)) {
           return false;
@@ -618,7 +620,7 @@ export class CrossNodeSearcher {
 
     // Group commands
     for (const cmd of results.results.commands) {
-      const nodeId = cmd.sourceNode?.nodeId || "global";
+      const nodeId = cmd.sourceNode?.nodeId ?? "global";
       if (!grouped[nodeId]) {
         grouped[nodeId] = { sessions: [], memories: [], commands: [] };
       }

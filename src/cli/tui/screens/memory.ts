@@ -1,0 +1,219 @@
+import blessed from "blessed";
+import { Screen, ScreenConfig } from "../core/screen.js";
+import { APIClient } from "../core/api-client.js";
+
+interface MemoryEntry {
+  id: string;
+  category: string;
+  content: string;
+  timestamp?: string;
+  nodeId?: string;
+  source?: string;
+}
+
+/**
+ * Memory Screen - View extracted knowledge and learning
+ * Shows memory entries organized by category
+ * Allows searching and viewing detailed memory content
+ */
+export class MemoryScreen extends Screen {
+  private memories: MemoryEntry[] = [];
+  private listBox?: blessed.Widgets.ListElement;
+  private contentBox?: blessed.Widgets.BoxElement;
+  private selectedIndex = 0;
+
+  constructor(
+    parent: blessed.Widgets.Screen,
+    config: ScreenConfig,
+    private apiClient: APIClient
+  ) {
+    super(parent, config);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async init(): Promise<void> {
+    const parent = this.parent as unknown as {
+      box: (opts: Record<string, unknown>) => blessed.Widgets.BoxElement;
+      list: (opts: Record<string, unknown>) => blessed.Widgets.ListElement;
+    };
+    this.box = parent.box({
+      parent: this.parent,
+      top: 1,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      style: {
+        border: {
+          fg: "cyan",
+        },
+      },
+    });
+
+    // Title
+    parent.box({
+      parent: this.box,
+      top: 0,
+      left: 2,
+      height: 1,
+      content: " Memory & Knowledge ",
+      style: {
+        fg: "white",
+        bold: true,
+      },
+    });
+
+    // List of memory entries
+    this.listBox = parent.list({
+      parent: this.box,
+      top: 1,
+      left: 1,
+      width: "40%",
+      bottom: 1,
+      keys: true,
+      mouse: true,
+      vi: true,
+      style: {
+        selected: {
+          bg: "blue",
+          fg: "white",
+        },
+      },
+    });
+
+    // Content viewer
+    this.contentBox = parent.box({
+      parent: this.box,
+      top: 1,
+      right: 1,
+      width: "60%-2",
+      bottom: 1,
+      scrollable: true,
+      mouse: true,
+      keys: true,
+      style: {
+        border: {
+          fg: "green",
+        },
+      },
+    });
+
+    this.setupKeybindings();
+  }
+
+  async render(): Promise<void> {
+    try {
+      this.memories = await this.apiClient.getMemories();
+
+      if (this.listBox) {
+        this.listBox.clearItems();
+
+        if (this.memories.length === 0) {
+          this.listBox.addItem("No memory entries");
+        } else {
+          this.memories.forEach((mem) => {
+            const label = `[${mem.category}] ${mem.content.substring(0, 40)}...`;
+            this.listBox?.addItem(label);
+          });
+        }
+
+        this.updateContentBox(0);
+        this.parent.render();
+      }
+    } catch (error) {
+      this.showError(
+        `Failed to load memory: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  async refresh(): Promise<void> {
+    await this.render();
+  }
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async handleKey(ch: string, key?: Record<string, unknown>): Promise<void> {
+    if (!key) {
+      return;
+    }
+    const keyRecord = key;
+    if (keyRecord.name === "up" || ch === "k") {
+      this.selectedIndex = Math.max(0, this.selectedIndex - 1);
+      this.updateContentBox(this.selectedIndex);
+    } else if (keyRecord.name === "down" || ch === "j") {
+      this.selectedIndex = Math.min(this.memories.length - 1, this.selectedIndex + 1);
+      this.updateContentBox(this.selectedIndex);
+    }
+  }
+
+  private updateContentBox(index: number): void {
+    if (!this.contentBox || !this.memories[index]) {
+      return;
+    }
+
+    const mem = this.memories[index];
+    let content = "";
+
+    content += `\n  ${mem.category}\n`;
+    content += `  ${"=".repeat(40)}\n\n`;
+    content += `  ${mem.content}\n`;
+    content += `\n  Source: ${mem.source ?? "N/A"}\n`;
+    content += `  Node: ${mem.nodeId ?? "N/A"}\n`;
+    content += `  Time: ${mem.timestamp ?? "N/A"}\n`;
+
+    this.contentBox.setContent(content);
+    this.parent.render();
+  }
+
+  private setupKeybindings(): void {
+    if (this.listBox) {
+      this.listBox.key(["j", "down"], () => {
+        this.selectedIndex = Math.min(this.memories.length - 1, this.selectedIndex + 1);
+        this.updateContentBox(this.selectedIndex);
+      });
+
+      this.listBox.key(["k", "up"], () => {
+        this.selectedIndex = Math.max(0, this.selectedIndex - 1);
+        this.updateContentBox(this.selectedIndex);
+      });
+    }
+  }
+
+  activate(): void {
+    if (this.listBox) {
+      this.listBox.focus();
+    }
+  }
+
+  deactivate(): void {
+    // Cleanup if needed
+  }
+
+  destroy(): void {
+    if (this.box) {
+      try {
+        this.box.destroy();
+      } catch {
+        // Ignore
+      }
+    }
+  }
+
+  getId(): string {
+    return this.id;
+  }
+
+  protected createBox(): blessed.Widgets.BoxElement {
+    const boxElement = (
+      this.parent as unknown as {
+        box: (opts: Record<string, unknown>) => blessed.Widgets.BoxElement;
+      }
+    ).box({
+      parent: this.parent,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+    });
+    return boxElement;
+  }
+}

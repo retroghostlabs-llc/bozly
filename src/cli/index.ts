@@ -34,6 +34,7 @@ import { suggestCommand } from "./commands/suggest.js";
 import { searchCommand } from "./commands/search.js";
 import { historyCommand } from "./commands/history.js";
 import { serveCommand } from "./commands/serve.js";
+import { tuiCommand } from "./commands/tui.js";
 
 // Import version from single source of truth
 import { VERSION } from "../core/version.js";
@@ -153,6 +154,7 @@ async function main(): Promise<void> {
   program.addCommand(searchCommand);
   program.addCommand(historyCommand);
   program.addCommand(serveCommand);
+  program.addCommand(tuiCommand);
 
   // Apply BozlyHelp to all commands and subcommands
   program.commands.forEach((cmd) => applyBozlyHelp(cmd));
@@ -171,6 +173,10 @@ async function main(): Promise<void> {
     console.log("  bozly context           Generate AI context");
     console.log("  bozly run <command>     Execute a node command");
     console.log("  bozly logs              View session logs");
+    console.log();
+    console.log(chalk.yellow("Dashboard & UI:"));
+    console.log("  bozly serve             Start API server (required for TUI)");
+    console.log("  bozly tui               Launch Terminal UI Dashboard");
     console.log();
     console.log(chalk.gray("Run 'bozly --help' for all commands"));
   });
