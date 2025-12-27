@@ -1,5 +1,5 @@
-import blessed from "blessed";
-import type { Widgets } from "blessed";
+import blessed from "@unblessed/blessed";
+import type { Widgets } from "@unblessed/blessed";
 
 export interface ScreenConfig {
   id: string;

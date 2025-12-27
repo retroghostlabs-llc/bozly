@@ -1,5 +1,5 @@
 import { Modal, ModalConfig } from "../core/modal.js";
-import blessed from "blessed";
+import blessed from "@unblessed/blessed";
 
 export interface ConfirmModalConfig extends ModalConfig {
   message: string;

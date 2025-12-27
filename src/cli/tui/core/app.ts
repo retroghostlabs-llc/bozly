@@ -1,4 +1,4 @@
-import blessed from "blessed";
+import blessed from "@unblessed/blessed";
 import { APIClient } from "./api-client.js";
 import { Screen } from "./screen.js";
 import { Modal } from "./modal.js";

@@ -1,4 +1,4 @@
-import blessed, { Widgets } from "blessed";
+import blessed, { Widgets } from "@unblessed/blessed";
 
 export interface ModalConfig {
   id: string;

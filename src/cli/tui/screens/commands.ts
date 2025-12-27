@@ -1,4 +1,4 @@
-import blessed from "blessed";
+import blessed from "@unblessed/blessed";
 import { Screen, ScreenConfig } from "../core/screen.js";
 import { APIClient } from "../core/api-client.js";
 
