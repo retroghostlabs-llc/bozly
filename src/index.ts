@@ -34,5 +34,5 @@ export {
   getNodeConfig,
 } from "./core/index.js";
 
-// Version
-export const VERSION = "0.3.0-rc.1";
+// Export version from single source of truth
+export { VERSION } from "./core/version.js";

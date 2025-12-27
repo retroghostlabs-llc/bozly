@@ -2,14 +2,21 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import path from "path";
 import { fileURLToPath } from "url";
 import { readFileSync } from "fs";
+import { VERSION } from "../../core/version.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load HTML templates
+// Load HTML templates and inject version
 function loadTemplate(name: string): string {
   const templatePath = path.join(__dirname, "..", "views", `${name}.html`);
-  return readFileSync(templatePath, "utf-8");
+  let html = readFileSync(templatePath, "utf-8");
+
+  // Replace version placeholders with actual version
+  // Supports both "v0.x.x" and "0.x.x" formats
+  html = html.replace(/BOZLY v[\d.]+(-[\w.]+)?/g, `BOZLY v${VERSION}`);
+
+  return html;
 }
 
 export function registerPageRoutes(fastify: FastifyInstance): void {

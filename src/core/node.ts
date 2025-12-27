@@ -32,17 +32,17 @@ import {
   applyTemplate,
 } from "./templates.js";
 import { getSystemTimezone } from "../utils/timezone.js";
+import { VERSION } from "./version.js";
 
 const BOZLY_DIR = ".bozly";
 const CONFIG_FILE = "config.json";
 const CONTEXT_FILE = "context.md";
-const BOZLY_VERSION = "0.3.0-rc.1";
 
 /**
  * Get the current BOZLY framework version
  */
 function getBozlyVersion(): string {
-  return BOZLY_VERSION;
+  return VERSION;
 }
 
 /**

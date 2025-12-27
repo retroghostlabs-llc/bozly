@@ -39,25 +39,13 @@ import { logger } from "./logger.js";
 import { MemoryExtractor } from "../memory/extractor.js";
 import { MemoryLoader } from "../memory/loader.js";
 import { MemoryIndex } from "../memory/index.js";
+import { VERSION } from "./version.js";
 
 /**
  * Format timestamp as ISO string
  */
 function getCurrentTimestamp(): ISODateTime {
   return new Date().toISOString();
-}
-
-/**
- * Get BOZLY version from package.json
- */
-function getPackageVersion(): string {
-  try {
-    // In a real app, this would read from package.json
-    // For now, return a default
-    return "0.3.0-alpha.1";
-  } catch {
-    return "unknown";
-  }
 }
 
 /**
@@ -270,7 +258,7 @@ export async function recordSession(
     },
     environment: {
       nodeVersion: process.version.replace(/^v/, ""),
-      bozlyVersion: getPackageVersion(),
+      bozlyVersion: VERSION,
       platform: process.platform,
       timezone: timezone,
     },

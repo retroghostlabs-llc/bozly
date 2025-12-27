@@ -35,8 +35,8 @@ import { searchCommand } from "./commands/search.js";
 import { historyCommand } from "./commands/history.js";
 import { serveCommand } from "./commands/serve.js";
 
-// Package info
-const VERSION = "0.3.0-alpha.1";
+// Import version from single source of truth
+import { VERSION } from "../core/version.js";
 
 /**
  * Initialize logger based on environment variables
