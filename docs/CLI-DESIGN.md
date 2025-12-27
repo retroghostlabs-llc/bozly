@@ -2,7 +2,7 @@
 
 **Command Reference for the BOZLY Framework**
 
-*Last updated: December 22, 2025*
+*Last updated: 2025-12-27 (Session 122)*
 
 ---
 

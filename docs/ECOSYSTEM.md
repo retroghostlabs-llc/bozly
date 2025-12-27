@@ -262,5 +262,14 @@ Ecosystem Planning
 
 ---
 
-**Last Updated:** 2025-12-20
+## See Also
+
+- [GETTING-STARTED.md](GETTING-STARTED.md) — Getting started with BOZLY
+- [N8N-INTEGRATION.md](N8N-INTEGRATION.md) — n8n integration guide
+- [ARCHITECTURE.md](ARCHITECTURE.md) — System architecture
+- [API-REFERENCE.md](API-REFERENCE.md) — API reference for integrations
+
+---
+
+**Last Updated:** 2025-12-27 (Session 122)
 **For Implementation:** See `/02-Areas/Ready-to-Build/` in Obsidian vault

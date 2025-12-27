@@ -625,3 +625,15 @@ echo "{
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - BOZLY system design
 - [GETTING-STARTED.md](./GETTING-STARTED.md) - Initial setup
 - [N8N-INTEGRATION.md](./N8N-INTEGRATION.md) - Advanced workflow integration
+
+---
+
+## See Also
+
+- [GETTING-STARTED.md](GETTING-STARTED.md) — Getting started with BOZLY
+- [WORKFLOWS-GUIDE.md](WORKFLOWS-GUIDE.md) — Multi-step automation
+- [CLI-REFERENCE.md](CLI-REFERENCE.md) — Hook-related CLI commands
+- [API-REFERENCE.md](API-REFERENCE.md) — Hooks API functions
+- [TEMPLATES.md](TEMPLATES.md) — Template system
+
+*Last updated: 2025-12-27 (Session 122)*

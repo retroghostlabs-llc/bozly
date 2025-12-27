@@ -485,3 +485,14 @@ If custom variables aren't prompting:
 - `docs/COMMANDS.md` - Command system documentation
 - `docs/CLI.md` - Complete CLI reference
 - `docs/GETTING-STARTED.md` - Quick start guide
+
+---
+
+## See Also
+
+- [GETTING-STARTED.md](GETTING-STARTED.md) — Getting started with BOZLY
+- [COMMANDS-GUIDE.md](COMMANDS-GUIDE.md) — Creating custom commands
+- [CLI-REFERENCE.md](CLI-REFERENCE.md) — Template CLI commands
+- [API-REFERENCE.md](API-REFERENCE.md) — Templates API
+
+*Last updated: 2025-12-27 (Session 122)*

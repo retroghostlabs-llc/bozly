@@ -299,3 +299,14 @@ BOZLY Project (Code)
 **Status:** Ready for Phase 1 implementation
 **Last Updated:** 2025-12-20
 **For Questions:** See Ready-to-Build implementation guides
+
+---
+
+## See Also
+
+- [GETTING-STARTED.md](GETTING-STARTED.md) — Getting started with BOZLY
+- [ECOSYSTEM.md](ECOSYSTEM.md) — External integrations overview
+- [WORKFLOWS-GUIDE.md](WORKFLOWS-GUIDE.md) — Workflow automation
+- [API-REFERENCE.md](API-REFERENCE.md) — API for n8n integration
+
+*Last updated: 2025-12-27 (Session 122)*

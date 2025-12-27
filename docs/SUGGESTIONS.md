@@ -489,5 +489,14 @@ This shouldn't happen. Suggestions are logged to history, not auto-applied.
 
 ---
 
+## See Also
+
+- [COMMANDS-GUIDE.md](COMMANDS-GUIDE.md) — How to create and manage commands
+- [WORKFLOWS-GUIDE.md](WORKFLOWS-GUIDE.md) — Building multi-step workflows
+- [GETTING-STARTED.md](GETTING-STARTED.md) — Getting started with BOZLY
+- [CLI-REFERENCE.md](CLI-REFERENCE.md) — All CLI commands including `bozly command suggest`
+
+---
+
 *Phase 2k: Command Suggestions & Learning*
-*Last updated: Session 99 (2025-12-24)*
+*Last updated: 2025-12-27 (Session 122)*

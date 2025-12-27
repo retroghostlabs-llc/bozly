@@ -489,5 +489,12 @@ Run with `--dry` to verify the model appears correctly.
 - Future: AI provider integration (claude, gpt, gemini, ollama)
 ---
 
-*Last updated: 2025-12-19*
+## See Also
+
+- [ARCHITECTURE.md](ARCHITECTURE.md) — System architecture overview
+- [CONCEPTS.md](CONCEPTS.md) — Core concepts
+- [API-REFERENCE.md](API-REFERENCE.md) — API for working with domain models
+- [GETTING-STARTED.md](GETTING-STARTED.md) — Real-world domain examples
+
+*Last updated: 2025-12-27 (Session 122)*
 *Pattern 7 (Domain Models) Status: COMPLETE ✅*
