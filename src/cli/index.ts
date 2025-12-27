@@ -38,6 +38,25 @@ import { serveCommand } from "./commands/serve.js";
 // Import version from single source of truth
 import { VERSION } from "../core/version.js";
 
+// Import UI utilities
+import { renderBanner } from "./ui/index.js";
+
+// Import Help class from commander
+import { Help } from "commander";
+
+/**
+ * Custom Help class that prepends the BOZLY banner to all help output
+ * This ensures the banner appears for:
+ * - Main program help (bozly --help)
+ * - All subcommand help (bozly init --help, bozly run --help, etc.)
+ * - Future commands automatically
+ */
+class BozlyHelp extends Help {
+  formatHelp(cmd: Command, helper: Help): string {
+    return renderBanner() + super.formatHelp(cmd, helper);
+  }
+}
+
 /**
  * Initialize logger based on environment variables
  */
@@ -93,8 +112,26 @@ async function main(): Promise<void> {
         " — Build. OrganiZe. Link. Yield.\n\n" +
         "AI-agnostic framework for domain-specific workspaces.\n" +
         "Works with Claude, GPT, Gemini, Ollama, and any AI CLI."
-    )
-    .version(VERSION, "-v, --version", "Show version number");
+    );
+
+  // Custom version output with banner
+  program.option("-v, --version", "Show version number", () => {
+    console.log(renderBanner());
+    console.log(chalk.gray("Version:"), VERSION);
+    process.exit(0);
+  });
+
+  // Use custom Help class for all commands (main + subcommands)
+  program.helpCommand(false); // Disable default 'help' command
+  program.addHelpCommand("help [command]", "Display help for command");
+  program.createHelp = () => new BozlyHelp();
+
+  // Helper function to apply BozlyHelp to a command
+  const applyBozlyHelp = (cmd: Command): void => {
+    cmd.createHelp = () => new BozlyHelp();
+    // Recursively apply to subcommands
+    cmd.commands.forEach((subCmd) => applyBozlyHelp(subCmd));
+  };
 
   // Register commands
   program.addCommand(initCommand);
@@ -117,19 +154,12 @@ async function main(): Promise<void> {
   program.addCommand(historyCommand);
   program.addCommand(serveCommand);
 
+  // Apply BozlyHelp to all commands and subcommands
+  program.commands.forEach((cmd) => applyBozlyHelp(cmd));
+
   // Default action (no command specified)
   program.action(() => {
-    console.log(
-      chalk.cyan(`
-╔═══════════════════════════════════════════╗
-║                                           ║
-║   ${chalk.bold("BOZLY")} — Build. OrganiZe. Link. Yield.  ║
-║                                           ║
-║   AI-agnostic workspace framework         ║
-║                                           ║
-╚═══════════════════════════════════════════╝
-`)
-    );
+    console.log(renderBanner());
     console.log(chalk.gray("Version:"), VERSION);
     console.log();
     console.log(chalk.yellow("Quick Start:"));
