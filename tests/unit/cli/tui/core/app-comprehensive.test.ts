@@ -5,8 +5,8 @@ import { Screen } from '../../../../../src/cli/tui/core/screen.js';
 import { Modal } from '../../../../../src/cli/tui/core/modal.js';
 import { getAPIURL } from '../../../../../src/core/port-config.js';
 
-// Mock blessed
-vi.mock('blessed', () => ({
+// Mock @unblessed/blessed
+vi.mock('@unblessed/blessed', () => ({
   default: {
     screen: vi.fn(() => ({
       box: vi.fn(() => ({
@@ -122,13 +122,9 @@ describe('BozlyTUI Application Comprehensive', () => {
       expect(typeof tui.init).toBe('function');
     });
 
-    it('should be async function', () => {
+    it('should be synchronous function', () => {
       const initResult = tui.init();
-      expect(initResult).toBeInstanceOf(Promise);
-      // Clean up the promise to avoid unhandled rejection
-      initResult.catch(() => {
-        /* ignore */
-      });
+      expect(initResult).toBeUndefined();
     });
 
     it('should initialize TUI state', () => {
