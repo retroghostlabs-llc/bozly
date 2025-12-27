@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import axios from "axios";
 import { APIClient } from "@/cli/tui/core/api-client.js";
+import { getAPIURL } from "@/core/port-config.js";
 
 // Mock axios
 vi.mock("axios");
@@ -34,11 +35,11 @@ describe("APIClient Comprehensive", () => {
   });
 
   describe("Constructor", () => {
-    it("should initialize with default base URL", () => {
+    it("should initialize with default base URL from port config", () => {
       const newClient = new APIClient();
       expect(axios.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          baseURL: "http://localhost:3000/api",
+          baseURL: getAPIURL(),
         })
       );
     });

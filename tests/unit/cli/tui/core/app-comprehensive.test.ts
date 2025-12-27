@@ -3,6 +3,7 @@ import { BozlyTUI } from '../../../../../src/cli/tui/core/app.js';
 import { APIClient } from '../../../../../src/cli/tui/core/api-client.js';
 import { Screen } from '../../../../../src/cli/tui/core/screen.js';
 import { Modal } from '../../../../../src/cli/tui/core/modal.js';
+import { getAPIURL } from '../../../../../src/core/port-config.js';
 
 // Mock blessed
 vi.mock('blessed', () => ({
@@ -71,7 +72,7 @@ describe('BozlyTUI Application Comprehensive', () => {
 
     // Reset modules to get fresh instances
     tui = new BozlyTUI({
-      apiUrl: 'http://localhost:3000/api',
+      apiUrl: getAPIURL(),
       refreshInterval: 1000,
     });
 

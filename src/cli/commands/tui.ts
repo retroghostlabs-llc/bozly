@@ -1,14 +1,11 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { runTUI } from "../tui/index.js";
+import { getAPIURL } from "../../core/port-config.js";
 
 export const tuiCommand = new Command("tui")
   .description("Launch Terminal UI Dashboard (requires bozly serve running)")
-  .option(
-    "--api-url <url>",
-    "API server URL (default: http://localhost:3000/api)",
-    "http://localhost:3000/api"
-  )
+  .option("--api-url <url>", `API server URL (default: ${getAPIURL()})`, getAPIURL())
   .option("--refresh <ms>", "Refresh interval in milliseconds", "5000")
   .action(async (options) => {
     try {

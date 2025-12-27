@@ -26,7 +26,7 @@ Complete guide to using the BOZLY Terminal User Interface Dashboard.
 ### Prerequisites
 
 - BOZLY v0.5.0 or later installed
-- `bozly serve` API server running (listens on http://localhost:3000)
+- `bozly serve` API server running (listens on http://127.0.0.1:3847 by default, or configured port)
 - Terminal with 80+ column width, 24+ row height (for optimal display)
 
 ### Launch in 2 Steps
@@ -431,7 +431,7 @@ Within list screens (Vaults, Sessions, Commands):
 # In another terminal, start the API server
 bozly serve
 
-# The server should run on http://localhost:3000 by default
+# The server should run on http://127.0.0.1:3847 by default (or your configured BOZLY_PORT)
 # Wait a few seconds for server to start, then try bozly tui again
 ```
 

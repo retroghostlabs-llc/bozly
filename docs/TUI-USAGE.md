@@ -25,7 +25,7 @@ Before launching the TUI, make sure the BOZLY API server is running:
 bozly serve
 ```
 
-The API server defaults to `http://localhost:3000/api`. The TUI will check for API availability on startup and provide helpful error messages if the server is not running.
+The API server defaults to `http://127.0.0.1:3847/api` (configurable via BOZLY_PORT environment variable). The TUI will check for API availability on startup and provide helpful error messages if the server is not running.
 
 ## Main Interface
 
@@ -280,8 +280,8 @@ The TUI cannot connect to the API server.
 # Start the BOZLY API server
 bozly serve
 
-# Verify it's running on the correct port
-curl http://localhost:3000/api/health
+# Verify it's running on the correct port (default: 127.0.0.1:3847)
+curl http://127.0.0.1:3847/api/health
 ```
 
 ### "Vault Not Found"

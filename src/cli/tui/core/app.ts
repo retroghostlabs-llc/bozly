@@ -2,6 +2,7 @@ import blessed from "blessed";
 import { APIClient } from "./api-client.js";
 import { Screen } from "./screen.js";
 import { Modal } from "./modal.js";
+import { getAPIURL } from "../../../core/port-config.js";
 
 export interface BozlyTUIConfig {
   apiUrl?: string;
@@ -70,7 +71,7 @@ export class BozlyTUI {
       // Check API availability
       const isHealthy = await this.apiClient.isHealthy();
       if (!isHealthy) {
-        throw new Error("BOZLY API server (bozly serve) is not running at http://localhost:3000");
+        throw new Error(`BOZLY API server (bozly serve) is not running at ${getAPIURL()}`);
       }
 
       // Create menu

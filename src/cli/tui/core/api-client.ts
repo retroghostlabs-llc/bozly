@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from "axios";
+import { getAPIURL } from "../../../core/port-config.js";
 
 export interface APIError {
   code: string;
@@ -13,7 +14,7 @@ export class APIClient {
   private cache: Map<string, { data: any; timestamp: number }> = new Map();
   private cacheTimeout: number = 5000; // 5 seconds
 
-  constructor(baseUrl: string = "http://localhost:3000/api") {
+  constructor(baseUrl: string = getAPIURL()) {
     this.client = axios.create({
       baseURL: baseUrl,
       timeout: 10000,

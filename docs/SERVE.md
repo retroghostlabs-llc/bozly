@@ -122,10 +122,10 @@ bozly run weekly-review
 ### Scenario 3: Network Access (Team/Demo)
 
 ```bash
-# Start on all interfaces
-bozly serve --host 0.0.0.0 --port 3000
+# Start on all interfaces (using default port 3847)
+bozly serve --host 0.0.0.0
 
-# Share URL: http://your-machine-ip:3000
+# Share URL: http://your-machine-ip:3847
 ```
 
 ⚠️ **Security Note:** This exposes session history and context. Only use on trusted networks.

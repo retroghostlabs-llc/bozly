@@ -990,8 +990,8 @@ bozly serve --api-only --port 3001
 BOZLY Dashboard
 ===============
 
-Web UI: http://localhost:3000
-API: http://localhost:3000/api
+Web UI: http://127.0.0.1:3847
+API: http://127.0.0.1:3847/api
 
 Vaults loaded: 2
 Sessions indexed: 131
@@ -1012,7 +1012,7 @@ bozly tui [OPTIONS]
 
 **Options:**
 ```
---api-url <url>            API server URL (default: http://localhost:3000/api)
+--api-url <url>            API server URL (default: http://127.0.0.1:3847/api, or configured BOZLY_PORT)
 --refresh <ms>             Refresh interval in milliseconds (default: 5000)
 ```
 
@@ -1032,7 +1032,7 @@ bozly tui
 bozly tui
 
 # Custom API server
-bozly tui --api-url http://192.168.1.100:3000/api
+bozly tui --api-url http://192.168.1.100:3847/api
 
 # Faster refresh interval (500ms)
 bozly tui --refresh 500
@@ -1081,7 +1081,7 @@ bozly tui --api-url http://localhost:8080/api --refresh 2000
 **Troubleshooting:**
 - If TUI won't connect, ensure `bozly serve` is running on the specified port
 - Check with `bozly status` to verify vaults are registered
-- Use `--api-url http://localhost:3000/api` to match the serve command
+- Use `--api-url http://127.0.0.1:3847/api` to match the serve command (or set BOZLY_PORT environment variable)
 
 **See Also:**
 - [TUI Quick Start](./TUI-QUICKSTART.md)

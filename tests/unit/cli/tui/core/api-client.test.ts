@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import axios from 'axios';
 import { APIClient } from '../../../../../src/cli/tui/core/api-client.js';
+import { getAPIURL } from '../../../../../src/core/port-config.js';
 
 // Mock axios
 vi.mock('axios');
@@ -24,7 +25,7 @@ describe('APIClient', () => {
     // Setup axios.create to return our mock client
     mockAxios.create = vi.fn().mockReturnValue(mockClient);
 
-    client = new APIClient('http://localhost:3000/api');
+    client = new APIClient(getAPIURL());
   });
 
   describe('Health Check', () => {
@@ -115,7 +116,7 @@ describe('APIClient', () => {
 
     it('should handle network errors gracefully', async () => {
       // Create a fresh client for this test to avoid previous mock state
-      const errorClient = new APIClient('http://localhost:3000/api');
+      const errorClient = new APIClient(getAPIURL());
       mockClient.get.mockRejectedValueOnce(new Error('Network error'));
 
       try {
