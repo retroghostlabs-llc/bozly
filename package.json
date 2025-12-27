@@ -1,6 +1,6 @@
 {
   "name": "@retroghostlabs/bozly",
-  "version": "0.3.0-rc.1",
+  "version": "0.6.0-beta.1",
   "description": "Build. Organize. Link. Yield. — AI-agnostic framework for domain-specific workspaces",
   "keywords": [
     "ai",

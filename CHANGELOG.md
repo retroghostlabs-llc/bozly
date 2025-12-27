@@ -7,6 +7,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.0-beta.1] - 2025-12-26
+
+### Phase 2.5: Complete (AI-Assisted Creation & Advanced Features)
+
+#### Added
+- **REST API Server** — 15 new REST endpoints for vault/session/command management
+- **Dashboard Server** (`bozly serve`) — Full web UI for session browsing, analytics, and management
+- **AI-Assisted Command Creation** — `bozly command create --ai` for interactive AI-powered command generation
+- **Template Extraction** — `bozly template from-vault` to extract templates from existing vaults
+- **Smart Command Suggestions** — `bozly command suggest --ai` with pattern detection and user approval
+- **Advanced Session Analytics** — Dashboard with filtering, search, and session statistics
+
+#### Features
+- Full Phase 2 implementation (Hooks, Workflows, Memory, Search, Smart Routing)
+- Web interface with responsive design
+- Session browser with 6-tab detailed view
+- Cross-node command search and execution
+- AI provider failover chains
+
+#### Tests
+- 1,642 tests passing (100%)
+- Test coverage: 80.06%
+
+---
+
+## [0.5.0-beta.1] - 2025-12-24
+
+### Added
+- **Web Dashboard UI** — Read-only web interface for session browsing
+- **SPA Interface** — Single-page application for vault visualization
+- **Session Browser** — Browse sessions with filtering and pagination
+- **Command Browser** — View all commands with metadata and execution history
+
+---
+
+## [0.4.2-beta.1] - 2025-12-22
+
+### Added
+- **Smart Routing** — Per-node and per-command AI provider configuration
+- **Provider Failover** — Automatic fallback chains for AI providers
+- **Command Suggestions** — AI-powered command improvement suggestions
+- **Enhanced CLI Polish** — Gradient banners, formatted tables, graceful degradation
+
+---
+
+## [0.4.1-beta.1] - 2025-12-21
+
+### Added
+- **Memory System** — Extraction, indexing, and injection of session memories
+- **Cross-Node Search** — Search across all vaults with session filtering
+- **Session Export** — Export sessions to multiple formats
+- **Memory Indexing** — Semantic search on collected memories
+
+---
+
+## [0.4.0-beta.1] - 2025-12-20
+
+### Added
+- **Hooks System** — 4 trigger points (session-start, pre-execution, post-execution, session-end)
+- **Workflows** — Multi-step processes with task chains and condition support
+- **Auto-Cleanup** — Duration parsing and storage monitoring with disk management
+- **Templates** — Variable substitution and template tooling
+- **Default Commands** — 5 built-in commands for common operations
+
+---
+
 ## [0.3.0-beta.1] - 2025-12-21
 
 ### Added - Release Preparation

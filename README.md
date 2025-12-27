@@ -112,11 +112,11 @@ TIER 3: NODE CONFIG (Node-Owned)
 
 ### Installation
 
-**Beta Status:** BOZLY 0.3.0-rc.1 is available for public beta testing. All Phase 1 features are implemented, tested, and production-ready. [Report issues on GitHub](https://github.com/RetroGhostLabs/bozly/issues).
+**Current Release:** BOZLY v0.6.0-beta.1 is available with full Phase 2 automation and integration features. All Phase 1 & 2 features are implemented, tested, and production-ready. [Report issues on GitHub](https://github.com/RetroGhostLabs/bozly/issues).
 
 ```bash
-# npm (recommended - release candidate)
-npm install -g @retroghostlabs/bozly@0.3.0-rc.1
+# npm (recommended)
+npm install -g @retroghostlabs/bozly@0.6.0-beta.1
 
 # Or install latest version
 npm install -g @retroghostlabs/bozly
@@ -274,11 +274,13 @@ See [CLI-DESIGN.md](docs/CLI-DESIGN.md) for full command reference.
 
 ## Project Status
 
-**Current Phase:** Phase 1: Beta — ✅ 100% COMPLETE | Phase 2: Automation & Integrations — ✅ 100% COMPLETE | Coverage — ✅ 80.06% | Phase 3: Ecosystem & Community — 📋 READY
+**Current Phase:** ✅ Phase 1: Beta (100% Complete) | ✅ Phase 2: Automation & Integrations (100% Complete) | 📋 Phase 3: Ecosystem & Community (Ready for v1.0)
 
-**Released:** v0.3.0-beta.1 (Dec 21, 2025) ✅ | v0.4.0-beta.1 ✅ | v0.4.1-beta.1 ✅ | v0.4.2-beta.1 ✅ | v0.5.0-beta.1 ✅ | v0.6.0-beta.1 ✅ (All Available)
+**Latest Release:** v0.6.0-beta.1 (Dec 26, 2025) — Full Phase 2 with web dashboard, REST APIs, smart routing, AI-assisted commands, and advanced memory system
 
-**Next:** Phase 3 - Ecosystem & Community (35-55 hrs) | v1.0 Public Launch May 2026 | Test Coverage: 1,642/1,642 passing (100%)
+**Available Versions:** v0.3.0 (Phase 1) | v0.4.0 (Hooks/Workflows) | v0.4.1 (Memory/Search) | v0.4.2 (Smart Execution) | v0.5.0 (Web UI) | v0.6.0 (Dashboard & APIs)
+
+**Testing:** 1,642/1,642 tests passing (100%) | Coverage: 80.06% | Next: v1.0 Public Launch (May 2026)
 
 ### Development Progress
 
@@ -423,12 +425,21 @@ See [LICENSE](LICENSE) for details.
 
 *Built by [RetroGhostLabs](https://github.com/RetroGhostLabs) | MIT License*
 
-*Last updated: 2025-12-26 (Session 120)* | *Status: Phase 1 ✅ COMPLETE | Phase 2 ✅ 100% COMPLETE | Coverage ✅ 80.06% (1,642/1,642 tests) | Released: v0.4.0-v0.6.0 (All Available) | Next: Phase 3 (v1.0, May 2026)*
+*Last updated: 2025-12-27 (Session 122 - Release Cleanup)* | *Phase 1 ✅ (100%) | Phase 2 ✅ (100%) | v0.6.0-beta.1 Released | Tests: 1,642/1,642 (100%) | v1.0 Target: May 2026*
 
 ---
 
 ## 📊 Progress Tracking
 
-**Phase 1 Beta: ✅ COMPLETE** — v0.3.0-rc.1 released December 22, 2025
+**Phase 1 Beta: ✅ COMPLETE** — v0.3.0-beta.1 released December 21, 2025
 
-For detailed timeline and planning docs, see the private workspace.
+**Phase 2 Automation & Integrations: ✅ 100% COMPLETE**
+- v0.4.0-beta.1: Hooks, Workflows, Auto-Cleanup, Templates
+- v0.4.1-beta.1: Memory System, Cross-Node Search
+- v0.4.2-beta.1: Smart Routing, Command Suggestions
+- v0.5.0-beta.1: Web Dashboard UI
+- v0.6.0-beta.1: REST APIs, Dashboard Server, AI-Assisted Commands
+
+**Phase 3: Ecosystem & Community** — 📋 Ready for v1.0 (Planning stage)
+
+See the project repository for issue tracking and feature requests.
