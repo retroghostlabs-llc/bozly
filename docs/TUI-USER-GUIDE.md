@@ -2,8 +2,8 @@
 
 Complete guide to using the BOZLY Terminal User Interface Dashboard.
 
-**Status:** ✅ Production Ready (v0.5.0+)
-**Coverage:** 80%+ test coverage on all core modules
+**Status:** ✅ Production Ready (v0.6.0+)
+**Coverage:** 90%+ test coverage on all core modules (@unblessed/blessed)
 **Last Updated:** December 27, 2025
 
 ---

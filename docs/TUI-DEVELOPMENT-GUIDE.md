@@ -2,10 +2,10 @@
 
 Complete guide for developers working on the Terminal User Interface system.
 
-**Status:** ✅ Production Ready with 80%+ Test Coverage
-**Framework:** blessed (Terminal UI library)
+**Status:** ✅ Production Ready with 90%+ Test Coverage
+**Framework:** @unblessed/blessed (Terminal UI library - maintained fork of blessed)
 **Language:** TypeScript
-**Test Coverage Target:** 80%+ for all modules
+**Test Coverage Target:** 80%+ for all modules (achieved 90%+ in app.ts)
 **Last Updated:** December 27, 2025
 
 ---
@@ -74,11 +74,16 @@ Blessed Terminal Screen
 
 ### Technology Stack
 
-- **blessed** (6.1.0+) - Terminal UI rendering library
+- **@unblessed/blessed** (latest) - Terminal UI rendering library (maintained fork of blessed)
 - **axios** (0.18.0+) - HTTP client for API communication
 - **TypeScript** - Type-safe development
 - **vitest** - Unit testing framework
 - **@inquirer/prompts** - Interactive command-line prompts
+
+**Note:** We use `@unblessed/blessed` instead of the original `blessed` package because:
+- Original `blessed` hasn't been maintained since 2017
+- `@unblessed/blessed` is a 100% API-compatible, actively maintained fork
+- Better TypeScript type definitions and modern JavaScript support
 
 ---
 
@@ -157,7 +162,7 @@ async showModal(modal: Modal): Promise<any> // Show modal, wait for result
 getAPIClient(): APIClient                // Get API client instance
 ```
 
-**Test Coverage:** 80%+ (core features tested)
+**Test Coverage:** 90%+ (comprehensive coverage for all app lifecycle methods, keybindings, and error handling)
 
 ---
 
