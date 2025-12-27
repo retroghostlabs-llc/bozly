@@ -1,4 +1,5 @@
-import blessed, { Widgets } from "blessed";
+import blessed from "blessed";
+import type { Widgets } from "blessed";
 
 export interface ScreenConfig {
   id: string;
@@ -103,24 +104,29 @@ export abstract class Screen {
   /**
    * Create a simple text box for content display
    */
-  protected createBox(options: Partial<Widgets.BoxOptions> = {}): blessed.Widgets.BoxElement {
-    const boxElement = (
-      this.parent as unknown as {
-        box: (opts: Record<string, unknown>) => blessed.Widgets.BoxElement;
-      }
-    ).box({
-      parent: this.parent,
-      top: 2,
-      left: 12,
-      right: 0,
-      bottom: 2,
-      border: "line",
-      style: {
-        border: { fg: "cyan" },
-      },
-      ...options,
-    });
-    return boxElement;
+  protected createBox(
+    options: Partial<Widgets.BoxOptions> = {}
+  ): blessed.Widgets.BoxElement | null {
+    try {
+      // Use blessed.box() with the parent screen
+      const boxElement = blessed.box({
+        parent: this.parent,
+        top: 2,
+        left: 12,
+        right: 0,
+        bottom: 2,
+        border: "line",
+        style: {
+          border: { fg: "cyan" },
+        },
+        ...options,
+      });
+      return boxElement;
+    } catch (error) {
+      // If box creation fails, return null (degraded mode)
+      console.log("[DEBUG] Failed to create box:", error instanceof Error ? error.message : error);
+      return null;
+    }
   }
 
   /**

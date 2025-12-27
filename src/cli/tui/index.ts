@@ -115,11 +115,31 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
       refreshInterval: refreshInterval as number,
     });
 
-    // Initialize app
-    await tui.init();
-
-    // Register all screens
+    // Check for degraded mode and warn user
     const screen = tui.getScreen();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (typeof (screen as any).box !== "function") {
+      console.log("");
+      console.log(chalk.yellow("⚠️  Terminal Compatibility Mode"));
+      console.log(chalk.gray("───────────────────────────────────────────────────────────"));
+      console.log(
+        chalk.yellow("  Your terminal's xterm-256color definition has compatibility issues.")
+      );
+      console.log(chalk.yellow("  BOZLY is running in degraded mode with reduced styling."));
+      console.log("");
+      console.log(chalk.gray("  To enable full features, fix your terminfo database:"));
+      console.log(chalk.cyan("    brew reinstall ncurses          # macOS"));
+      console.log(chalk.cyan("    sudo apt-get install ncurses-bin # Linux"));
+      console.log("");
+      console.log(chalk.gray("  For detailed instructions, see: docs/TROUBLESHOOTING.md"));
+      console.log(chalk.gray("───────────────────────────────────────────────────────────"));
+      console.log("");
+    }
+
+    // Initialize app
+    tui.init();
+
+    // Register all screens (screen already retrieved above)
 
     const homeScreen = new HomeScreen(screen, apiClient, { id: "home", name: "Home" });
     const vaultsScreen = new VaultsScreen(screen, { id: "vaults", name: "Vaults" }, apiClient);

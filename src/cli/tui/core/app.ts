@@ -2,7 +2,6 @@ import blessed from "blessed";
 import { APIClient } from "./api-client.js";
 import { Screen } from "./screen.js";
 import { Modal } from "./modal.js";
-import { getAPIURL } from "../../../core/port-config.js";
 
 export interface BozlyTUIConfig {
   apiUrl?: string;
@@ -25,8 +24,10 @@ export class BozlyTUI {
   private isRunning: boolean = false;
 
   constructor(config: BozlyTUIConfig = {}) {
-    // Try to initialize blessed screen with terminal capabilities fallback
+    // Initialize blessed screen with terminal capabilities fallback
+    // This handles xterm-256color terminfo parsing issues on some systems
     try {
+      const termValue = process.env.BOZLY_TERM ?? process.env.TERM ?? "xterm-256color";
       this.screen = blessed.screen({
         mouse: true,
         title: "BOZLY TUI Dashboard",
@@ -34,8 +35,7 @@ export class BozlyTUI {
           bg: "default",
           fg: "default",
         },
-        // Use explicit terminal setting for better compatibility
-        term: process.env.BOZLY_TERM || process.env.TERM || "xterm-256color",
+        term: termValue,
         ignoreDockConflict: true,
       });
     } catch (error) {
@@ -66,16 +66,14 @@ export class BozlyTUI {
   /**
    * Initialize and start the TUI application
    */
-  async init(): Promise<void> {
+  init(): void {
     try {
-      // Check API availability
-      const isHealthy = await this.apiClient.isHealthy();
-      if (!isHealthy) {
-        throw new Error(`BOZLY API server (bozly serve) is not running at ${getAPIURL()}`);
+      // Note: API health already checked in index.ts before creating this instance
+      // Skip menu creation if screen.box is not available (degraded blessed mode)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (typeof (this.screen as any).box === "function") {
+        this.createMenu();
       }
-
-      // Create menu
-      this.createMenu();
 
       // Initialize screens (will be created in subclasses)
       // For now, just setup the structure
@@ -92,11 +90,13 @@ export class BozlyTUI {
    */
   async start(): Promise<void> {
     if (!this.isRunning) {
-      await this.init();
+      this.init();
     }
 
-    // Focus screen
+    // Initialize and render the current screen
     if (this.currentScreen) {
+      await this.currentScreen.init();
+      await this.currentScreen.render();
       this.currentScreen.activate();
     }
 

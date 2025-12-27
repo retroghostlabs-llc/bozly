@@ -97,8 +97,15 @@ export class APIClient {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.fetch(`/sessions?${queryStr}`, async () => {
       const response = await this.client.get(`/sessions?${queryStr}`);
+      const data = response.data.data || response.data;
+      // Ensure we always return an array
+      const result = Array.isArray(data)
+        ? data
+        : typeof data === "object" && data !== null
+          ? Object.values(data)
+          : [];
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return response.data.data || response.data;
+      return result;
     });
   }
 
