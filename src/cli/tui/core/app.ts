@@ -24,14 +24,37 @@ export class BozlyTUI {
   private isRunning: boolean = false;
 
   constructor(config: BozlyTUIConfig = {}) {
-    this.screen = blessed.screen({
-      mouse: true,
-      title: "BOZLY TUI Dashboard",
-      style: {
-        bg: "default",
-        fg: "default",
-      },
-    });
+    // Try to initialize blessed screen with terminal capabilities fallback
+    try {
+      this.screen = blessed.screen({
+        mouse: true,
+        title: "BOZLY TUI Dashboard",
+        style: {
+          bg: "default",
+          fg: "default",
+        },
+        // Use explicit terminal setting for better compatibility
+        term: process.env.BOZLY_TERM || process.env.TERM || "xterm-256color",
+        ignoreDockConflict: true,
+      });
+    } catch (error) {
+      // Fallback to simpler terminal if blessed fails to parse terminfo
+      if (error instanceof Error && error.message.includes("Setulc")) {
+        process.env.TERM = "screen";
+        this.screen = blessed.screen({
+          mouse: true,
+          title: "BOZLY TUI Dashboard",
+          style: {
+            bg: "default",
+            fg: "default",
+          },
+          term: "screen",
+          ignoreDockConflict: true,
+        });
+      } else {
+        throw error;
+      }
+    }
 
     this.apiClient = new APIClient(config.apiUrl);
     this.refreshInterval = config.refreshInterval ?? 5000;
