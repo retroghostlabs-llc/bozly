@@ -239,6 +239,48 @@ bozly serve --no-open         # Don't auto-open browser
 
 **Full Documentation:** See [SERVE.md](docs/SERVE.md)
 
+### Terminal UI (TUI)
+
+**Interactive terminal interface for BOZLY system management.**
+
+```bash
+# Terminal 1: Start the API server
+bozly serve                # Runs on http://localhost:3000
+
+# Terminal 2: Launch the TUI
+bozly tui                  # Connect to API, launch interactive UI
+bozly tui --api-url http://localhost:8000/api  # Custom API URL
+bozly tui --refresh 10000  # Custom refresh interval (ms)
+```
+
+**TUI Features:**
+- 🖥️ **8 Main Screens** — Home, Vaults, Sessions, Commands, Workflows, Memory, Config, Health
+- ⌨️ **Keyboard-Driven Navigation** — vim-style (hjkl, gg, G, /) + number keys for direct screen access
+- 🔄 **Real-Time Updates** — Auto-refresh with configurable intervals
+- 🎯 **Full CRUD Operations** — Create, read, update, delete vaults, commands, sessions
+- 📊 **Session Management** — View history, compare sessions, analyze patterns
+- 🔐 **Configuration Management** — Edit settings, manage providers
+- 🖱️ **Mouse Support** — Click navigation (optional, keyboard is primary)
+
+**Screen Reference:**
+| Screen | Key | Function |
+|--------|-----|----------|
+| Home | H | Dashboard overview & system status |
+| Vaults | V | Browse and manage registered vaults |
+| Sessions | S | View command execution history |
+| Commands | C | Browse available commands |
+| Workflows | W | View and manage multi-step processes |
+| Memory | M | Browse extracted knowledge |
+| Config | O | System configuration & settings |
+| Health | H | API server health & statistics |
+
+**Keyboard Shortcuts:**
+- **Navigation:** `hjkl` or arrow keys, `gg`/`G` for start/end, `PgUp`/`PgDn`
+- **Actions:** `Enter` select, `e` edit, `d` delete, `r` run, `/` search, `y` copy
+- **Global:** `R` refresh, `q` quit, `Tab` next screen, `1-8` jump to screen
+
+**Full Documentation:** See [TUI-USER-GUIDE.md](docs/TUI-USER-GUIDE.md) and [TUI-DEVELOPMENT-GUIDE.md](docs/TUI-DEVELOPMENT-GUIDE.md)
+
 ### AI Selection
 
 ```bash
