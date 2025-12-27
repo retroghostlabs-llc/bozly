@@ -1,23 +1,55 @@
 import { Command } from "commander";
+import { confirm } from "@inquirer/prompts";
 import { startServer } from "../../server/index.js";
-import { errorBox, successBox, infoBox } from "../ui/index.js";
+import { killServerOnPort, findServerPID } from "../../core/server-manager.js";
+import { getDefaultPort, getDefaultHost, isValidPort } from "../../core/port-config.js";
+import { errorBox, successBox, infoBox, warningBox } from "../ui/index.js";
 
 export const serveCommand = new Command()
   .name("serve")
   .description("Start BOZLY web dashboard server")
-  .option("-p, --port <port>", "Server port", "3847")
-  .option("-h, --host <host>", "Server host", "127.0.0.1")
+  .option("-p, --port <port>", "Server port (default: 3847, or BOZLY_PORT env)")
+  .option("-h, --host <host>", "Server host (default: 127.0.0.1, or BOZLY_HOST env)")
   .option("-o, --open", "Open browser automatically", true)
   .option("--no-open", "Do not open browser automatically")
   .action(async (options) => {
     try {
-      const port = parseInt(options.port, 10);
-      const host = options.host;
+      // Use provided port or fall back to config
+      const portStr = options.port ?? getDefaultPort().toString();
+      const port = parseInt(portStr, 10);
+      const host = options.host ?? getDefaultHost();
       const openBrowser = options.open;
 
-      if (isNaN(port) || port < 1 || port > 65535) {
+      if (!isValidPort(port)) {
         errorBox("Invalid port number. Must be between 1 and 65535.");
         process.exit(1);
+      }
+
+      // Check if server is already running on this port
+      const existingPID = await findServerPID(port);
+      if (existingPID) {
+        warningBox(`Server already running on port ${port} (PID: ${existingPID})`);
+
+        const shouldKill = await confirm({
+          message: "Kill existing server and start new one?",
+          default: true,
+        });
+
+        if (shouldKill) {
+          infoBox("Stopping existing server...");
+          const killed = await killServerOnPort(port);
+          if (killed) {
+            successBox("Existing server stopped");
+            // Wait a moment before starting new one
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          } else {
+            errorBox("Failed to stop existing server");
+            process.exit(1);
+          }
+        } else {
+          infoBox("Use 'bozly stop' to stop the server manually");
+          process.exit(1);
+        }
       }
 
       infoBox(`Starting BOZLY Server on http://${host}:${port}`);

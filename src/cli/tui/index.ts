@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
-import { confirm } from "@inquirer/prompts";
+import { select } from "@inquirer/prompts";
 import chalk from "chalk";
 import { BozlyTUI } from "./core/app.js";
 import { APIClient } from "./core/api-client.js";
 import { spawnAPIServer, waitForAPIServer } from "./utils/server.js";
+import { killServerOnPort } from "../../core/server-manager.js";
+import { getDefaultPort, getAPIURL } from "../../core/port-config.js";
 import { HomeScreen } from "./screens/home.js";
 import { VaultsScreen } from "./screens/vaults.js";
 import { SessionsScreen } from "./screens/sessions.js";
@@ -20,8 +22,10 @@ import { HealthScreen } from "./screens/health.js";
  */
 export async function runTUI(options?: Record<string, unknown>): Promise<void> {
   try {
-    // Get API URL
-    const apiUrl = options?.apiUrl ?? process.env.BOZLY_API_URL ?? "http://localhost:3000/api";
+    // Get API URL from config or options
+    const port = options?.port as number | undefined;
+    const host = options?.host as string | undefined;
+    const apiUrl = options?.apiUrl ?? process.env.BOZLY_API_URL ?? getAPIURL(port, host);
     const refreshInterval = options?.refreshInterval ?? 5000;
 
     // Check if API server is running
@@ -33,24 +37,66 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
       console.log(chalk.yellow("⚠️  API server is not running"));
       console.log("");
 
-      // Ask user if they want to start it
-      const shouldStart = await confirm({
-        message: "Start API server now?",
-        default: true,
+      // Ask user what they want to do
+      const action = await select({
+        message: "What would you like to do?",
+        choices: [
+          { name: "Start new server", value: "start" },
+          { name: "Restart server", value: "restart" },
+          { name: "Use manual startup", value: "manual" },
+          { name: "Exit", value: "exit" },
+        ],
       });
 
-      if (shouldStart) {
+      if (action === "exit") {
+        process.exit(0);
+      }
+
+      if (action === "manual") {
+        console.log("");
+        console.log(chalk.yellow("To start the API server manually, run:"));
+        console.log("");
+        console.log(chalk.cyan("  bozly serve"));
+        console.log("");
+        process.exit(0);
+      }
+
+      if (action === "restart") {
+        console.log(chalk.blue("→ Stopping existing server..."));
+        const configPort = port ?? getDefaultPort();
+        const killed = await killServerOnPort(configPort);
+        if (killed) {
+          console.log(chalk.green("✓ Server stopped"));
+        } else {
+          console.log(chalk.yellow("⚠️  Could not stop existing server"));
+        }
+        // Wait a moment before starting new one
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+
+      if (action === "start" || action === "restart") {
         console.log(chalk.blue("→ Starting API server..."));
 
         try {
           await spawnAPIServer();
 
           // Wait for server to be ready
-          console.log(chalk.blue("→ Waiting for server to be ready..."));
+          console.log(chalk.blue(`→ Waiting for server to be ready at ${String(apiUrl)}...`));
           const isReady = await waitForAPIServer(apiUrl as string);
 
           if (!isReady) {
-            console.error(chalk.red("✗ API server failed to start within timeout"));
+            console.error(chalk.red("✗ API server failed to start"));
+            console.error(chalk.yellow("Troubleshooting:"));
+            const configPort = port ?? getDefaultPort();
+            console.error(
+              `  • Run: bozly stop (to kill any existing server on port ${configPort})`
+            );
+            console.error(`  • Check if port ${configPort} is in use: lsof -i :${configPort}`);
+            console.error("  • Try manual start: bozly serve");
+            console.error("");
+            console.error(chalk.yellow("Configure port globally:"));
+            console.error("  • Set env: export BOZLY_PORT=3847");
+            console.error("  • Or edit: ~/.bozly/bozly-config.json");
             process.exit(1);
           }
 
@@ -60,13 +106,6 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
           console.error(chalk.red("✗ Failed to start API server:"), error);
           process.exit(1);
         }
-      } else {
-        console.log("");
-        console.log(chalk.yellow("To start the API server manually, run:"));
-        console.log("");
-        console.log(chalk.cyan("  bozly serve"));
-        console.log("");
-        process.exit(1);
       }
     }
 

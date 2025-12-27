@@ -34,6 +34,7 @@ import { suggestCommand } from "./commands/suggest.js";
 import { searchCommand } from "./commands/search.js";
 import { historyCommand } from "./commands/history.js";
 import { serveCommand } from "./commands/serve.js";
+import { stopCommand } from "./commands/stop.js";
 import { tuiCommand } from "./commands/tui.js";
 
 // Import version from single source of truth
@@ -154,6 +155,7 @@ async function main(): Promise<void> {
   program.addCommand(searchCommand);
   program.addCommand(historyCommand);
   program.addCommand(serveCommand);
+  program.addCommand(stopCommand);
   program.addCommand(tuiCommand);
 
   // Apply BozlyHelp to all commands and subcommands
