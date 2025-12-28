@@ -159,8 +159,7 @@ export abstract class Screen {
    * Display error message to user
    */
   protected showError(message: string): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const errorBox = (this.parent as any).box({
+    const errorBox = blessed.box({
       parent: this.parent,
       top: "center",
       left: "center",
@@ -191,8 +190,7 @@ export abstract class Screen {
    * Display success message to user
    */
   protected showSuccess(message: string): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const successBox = (this.parent as any).box({
+    const successBox = blessed.box({
       parent: this.parent,
       top: "center",
       left: "center",
@@ -223,8 +221,7 @@ export abstract class Screen {
    * Display info message to user
    */
   protected showInfo(message: string): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const infoBox = (this.parent as any).box({
+    const infoBox = blessed.box({
       parent: this.parent,
       top: "center",
       left: "center",

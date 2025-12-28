@@ -1,6 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import blessed from 'blessed';
+import blessed from '@unblessed/blessed';
 import { Screen } from '../../../../../src/cli/tui/core/screen.js';
+
+// Mock @unblessed/blessed
+vi.mock('@unblessed/blessed', () => ({
+  default: {
+    box: vi.fn().mockReturnValue({
+      show: vi.fn(),
+      hide: vi.fn(),
+      destroy: vi.fn(),
+      setContent: vi.fn(),
+    }),
+  },
+}));
 
 // Concrete implementation for testing
 class TestScreen extends Screen {
@@ -83,16 +95,28 @@ describe('Screen', () => {
   });
 
   describe('Error Display', () => {
+    beforeEach(() => {
+      // Setup blessed.box mock to return proper object
+      vi.mocked(blessed.box).mockReturnValue({
+        show: vi.fn(),
+        hide: vi.fn(),
+        destroy: vi.fn(),
+        setContent: vi.fn(),
+      } as any);
+    });
+
     it('should show error messages', () => {
       // Mock setTimeout to avoid actual delays in tests
       vi.useFakeTimers();
 
       screen.activate();
-      const originalRender = mockScreen.render;
       mockScreen.render = vi.fn();
 
       // This should not throw
       (screen as any).showError('Test error message');
+
+      expect(blessed.box).toHaveBeenCalled();
+      expect(mockScreen.render).toHaveBeenCalled();
 
       vi.useRealTimers();
     });
@@ -105,6 +129,9 @@ describe('Screen', () => {
 
       (screen as any).showSuccess('Test success message');
 
+      expect(blessed.box).toHaveBeenCalled();
+      expect(mockScreen.render).toHaveBeenCalled();
+
       vi.useRealTimers();
     });
 
@@ -115,6 +142,9 @@ describe('Screen', () => {
       mockScreen.render = vi.fn();
 
       (screen as any).showInfo('Test info message');
+
+      expect(blessed.box).toHaveBeenCalled();
+      expect(mockScreen.render).toHaveBeenCalled();
 
       vi.useRealTimers();
     });

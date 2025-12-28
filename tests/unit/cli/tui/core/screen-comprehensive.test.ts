@@ -264,47 +264,55 @@ describe("Screen Base Class", () => {
     beforeEach(async () => {
       await screen.init();
       vi.useFakeTimers();
+      // Setup blessed.box mock to return proper object
+      vi.mocked(blessed.box).mockReturnValue({
+        show: vi.fn(),
+        hide: vi.fn(),
+        destroy: vi.fn(),
+        setContent: vi.fn(),
+      } as any);
     });
 
     afterEach(() => {
       vi.useRealTimers();
+      vi.clearAllMocks();
     });
 
     it("should show error message", () => {
       screen["showError"]("Test error message");
-      expect(mockScreen.box).toHaveBeenCalled();
+      expect(blessed.box).toHaveBeenCalled();
       expect(mockScreen.render).toHaveBeenCalled();
     });
 
     it("should clean up error message after timeout", () => {
       screen["showError"]("Test error");
-      expect(mockScreen.box).toHaveBeenCalled();
+      expect(blessed.box).toHaveBeenCalled();
       vi.advanceTimersByTime(3000);
       expect(mockScreen.render).toHaveBeenCalled();
     });
 
     it("should show success message", () => {
       screen["showSuccess"]("Test success message");
-      expect(mockScreen.box).toHaveBeenCalled();
+      expect(blessed.box).toHaveBeenCalled();
       expect(mockScreen.render).toHaveBeenCalled();
     });
 
     it("should clean up success message after timeout", () => {
       screen["showSuccess"]("Test success");
-      expect(mockScreen.box).toHaveBeenCalled();
+      expect(blessed.box).toHaveBeenCalled();
       vi.advanceTimersByTime(2000);
       expect(mockScreen.render).toHaveBeenCalled();
     });
 
     it("should show info message", () => {
       screen["showInfo"]("Test info message");
-      expect(mockScreen.box).toHaveBeenCalled();
+      expect(blessed.box).toHaveBeenCalled();
       expect(mockScreen.render).toHaveBeenCalled();
     });
 
     it("should clean up info message after timeout", () => {
       screen["showInfo"]("Test info");
-      expect(mockScreen.box).toHaveBeenCalled();
+      expect(blessed.box).toHaveBeenCalled();
       vi.advanceTimersByTime(2000);
       expect(mockScreen.render).toHaveBeenCalled();
     });
