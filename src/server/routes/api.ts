@@ -196,6 +196,45 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
     }
   });
 
+  // GET /api/commands - List all commands across all vaults
+  fastify.get("/api/commands", async () => {
+    try {
+      const vaults = await listNodes();
+      const allCommands: any[] = [];
+
+      for (const vault of vaults) {
+        try {
+          const commands = await getNodeCommands(vault.path);
+          allCommands.push(
+            ...commands.map((c: any) => ({
+              name: c.name,
+              description: c.description ?? "No description",
+              source: c.source ?? "Unknown",
+              nodeId: vault.id,
+              type: c.type ?? "unknown",
+              usage: c.usage,
+            }))
+          );
+        } catch {
+          // Skip vaults that fail to load
+        }
+      }
+
+      return {
+        success: true,
+        data: allCommands,
+      };
+    } catch (error) {
+      void logger.error("Failed to list commands from API", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to list commands",
+      };
+    }
+  });
+
   // GET /api/vaults/:id/commands - List commands
   fastify.get<{ Params: { id: string } }>("/api/vaults/:id/commands", async (request) => {
     try {
