@@ -6,9 +6,12 @@
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as os from "os";
+import { fileURLToPath } from "url";
 import { logger } from "./logger.js";
 import { Template, TemplateMetadata, TemplateContext } from "./types.js";
 import { promptText, promptConfirm } from "../utils/prompts.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Get the builtin templates directory (shipped with BOZLY)
