@@ -4,6 +4,7 @@ import { loadSession, getNodeSessions } from "../../core/sessions.js";
 import { getNodeCommands } from "../../core/commands.js";
 import { generateContext } from "../../core/context.js";
 import { listProviders } from "../../core/providers.js";
+import { getConfig } from "../../core/config-manager.js";
 import { logger } from "../../core/logger.js";
 
 export function registerApiRoutes(fastify: FastifyInstance): void {
@@ -383,5 +384,30 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
       status: "ok",
       timestamp: new Date().toISOString(),
     };
+  });
+
+  // GET /api/config - Get application configuration
+  fastify.get("/api/config", () => {
+    try {
+      const configManager = getConfig();
+      return {
+        success: true,
+        data: {
+          server: configManager.getServer(),
+          storage: configManager.getStorage(),
+          client: configManager.getClient(),
+          logging: configManager.getLogging(),
+          process: configManager.getProcess(),
+        },
+      };
+    } catch (error) {
+      void logger.error("Failed to get config from API", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to get config",
+      };
+    }
   });
 }
