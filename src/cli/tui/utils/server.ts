@@ -1,5 +1,6 @@
 import { spawn } from "child_process";
 import axios from "axios";
+import { logger } from "../../../core/logger.js";
 
 /**
  * Spawn the BOZLY API server in background
@@ -50,8 +51,11 @@ export async function waitForAPIServer(
 
   // Log the last error for debugging
   if (lastError) {
-    // eslint-disable-next-line no-console
-    console.debug(`Server health check failed: ${lastError.message}`);
+    await logger.debug(`Server health check failed: ${lastError.message}`, {
+      error: lastError.message,
+      attempts,
+      maxAttempts,
+    });
   }
 
   return false;

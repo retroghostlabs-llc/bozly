@@ -4,6 +4,7 @@ import { loadSession, getNodeSessions } from "../../core/sessions.js";
 import { getNodeCommands } from "../../core/commands.js";
 import { generateContext } from "../../core/context.js";
 import { listProviders } from "../../core/providers.js";
+import { logger } from "../../core/logger.js";
 
 export function registerApiRoutes(fastify: FastifyInstance): void {
   // GET /api/vaults - List all vaults
@@ -19,6 +20,9 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
         })),
       };
     } catch (error) {
+      void logger.error("Failed to list vaults from API", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return {
         success: false,
         error: error instanceof Error ? error.message : "Failed to list vaults",
@@ -31,6 +35,7 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
     try {
       const vault = await getNode(request.params.id);
       if (!vault) {
+        void logger.warn("Vault not found in API", { vaultId: request.params.id });
         return {
           success: false,
           error: "Vault not found",
@@ -41,6 +46,10 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
         data: vault,
       };
     } catch (error) {
+      void logger.error("Failed to get vault from API", {
+        error: error instanceof Error ? error.message : String(error),
+        vaultId: request.params.id,
+      });
       return {
         success: false,
         error: error instanceof Error ? error.message : "Failed to get vault",
@@ -58,6 +67,7 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
       const vault = await getNode(vaultId);
 
       if (!vault) {
+        void logger.warn("Vault not found when listing sessions in API", { vaultId });
         return {
           success: false,
           error: "Vault not found",
@@ -80,6 +90,10 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
         },
       };
     } catch (error) {
+      void logger.error("Failed to list sessions from API", {
+        error: error instanceof Error ? error.message : String(error),
+        vaultId: request.params.id,
+      });
       return {
         success: false,
         error: error instanceof Error ? error.message : "Failed to list sessions",
@@ -94,6 +108,10 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
       try {
         const vault = await getNode(request.params.id);
         if (!vault) {
+          void logger.warn("Vault not found when getting session in API", {
+            vaultId: request.params.id,
+            sessionId: request.params.sessionId,
+          });
           return {
             success: false,
             error: "Vault not found",
@@ -103,6 +121,10 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
         const session = await loadSession(vault.path, request.params.sessionId);
 
         if (!session) {
+          void logger.warn("Session not found in API", {
+            vaultId: request.params.id,
+            sessionId: request.params.sessionId,
+          });
           return {
             success: false,
             error: "Session not found",
@@ -114,6 +136,11 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
           data: session,
         };
       } catch (error) {
+        void logger.error("Failed to get session from API", {
+          error: error instanceof Error ? error.message : String(error),
+          vaultId: request.params.id,
+          sessionId: request.params.sessionId,
+        });
         return {
           success: false,
           error: error instanceof Error ? error.message : "Failed to get session",
@@ -129,6 +156,7 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
       const vault = await getNode(vaultId);
 
       if (!vault) {
+        void logger.warn("Vault not found when getting stats in API", { vaultId });
         return {
           success: false,
           error: "Vault not found",
@@ -157,6 +185,10 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
         data: stats,
       };
     } catch (error) {
+      void logger.error("Failed to get stats from API", {
+        error: error instanceof Error ? error.message : String(error),
+        vaultId: request.params.id,
+      });
       return {
         success: false,
         error: error instanceof Error ? error.message : "Failed to get stats",
@@ -171,6 +203,7 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
       const vault = await getNode(vaultId);
 
       if (!vault) {
+        void logger.warn("Vault not found when listing commands in API", { vaultId });
         return {
           success: false,
           error: "Vault not found",
@@ -188,6 +221,10 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
         })),
       };
     } catch (error) {
+      void logger.error("Failed to list commands from API", {
+        error: error instanceof Error ? error.message : String(error),
+        vaultId: request.params.id,
+      });
       return {
         success: false,
         error: error instanceof Error ? error.message : "Failed to list commands",
@@ -204,6 +241,10 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
         const vault = await getNode(vaultId);
 
         if (!vault) {
+          void logger.warn("Vault not found when getting command in API", {
+            vaultId,
+            commandName: request.params.name,
+          });
           return {
             success: false,
             error: "Vault not found",
@@ -214,6 +255,10 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
         const command = commands.find((c: { name: string }) => c.name === request.params.name);
 
         if (!command) {
+          void logger.warn("Command not found in API", {
+            vaultId,
+            commandName: request.params.name,
+          });
           return {
             success: false,
             error: "Command not found",
@@ -225,6 +270,11 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
           data: command,
         };
       } catch (error) {
+        void logger.error("Failed to get command from API", {
+          error: error instanceof Error ? error.message : String(error),
+          vaultId: request.params.id,
+          commandName: request.params.name,
+        });
         return {
           success: false,
           error: error instanceof Error ? error.message : "Failed to get command",
@@ -240,6 +290,7 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
       const vault = await getNode(vaultId);
 
       if (!vault) {
+        void logger.warn("Vault not found when getting context in API", { vaultId });
         return {
           success: false,
           error: "Vault not found",
@@ -256,6 +307,10 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
         },
       };
     } catch (error) {
+      void logger.error("Failed to load context from API", {
+        error: error instanceof Error ? error.message : String(error),
+        vaultId: request.params.id,
+      });
       return {
         success: false,
         error: error instanceof Error ? error.message : "Failed to load context",
@@ -272,6 +327,9 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
         data: providers,
       };
     } catch (error) {
+      void logger.error("Failed to list providers from API", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return {
         success: false,
         error: error instanceof Error ? error.message : "Failed to list providers",

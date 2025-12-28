@@ -280,6 +280,16 @@ export class BozlyTUI implements IAppReference {
   }
 
   /**
+   * Log error from async operation
+   */
+  private logAsyncError(operation: string, error: unknown): void {
+    void logger.error(
+      `Error in ${operation}`,
+      error instanceof Error ? error : new Error(String(error))
+    );
+  }
+
+  /**
    * Setup global keybindings
    */
   private setupGlobalKeybindings(): void {
@@ -308,37 +318,45 @@ export class BozlyTUI implements IAppReference {
       this.screen.key([String(i)], () => {
         const screenId = this.menuItems.get(i);
         if (screenId) {
-          this.switchScreen(screenId).catch(console.error);
+          this.switchScreen(screenId).catch((err) => {
+            this.logAsyncError(`Screen switch to menu ${i}`, err);
+          });
         }
       });
     }
 
     // Home shortcut (0)
     this.screen.key(["0"], () => {
-      this.switchScreen("home").catch(console.error);
+      this.switchScreen("home").catch((err) => {
+        this.logAsyncError("Screen switch to home", err);
+      });
     });
 
     // Help
     this.screen.key(["?"], () => {
       this.showHelpModal().catch((err) => {
-        logger.error("Error showing help modal", err).catch(() => {
-          // Silently ignore logging errors
-        });
+        this.logAsyncError("Show help modal", err);
       });
     });
 
     // Refresh
     this.screen.key(["C-l"], () => {
-      this.refresh().catch(console.error);
+      this.refresh().catch((err) => {
+        this.logAsyncError("Refresh screen", err);
+      });
     });
 
     // Pass other keys to current screen or modal
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.screen.on("keypress", (ch: string, key: any) => {
       if (this.currentModal) {
-        this.currentModal.handleKey(ch, key).catch(console.error);
+        this.currentModal.handleKey(ch, key).catch((err) => {
+          this.logAsyncError(`Modal key handling (${ch})`, err);
+        });
       } else if (this.currentScreen) {
-        this.currentScreen.handleKey(ch, key).catch(console.error);
+        this.currentScreen.handleKey(ch, key).catch((err) => {
+          this.logAsyncError(`Screen key handling (${ch})`, err);
+        });
       }
     });
   }
@@ -351,7 +369,7 @@ export class BozlyTUI implements IAppReference {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const helpBox = (this.screen as any).box as ((options: any) => any) | undefined;
       if (!helpBox) {
-        console.warn("[TUI] blessed screen.box() not available for help modal");
+        await logger.warn("blessed screen.box() not available for help modal");
         return;
       }
 

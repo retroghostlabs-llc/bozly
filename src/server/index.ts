@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import fastifyStatic from "@fastify/static";
 import path from "path";
 import { fileURLToPath } from "url";
+import { logger } from "../core/logger.js";
 import { registerApiRoutes } from "./routes/api.js";
 import { registerPageRoutes } from "./routes/pages.js";
 
@@ -42,23 +43,27 @@ export async function startServer(config: ServerConfig) {
     await fastify.listen({ port: serverConfig.port, host: serverConfig.host });
 
     const url = `http://${serverConfig.host}:${serverConfig.port}`;
-    // eslint-disable-next-line no-console
-    console.log(`✅ BOZLY Server running at ${url}`);
+    await logger.info(`BOZLY Server running at ${url}`, {
+      url,
+      host: serverConfig.host,
+      port: serverConfig.port,
+    });
 
     if (serverConfig.openBrowser) {
       try {
         const open = (await import("open")).default;
         await open(url);
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.log(`📖 Open in browser: ${url}`);
+        await logger.info(`Open server in browser: ${url}`, { url });
       }
     }
 
     return fastify;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("❌ Failed to start server:", error);
+    await logger.error(
+      "Failed to start server",
+      error instanceof Error ? error : new Error(String(error))
+    );
     process.exit(1);
   }
 }

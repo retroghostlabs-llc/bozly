@@ -44,6 +44,7 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
     const isHealthy = await apiClient.isHealthy();
 
     if (!isHealthy) {
+      await logger.warn("API server is not running", { apiUrl });
       console.log("");
       console.log(chalk.yellow("⚠️  API server is not running"));
       console.log("");
@@ -60,10 +61,12 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
       });
 
       if (action === "exit") {
+        await logger.info("User exited TUI startup");
         process.exit(0);
       }
 
       if (action === "manual") {
+        await logger.info("User selected manual server startup");
         console.log("");
         console.log(chalk.yellow("To start the API server manually, run:"));
         console.log("");
@@ -73,12 +76,15 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
       }
 
       if (action === "restart") {
+        await logger.info("User selected server restart");
         console.log(chalk.blue("→ Stopping existing server..."));
         const configPort = port ?? getDefaultPort();
         const killed = await killServerOnPort(configPort);
         if (killed) {
+          await logger.info("Existing server stopped successfully", { port: configPort });
           console.log(chalk.green("✓ Server stopped"));
         } else {
+          await logger.warn("Could not stop existing server", { port: configPort });
           console.log(chalk.yellow("⚠️  Could not stop existing server"));
         }
         // Wait a moment before starting new one
@@ -86,6 +92,7 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
       }
 
       if (action === "start" || action === "restart") {
+        await logger.info("Starting API server", { apiUrl });
         console.log(chalk.blue("→ Starting API server..."));
 
         try {
@@ -96,9 +103,14 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
           const isReady = await waitForAPIServer(apiUrl as string);
 
           if (!isReady) {
+            const configPort = port ?? getDefaultPort();
+            await logger.error("API server failed to start or become ready", {
+              apiUrl,
+              port: configPort,
+              timeout: "30 attempts × 200ms",
+            });
             console.error(chalk.red("✗ API server failed to start"));
             console.error(chalk.yellow("Troubleshooting:"));
-            const configPort = port ?? getDefaultPort();
             console.error(
               `  • Run: bozly stop (to kill any existing server on port ${configPort})`
             );
@@ -111,9 +123,14 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
             process.exit(1);
           }
 
+          await logger.info("API server started successfully", { apiUrl });
           console.log(chalk.green("✓ API server started successfully"));
           console.log("");
         } catch (error) {
+          await logger.error(
+            "Failed to start API server",
+            error instanceof Error ? error : new Error(String(error))
+          );
           console.error(chalk.red("✗ Failed to start API server:"), error);
           process.exit(1);
         }
@@ -129,6 +146,7 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
     // Check for actual terminal compatibility issues (only if TERM is unset)
     const term = process.env.TERM;
     if (!term || term === "dumb") {
+      await logger.warn("Terminal compatibility issue detected", { term });
       console.log("");
       console.log(chalk.yellow("⚠️  Terminal Compatibility Mode"));
       console.log(chalk.gray("───────────────────────────────────────────────────────────"));
@@ -187,11 +205,11 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
     await tui.start();
   } catch (error) {
     if (error instanceof Error) {
-      console.error(chalk.red("✗ TUI Error:"), error.message);
       await logger.error("TUI Error", error);
+      console.error(chalk.red("✗ TUI Error:"), error.message);
     } else {
+      await logger.error("TUI Error (unknown type)", new Error(String(error)));
       console.error(chalk.red("✗ TUI Error:"), error);
-      await logger.error("TUI Error (unknown type)", { error: String(error) });
     }
 
     process.exit(1);
