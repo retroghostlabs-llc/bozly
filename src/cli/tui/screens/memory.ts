@@ -65,9 +65,9 @@ export class MemoryScreen extends Screen {
       left: 1,
       width: "40%",
       bottom: 1,
-      keys: true,
+      keys: false,
       mouse: true,
-      vi: true,
+      vi: false,
       style: {
         selected: {
           bg: "blue",
@@ -85,7 +85,7 @@ export class MemoryScreen extends Screen {
       bottom: 1,
       scrollable: true,
       mouse: true,
-      keys: true,
+      keys: false,
       style: {
         border: {
           fg: "green",
@@ -133,6 +133,7 @@ export class MemoryScreen extends Screen {
       return;
     }
     const keyRecord = key;
+
     if (keyRecord.name === "up" || ch === "k") {
       this.selectedIndex = Math.max(0, this.selectedIndex - 1);
       this.updateContentBox(this.selectedIndex);
@@ -158,21 +159,19 @@ export class MemoryScreen extends Screen {
     content += `  Time: ${mem.timestamp ?? "N/A"}\n`;
 
     this.contentBox.setContent(content);
+
+    // Update list selection to match our selectedIndex
+    if (this.listBox) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (this.listBox as any).select(index);
+    }
+
     this.parent.render();
   }
 
   private setupKeybindings(): void {
-    if (this.listBox) {
-      this.listBox.key(["j", "down"], () => {
-        this.selectedIndex = Math.min(this.memories.length - 1, this.selectedIndex + 1);
-        this.updateContentBox(this.selectedIndex);
-      });
-
-      this.listBox.key(["k", "up"], () => {
-        this.selectedIndex = Math.max(0, this.selectedIndex - 1);
-        this.updateContentBox(this.selectedIndex);
-      });
-    }
+    // Keys are handled via the app's global keypress event -> handleKey()
+    // No need to set up bindings here
   }
 
   activate(): void {

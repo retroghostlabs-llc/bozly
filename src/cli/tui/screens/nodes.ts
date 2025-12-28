@@ -70,9 +70,9 @@ export class NodesScreen extends Screen {
       left: 1,
       width: "60%",
       bottom: 1,
-      keys: true,
+      keys: false,
       mouse: true,
-      vi: true,
+      vi: false,
       style: {
         selected: {
           bg: "blue",
@@ -100,7 +100,7 @@ export class NodesScreen extends Screen {
       },
       scrollable: true,
       mouse: true,
-      keys: true,
+      keys: false,
     });
 
     this.createFooterBox();
@@ -139,9 +139,35 @@ export class NodesScreen extends Screen {
     await this.render();
   }
 
-  async handleKey(_ch: string, _key?: Record<string, unknown>): Promise<void> {
-    // Handle custom keys for this screen (most are handled via keybindings setup)
-    // This is kept for future expansion
+  async handleKey(ch: string, key?: Record<string, unknown>): Promise<void> {
+    if (!key) {
+      return;
+    }
+    const keyRecord = key;
+
+    if (keyRecord.name === "down" || ch === "j") {
+      this.selectedIndex = Math.min(this.nodes.length - 1, this.selectedIndex + 1);
+      this.updateDetailBox(this.selectedIndex);
+    } else if (keyRecord.name === "up" || ch === "k") {
+      this.selectedIndex = Math.max(0, this.selectedIndex - 1);
+      this.updateDetailBox(this.selectedIndex);
+    } else if (keyRecord.name === "enter") {
+      const vault = this.nodes[this.selectedIndex];
+      if (vault) {
+        await this.showVaultDetail(vault);
+      }
+    } else if (ch === "d") {
+      const vault = this.nodes[this.selectedIndex];
+      if (vault) {
+        const confirmed = await this.showConfirmDialog(
+          `Delete vault "${vault.name}"?`,
+          "This action cannot be undone."
+        );
+        if (confirmed) {
+          await this.deleteVault(vault.id);
+        }
+      }
+    }
   }
 
   private updateDetailBox(index: number): void {
@@ -159,9 +185,16 @@ export class NodesScreen extends Screen {
     content += `  Sessions: ${vault.sessions ?? 0}\n`;
     content += `  Commands: ${vault.commands ?? 0}\n`;
     content += `  Created: ${vault.created ?? "N/A"}\n`;
-    content += "\n  Keys: Enter (view), d (delete), ↑/↓ (navigate)\n";
+    content += "\n  Keys: Enter (view), d (delete), ↑/↓ or j/k (navigate)\n";
 
     this.detailBox.setContent(content);
+
+    // Update list selection to match our selectedIndex
+    if (this.listBox) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (this.listBox as any).select(index);
+    }
+
     this.parent.render();
   }
 
@@ -183,7 +216,7 @@ export class NodesScreen extends Screen {
           fg: "blue",
         },
       },
-      keys: true,
+      keys: false,
       mouse: true,
     });
 
@@ -216,7 +249,7 @@ export class NodesScreen extends Screen {
             fg: "red",
           },
         },
-        keys: true,
+        keys: false,
       });
 
       parentCast.box({
@@ -257,41 +290,8 @@ export class NodesScreen extends Screen {
   }
 
   private setupKeybindings(): void {
-    if (this.listBox) {
-      // Handle vim-style navigation
-      this.listBox.key(["j", "down"], () => {
-        this.selectedIndex = Math.min(this.nodes.length - 1, this.selectedIndex + 1);
-        this.updateDetailBox(this.selectedIndex);
-      });
-
-      this.listBox.key(["k", "up"], () => {
-        this.selectedIndex = Math.max(0, this.selectedIndex - 1);
-        this.updateDetailBox(this.selectedIndex);
-      });
-
-      // Select item
-      this.listBox.key(["enter"], () => {
-        const vault = this.nodes[this.selectedIndex];
-        if (vault) {
-          this.showVaultDetail(vault);
-        }
-      });
-
-      // Delete vault
-      this.listBox.key(["d"], () => {
-        const vault = this.nodes[this.selectedIndex];
-        if (vault) {
-          this.showConfirmDialog(
-            `Delete vault "${vault.name}"?`,
-            "This action cannot be undone."
-          ).then((confirmed) => {
-            if (confirmed) {
-              this.deleteVault(vault.id);
-            }
-          });
-        }
-      });
-    }
+    // Keys are handled via the app's global keypress event -> handleKey()
+    // No need to set up bindings here
   }
 
   activate(): void {

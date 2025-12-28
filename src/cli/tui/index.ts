@@ -45,9 +45,7 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
 
     if (!isHealthy) {
       await logger.warn("API server is not running", { apiUrl });
-      console.log("");
       console.log(chalk.yellow("⚠️  API server is not running"));
-      console.log("");
 
       // Ask user what they want to do
       const action = await select({
@@ -67,11 +65,8 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
 
       if (action === "manual") {
         await logger.info("User selected manual server startup");
-        console.log("");
         console.log(chalk.yellow("To start the API server manually, run:"));
-        console.log("");
         console.log(chalk.cyan("  bozly serve"));
-        console.log("");
         process.exit(0);
       }
 
@@ -114,18 +109,12 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
             console.error(
               `  • Run: bozly stop (to kill any existing server on port ${configPort})`
             );
-            console.error(`  • Check if port ${configPort} is in use: lsof -i :${configPort}`);
-            console.error("  • Try manual start: bozly serve");
-            console.error("");
             console.error(chalk.yellow("Configure port globally:"));
-            console.error("  • Set env: export BOZLY_PORT=3847");
-            console.error("  • Or edit: ~/.bozly/bozly-config.json");
             process.exit(1);
           }
 
           await logger.info("API server started successfully", { apiUrl });
           console.log(chalk.green("✓ API server started successfully"));
-          console.log("");
         } catch (error) {
           await logger.error(
             "Failed to start API server",
@@ -147,21 +136,17 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
     const term = process.env.TERM;
     if (!term || term === "dumb") {
       await logger.warn("Terminal compatibility issue detected", { term });
-      console.log("");
       console.log(chalk.yellow("⚠️  Terminal Compatibility Mode"));
       console.log(chalk.gray("───────────────────────────────────────────────────────────"));
       console.log(chalk.yellow("  BOZLY detected an unsupported terminal."));
       console.log(chalk.yellow("  Your TERM variable is not set or set to 'dumb'."));
-      console.log("");
       console.log(chalk.gray("  To enable full features, set your terminal type:"));
       console.log(chalk.cyan("    export TERM=xterm-256color"));
-      console.log("");
       console.log(
         chalk.gray("  For iTerm2: Settings → Profiles → Terminal → Report Terminal Type")
       );
       console.log(chalk.gray("  For detailed instructions, see: docs/TROUBLESHOOTING.md"));
       console.log(chalk.gray("───────────────────────────────────────────────────────────"));
-      console.log("");
     }
 
     // Initialize app

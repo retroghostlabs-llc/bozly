@@ -151,7 +151,6 @@ export abstract class Screen {
       return boxElement;
     } catch (error) {
       // If box creation fails, return null (degraded mode)
-      console.log("[DEBUG] Failed to create box:", error instanceof Error ? error.message : error);
       return null;
     }
   }

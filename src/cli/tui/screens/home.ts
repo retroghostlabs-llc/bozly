@@ -27,6 +27,8 @@ interface DashboardStats {
 export class HomeScreen extends Screen {
   private apiClient: APIClient;
   private stats: DashboardStats | null = null;
+  private scrollOffset: number = 0;
+  private contentLines: string[] = [];
 
   constructor(parent: blessed.Widgets.Screen, apiClient: APIClient, config: ScreenConfig) {
     super(parent, config);
@@ -55,7 +57,12 @@ export class HomeScreen extends Screen {
     content += this.renderQuickActions();
     // Footer is now rendered as a separate box at screen bottom, not as content
 
-    this.box.setContent(content);
+    // Split content into lines for scroll management
+    this.contentLines = content.split("\n");
+
+    // Apply scroll offset - show lines from scrollOffset onward
+    const visibleContent = this.contentLines.slice(this.scrollOffset).join("\n");
+    this.box.setContent(visibleContent);
     this.parent.render();
   }
 
@@ -68,31 +75,38 @@ export class HomeScreen extends Screen {
     // Handle vim-style and character input
     const keyName = key?.name as string | undefined;
 
+    // Calculate max scroll offset (enough to show at least some content)
+    const boxHeight = this.box?.height ?? 20; // Default to 20 if height not available
+    const maxScrollOffset = Math.max(0, this.contentLines.length - Math.floor(boxHeight / 2));
+
     // Vim-style navigation
     if (ch === "j" || keyName === "down") {
-      this.box?.scroll(1);
+      this.scrollOffset = Math.min(maxScrollOffset, this.scrollOffset + 1);
       this.appRef?.showStatusMessage("Scrolling down...");
+      await this.render();
     } else if (ch === "k" || keyName === "up") {
-      this.box?.scroll(-1);
+      this.scrollOffset = Math.max(0, this.scrollOffset - 1);
       this.appRef?.showStatusMessage("Scrolling up...");
+      await this.render();
     } else if (ch === "G" || (ch === "g" && key?.shift)) {
       // G - go to end
-      this.box?.setScroll(this.box?.getScrollHeight() ?? 0);
+      this.scrollOffset = maxScrollOffset;
       this.appRef?.showStatusMessage("Jumped to bottom");
+      await this.render();
     } else if (ch === "g" && !key?.shift) {
       // gg - go to top (requires double press)
-      this.box?.setScroll(0);
+      this.scrollOffset = 0;
       this.appRef?.showStatusMessage("Jumped to top");
+      await this.render();
     } else if (ch === "n" || ch === "N") {
       // Quick action: New session
       this.appRef?.showStatusMessage("New command (Phase 2)");
     } else if (ch === "r" || ch === "R") {
       // Quick action: Refresh
       this.appRef?.showStatusMessage("Refreshing statistics...");
+      this.scrollOffset = 0; // Reset scroll on refresh
       await this.refresh();
     }
-
-    this.parent.render();
   }
 
   private renderHeader(): string {
@@ -241,7 +255,6 @@ ${gray}════════════════════════�
         totalDuration,
       };
     } catch (error) {
-      console.error("Error loading stats:", error);
       this.stats = {
         totalVaults: 0,
         totalSessions: 0,

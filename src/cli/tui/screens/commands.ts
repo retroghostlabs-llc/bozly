@@ -59,15 +59,17 @@ export class CommandsScreen extends Screen {
     });
 
     // List of commands
+    // Note: keys: true so element receives key events, vi: false to disable auto navigation
+    // We manually handle navigation in setupKeybindings via element's keypress event
     this.listBox = blessed.list({
       parent: this.box,
       top: 1,
       left: 1,
       width: "50%",
       bottom: 1,
-      keys: true,
+      keys: false,
       mouse: true,
-      vi: true,
+      vi: false,
       style: {
         selected: {
           bg: "blue",
@@ -85,7 +87,7 @@ export class CommandsScreen extends Screen {
       bottom: 1,
       scrollable: true,
       mouse: true,
-      keys: true,
+      keys: false,
       style: {
         border: {
           fg: "green",
@@ -134,6 +136,7 @@ export class CommandsScreen extends Screen {
       return;
     }
     const keyRecord = key;
+
     if (keyRecord.name === "up" || ch === "k") {
       this.selectedIndex = Math.max(0, this.selectedIndex - 1);
       this.updateInfoBox(this.selectedIndex);
@@ -174,24 +177,22 @@ export class CommandsScreen extends Screen {
       content += `\n  Usage:\n  ${cmd.usage}\n`;
     }
 
-    content += `\n  Keys: ↑/↓ (navigate), / (search)\n`;
+    content += `\n  Keys: ↑/↓ or j/k (navigate), / (search)\n`;
 
     this.infoBox.setContent(content);
+
+    // Update list selection to match our selectedIndex
+    if (this.listBox) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (this.listBox as any).select(this.selectedIndex);
+    }
+
     this.parent.render();
   }
 
   private setupKeybindings(): void {
-    if (this.listBox) {
-      this.listBox.key(["j", "down"], () => {
-        this.selectedIndex = Math.min(this.commands.length - 1, this.selectedIndex + 1);
-        this.updateInfoBox(this.selectedIndex);
-      });
-
-      this.listBox.key(["k", "up"], () => {
-        this.selectedIndex = Math.max(0, this.selectedIndex - 1);
-        this.updateInfoBox(this.selectedIndex);
-      });
-    }
+    // Keys are handled via the app's global keypress event -> handleKey()
+    // No need to set up bindings here
   }
 
   activate(): void {

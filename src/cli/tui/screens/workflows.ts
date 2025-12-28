@@ -66,9 +66,9 @@ export class WorkflowsScreen extends Screen {
       left: 1,
       width: "50%",
       bottom: 1,
-      keys: true,
+      keys: false,
       mouse: true,
-      vi: true,
+      vi: false,
       style: {
         selected: {
           bg: "blue",
@@ -86,7 +86,7 @@ export class WorkflowsScreen extends Screen {
       bottom: 1,
       scrollable: true,
       mouse: true,
-      keys: true,
+      keys: false,
       style: {
         border: {
           fg: "green",
@@ -131,10 +131,14 @@ export class WorkflowsScreen extends Screen {
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async handleKey(ch: string, key?: Record<string, unknown>): Promise<void> {
-    if (key?.name === "up" || ch === "k") {
+    if (!key) {
+      return;
+    }
+
+    if (key.name === "up" || ch === "k") {
       this.selectedIndex = Math.max(0, this.selectedIndex - 1);
       this.updateDetailBox(this.selectedIndex);
-    } else if (key?.name === "down" || ch === "j") {
+    } else if (key.name === "down" || ch === "j") {
       this.selectedIndex = Math.min(this.workflows.length - 1, this.selectedIndex + 1);
       this.updateDetailBox(this.selectedIndex);
     }
@@ -157,21 +161,19 @@ export class WorkflowsScreen extends Screen {
     content += `\n  Description:\n  ${wf.description ?? "(none)"}\n`;
 
     this.detailBox.setContent(content);
+
+    // Update list selection to match our selectedIndex
+    if (this.listBox) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (this.listBox as any).select(index);
+    }
+
     this.parent.render();
   }
 
   private setupKeybindings(): void {
-    if (this.listBox) {
-      this.listBox.key(["j", "down"], () => {
-        this.selectedIndex = Math.min(this.workflows.length - 1, this.selectedIndex + 1);
-        this.updateDetailBox(this.selectedIndex);
-      });
-
-      this.listBox.key(["k", "up"], () => {
-        this.selectedIndex = Math.max(0, this.selectedIndex - 1);
-        this.updateDetailBox(this.selectedIndex);
-      });
-    }
+    // Keys are handled via the app's global keypress event -> handleKey()
+    // No need to set up bindings here
   }
 
   activate(): void {

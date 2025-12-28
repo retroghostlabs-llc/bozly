@@ -348,9 +348,30 @@ export class BozlyTUI implements IAppReference {
       });
     });
 
-    // Pass other keys to current screen or modal
+    // Pass all keys to current screen or modal via keypress event
+    // This ensures navigation keys (arrows, j/k, etc.) are handled properly
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.screen.on("keypress", (ch: string, key: any) => {
+      // Check for global menu shortcuts (1-8) and home (0) - these take priority
+      if (!this.currentModal && ch && ch.match(/^[0-8]$/)) {
+        const menuNum = parseInt(ch, 10);
+
+        if (menuNum === 0) {
+          this.switchScreen("home").catch((err) => {
+            this.logAsyncError(`Screen switch to home`, err);
+          });
+          return;
+        }
+
+        const screenId = this.menuItems.get(menuNum);
+        if (screenId) {
+          this.switchScreen(screenId).catch((err) => {
+            this.logAsyncError(`Screen switch to menu ${menuNum}`, err);
+          });
+          return;
+        }
+      }
+
       if (this.currentModal) {
         this.currentModal.handleKey(ch, key).catch((err) => {
           this.logAsyncError(`Modal key handling (${ch})`, err);
