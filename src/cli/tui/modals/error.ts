@@ -32,8 +32,10 @@ export class ErrorModal extends Modal {
     });
 
     // Create message text
+    const gray = "\x1b[90m";
+    const reset = "\x1b[0m";
     const textContent = this.details
-      ? `${this.message}\n\n{gray}${this.details}{/gray}`
+      ? `${this.message}\n\n${gray}${this.details}${reset}`
       : this.message;
 
     (
@@ -45,6 +47,7 @@ export class ErrorModal extends Modal {
       right: 2,
       height: this.details ? 8 : 5,
       content: textContent,
+      tags: true,
       style: {
         fg: "red",
       },

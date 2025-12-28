@@ -31,6 +31,7 @@ export class BozlyTUI {
       this.screen = blessed.screen({
         mouse: true,
         title: "BOZLY TUI Dashboard",
+        smartCSR: true,
         style: {
           bg: "default",
           fg: "default",
@@ -45,6 +46,7 @@ export class BozlyTUI {
         this.screen = blessed.screen({
           mouse: true,
           title: "BOZLY TUI Dashboard",
+          smartCSR: true,
           style: {
             bg: "default",
             fg: "default",
@@ -237,6 +239,7 @@ export class BozlyTUI {
       width: 12,
       bottom: 0,
       border: "line",
+      tags: true,
       style: {
         border: { fg: "cyan" },
       },
@@ -253,14 +256,17 @@ export class BozlyTUI {
       { num: 8, name: "Health", id: "health" },
     ];
 
+    const bold = "\x1b[1m";
+    const reset = "\x1b[0m";
+
     let content = "\n";
     for (const item of items) {
       this.menuItems.set(item.num, item.id);
-      content += `  [{bold}${item.num}{/bold}] ${item.name}\n`;
+      content += `  [${bold}${item.num}${reset}] ${item.name}\n`;
     }
 
-    content += "\n  [{bold}?{/bold}] Help\n";
-    content += "  [{bold}Q{/bold}] Quit\n";
+    content += `\n  [${bold}?${reset}] Help\n`;
+    content += `  [${bold}Q${reset}] Quit\n`;
 
     menu.setContent(content);
   }
@@ -328,6 +334,7 @@ export class BozlyTUI {
       height: 25,
       border: "line",
       label: " Help ",
+      tags: true,
       style: {
         border: { fg: "cyan" },
       },

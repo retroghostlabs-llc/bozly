@@ -44,6 +44,7 @@ export class ConfirmModal extends Modal {
       right: 2,
       height: "shrink",
       content: this.message,
+      tags: true,
       style: {
         fg: this.dangerous ? "red" : "white",
       },

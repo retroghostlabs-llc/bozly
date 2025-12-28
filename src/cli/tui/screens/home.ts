@@ -91,40 +91,59 @@ export class HomeScreen extends Screen {
   }
 
   private renderHeader(): string {
-    return `{bold}{cyan}BOZLY Dashboard{/cyan}{/bold}
-{gray}═══════════════════════════════════════════════════════════{/gray}
+    // Use ANSI color codes for terminal output instead of blessed tags
+    const bold = "\x1b[1m";
+    const cyan = "\x1b[36m";
+    const gray = "\x1b[90m";
+    const reset = "\x1b[0m";
+
+    return `${bold}${cyan}BOZLY Dashboard${reset}
+${gray}═══════════════════════════════════════════════════════════${reset}
 
 `;
   }
 
   private renderStats(): string {
+    const bold = "\x1b[1m";
+    const cyan = "\x1b[36m";
+    const gray = "\x1b[90m";
+    const green = "\x1b[32m";
+    const yellow = "\x1b[33m";
+    const reset = "\x1b[0m";
+
     if (!this.stats) {
-      return "{yellow}Loading stats...{/yellow}\n\n";
+      return `${yellow}Loading stats...${reset}\n\n`;
     }
 
-    return `{bold}System Overview{/bold}
-{gray}───────────────────────────────────────────────────────────{/gray}
-  Active Vaults:      {cyan}${this.stats.totalVaults}{/cyan}
-  Total Sessions:     {cyan}${this.stats.totalSessions}{/cyan}
-  Total Commands:     {cyan}${this.stats.totalCommands}{/cyan}
-  Success Rate:       {green}${this.stats.successRate.toFixed(1)}%{/green}
-  Total Duration:     {cyan}${this.stats.totalDuration}{/cyan}
-  Last Updated:       {gray}${this.stats.lastUpdate}{/gray}
+    return `${bold}System Overview${reset}
+${gray}───────────────────────────────────────────────────────────${reset}
+  Active Vaults:      ${cyan}${this.stats.totalVaults}${reset}
+  Total Sessions:     ${cyan}${this.stats.totalSessions}${reset}
+  Total Commands:     ${cyan}${this.stats.totalCommands}${reset}
+  Success Rate:       ${green}${this.stats.successRate.toFixed(1)}%${reset}
+  Total Duration:     ${cyan}${this.stats.totalDuration}${reset}
+  Last Updated:       ${gray}${this.stats.lastUpdate}${reset}
 
 `;
   }
 
   private renderRecentSessions(): string {
+    const bold = "\x1b[1m";
+    const gray = "\x1b[90m";
+    const green = "\x1b[32m";
+    const red = "\x1b[31m";
+    const reset = "\x1b[0m";
+
     if (!this.stats || this.stats.recentSessions.length === 0) {
       return "";
     }
 
-    let content = `{bold}Recent Sessions{/bold}
-{gray}───────────────────────────────────────────────────────────{/gray}
+    let content = `${bold}Recent Sessions${reset}
+${gray}───────────────────────────────────────────────────────────${reset}
 `;
 
     for (const session of this.stats.recentSessions.slice(0, 5)) {
-      const status = session.status === "completed" ? "{green}✓{/green}" : "{red}✗{/red}";
+      const status = session.status === "completed" ? `${green}✓${reset}` : `${red}✗${reset}`;
       const time = new Date(session.timestamp).toLocaleTimeString();
       content += `  ${status} ${session.command} (${session.vault}) @ ${time}\n`;
     }
@@ -134,15 +153,19 @@ export class HomeScreen extends Screen {
   }
 
   private renderQuickActions(): string {
-    return `{bold}Quick Actions{/bold}
-{gray}───────────────────────────────────────────────────────────{/gray}
+    const bold = "\x1b[1m";
+    const gray = "\x1b[90m";
+    const reset = "\x1b[0m";
+
+    return `${bold}Quick Actions${reset}
+${gray}───────────────────────────────────────────────────────────${reset}
   [N]ew command        Run a command from current vault
   [R]efresh            Update statistics
   [1-8]                Jump to other screens
   [?]                  Show help
   [Q]uit               Exit application
 
-{gray}═══════════════════════════════════════════════════════════{/gray}
+${gray}═══════════════════════════════════════════════════════════${reset}
 `;
   }
 

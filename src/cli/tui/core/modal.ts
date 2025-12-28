@@ -132,6 +132,7 @@ export abstract class Modal {
       height: this.height,
       border: "line",
       label: ` ${this.title} `,
+      tags: true,
       style: {
         border: { fg: "cyan" },
         label: { fg: "white" },
