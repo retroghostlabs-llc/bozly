@@ -1,9 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import blessed from "blessed";
+import blessed from "@unblessed/blessed";
 import { Modal } from "@/cli/tui/core/modal.js";
 
-// Mock blessed
-vi.mock("blessed");
+// Mock @unblessed/blessed
+vi.mock("@unblessed/blessed", () => ({
+  default: {
+    box: vi.fn().mockReturnValue({
+      show: vi.fn(),
+      hide: vi.fn(),
+      focus: vi.fn(),
+      destroy: vi.fn(),
+      setContent: vi.fn(),
+    }),
+  },
+}));
 
 // Create a concrete implementation for testing
 class TestModal extends Modal {
