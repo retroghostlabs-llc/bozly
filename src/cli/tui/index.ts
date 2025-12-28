@@ -2,14 +2,13 @@
 
 import { select } from "@inquirer/prompts";
 import chalk from "chalk";
-import { homedir } from "os";
-import path from "path";
 import { BozlyTUI } from "./core/app.js";
 import { APIClient } from "./core/api-client.js";
 import { spawnAPIServer, waitForAPIServer } from "./utils/server.js";
 import { killServerOnPort } from "../../core/server-manager.js";
 import { getDefaultPort, getAPIURL } from "../../core/port-config.js";
 import { logger, LogLevel } from "../../core/logger.js";
+import { ConfigManager } from "../../core/config-manager.js";
 import { HomeScreen } from "./screens/home.js";
 import { NodesScreen } from "./screens/nodes.js";
 import { SessionsScreen } from "./screens/sessions.js";
@@ -25,19 +24,31 @@ import { HealthScreen } from "./screens/health.js";
  */
 export async function runTUI(options?: Record<string, unknown>): Promise<void> {
   try {
-    // Initialize logger
-    const logDir = path.join(homedir(), ".bozly", "logs");
+    // Initialize ConfigManager to access settings
+    const config = ConfigManager.getInstance();
+
+    // Initialize logger with ConfigManager settings
+    const logDir = config.getStorage().logDir;
+    const loggingConfig = config.getLogging();
+    // Map string log level to LogLevel enum
+    const logLevelValue = loggingConfig.level;
+    const logLevel =
+      typeof logLevelValue === "string"
+        ? (LogLevel[logLevelValue.toUpperCase() as keyof typeof LogLevel] ?? LogLevel.INFO)
+        : (logLevelValue ?? LogLevel.INFO);
+
     await logger.init(logDir, {
-      level: LogLevel.DEBUG,
+      level: logLevel,
       enableConsole: false, // Disable console for TUI since it uses the terminal
-      enableFile: true,
+      enableFile: loggingConfig.enableFile,
     });
 
     // Get API URL from config or options
     const port = options?.port as number | undefined;
     const host = options?.host as string | undefined;
     const apiUrl = options?.apiUrl ?? process.env.BOZLY_API_URL ?? getAPIURL(port, host);
-    const refreshInterval = options?.refreshInterval ?? 5000;
+    const refreshInterval =
+      (options?.refreshInterval as number | undefined) ?? config.getClient().tuiRefreshIntervalMs;
 
     // Check if API server is running
     const apiClient = new APIClient(apiUrl as string);
@@ -129,7 +140,7 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
     // Create TUI app
     const tui = new BozlyTUI({
       apiUrl: apiUrl as string,
-      refreshInterval: refreshInterval as number,
+      refreshInterval: refreshInterval,
     });
 
     // Check for actual terminal compatibility issues (only if TERM is unset)

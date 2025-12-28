@@ -4,7 +4,7 @@ import { loadSession, getNodeSessions } from "../../core/sessions.js";
 import { getNodeCommands } from "../../core/commands.js";
 import { generateContext } from "../../core/context.js";
 import { listProviders } from "../../core/providers.js";
-import { getConfig } from "../../core/config-manager.js";
+import { ConfigManager } from "../../core/config-manager.js";
 import { logger } from "../../core/logger.js";
 
 export function registerApiRoutes(fastify: FastifyInstance): void {
@@ -201,20 +201,35 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
   fastify.get("/api/commands", async () => {
     try {
       const vaults = await listNodes();
-      const allCommands: any[] = [];
+      const allCommands: Array<{
+        name: string;
+        description: string;
+        source: string;
+        nodeId: string;
+        type: string;
+        usage?: unknown;
+      }> = [];
 
       for (const vault of vaults) {
         try {
           const commands = await getNodeCommands(vault.path);
           allCommands.push(
-            ...commands.map((c: any) => ({
-              name: c.name,
-              description: c.description ?? "No description",
-              source: c.source ?? "Unknown",
-              nodeId: vault.id,
-              type: c.type ?? "unknown",
-              usage: c.usage,
-            }))
+            ...commands.map(
+              (c: {
+                name: string;
+                description?: string;
+                source?: string;
+                type?: string;
+                usage?: unknown;
+              }) => ({
+                name: c.name,
+                description: c.description ?? "No description",
+                source: c.source ?? "Unknown",
+                nodeId: vault.id,
+                type: c.type ?? "unknown",
+                usage: c.usage,
+              })
+            )
           );
         } catch {
           // Skip vaults that fail to load
@@ -389,7 +404,7 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
   // GET /api/config - Get application configuration
   fastify.get("/api/config", () => {
     try {
-      const configManager = getConfig();
+      const configManager = ConfigManager.getInstance();
       return {
         success: true,
         data: {
@@ -407,6 +422,81 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
       return {
         success: false,
         error: error instanceof Error ? error.message : "Failed to get config",
+      };
+    }
+  });
+
+  // PUT /api/config - Update application configuration
+  fastify.put<{ Body: Record<string, unknown> }>("/api/config", (request) => {
+    try {
+      const configManager = ConfigManager.getInstance();
+      const updates = request.body;
+
+      // Process each config update
+      const results: { path: string; success: boolean; error?: string }[] = [];
+
+      for (const [key, value] of Object.entries(updates)) {
+        try {
+          // Validate the key is a valid config path
+          if (typeof key !== "string" || !key.includes(".")) {
+            results.push({
+              path: key,
+              success: false,
+              error: "Invalid config path format. Use dot notation (e.g., 'server.port')",
+            });
+            continue;
+          }
+
+          // Update the config value
+          configManager.set(key, value);
+          results.push({ path: key, success: true });
+
+          void logger.info("Config updated via API", { path: key, value });
+        } catch (err) {
+          results.push({
+            path: key,
+            success: false,
+            error: err instanceof Error ? err.message : String(err),
+          });
+          void logger.warn("Failed to update config value", {
+            path: key,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+
+      // Check if any updates succeeded
+      const succeeded = results.filter((r) => r.success).length;
+      const failed = results.filter((r) => !r.success).length;
+
+      if (succeeded === 0 && failed > 0) {
+        return {
+          success: false,
+          error: `Failed to update ${failed} config value(s)`,
+          results,
+        };
+      }
+
+      // Return updated config
+      return {
+        success: true,
+        message: `Updated ${succeeded} value(s), failed ${failed} value(s)`,
+        results,
+        data: {
+          server: configManager.getServer(),
+          storage: configManager.getStorage(),
+          client: configManager.getClient(),
+          logging: configManager.getLogging(),
+          process: configManager.getProcess(),
+        },
+      };
+    } catch (error) {
+      void logger.error("Failed to update config via API", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to update config",
       };
     }
   });
