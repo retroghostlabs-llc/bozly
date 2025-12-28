@@ -35,7 +35,7 @@ describe('Banner Rendering', () => {
       expect(typeof banner).toBe('string');
       // Fancy banner should contain the tagline text (ANSI codes wrap individual chars)
       expect(banner).toContain('Build');
-      expect(banner).toContain('OrganiZe');
+      expect(banner).toContain('Organize');
       expect(banner).toContain('Link');
       expect(banner).toContain('Yield');
     });
@@ -104,7 +104,7 @@ describe('Banner Rendering', () => {
       });
       const banner = renderBanner();
       expect(banner).toContain('Build');
-      expect(banner).toContain('OrganiZe');
+      expect(banner).toContain('Organize');
       expect(banner).toContain('Link');
       expect(banner).toContain('Yield');
     });
@@ -146,7 +146,7 @@ describe('Banner Rendering', () => {
       });
       const banner = renderBannerWithVersion('1.0.0');
       expect(banner).toContain('Build');
-      expect(banner).toContain('OrganiZe');
+      expect(banner).toContain('Organize');
     });
   });
 });

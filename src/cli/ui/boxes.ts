@@ -1,4 +1,3 @@
-import boxen from "boxen";
 import chalk from "chalk";
 import { isFancyTerminal } from "./theme.js";
 
@@ -6,6 +5,10 @@ import { isFancyTerminal } from "./theme.js";
  * Display a success message in a colored box
  */
 export function successBox(message: string, details?: Record<string, string | number>): string {
+  const green = "\x1b[32m";
+  const gray = "\x1b[90m";
+  const reset = "\x1b[0m";
+
   if (!isFancyTerminal()) {
     // Simple fallback for dumb terminals
     let output = "✓ " + message;
@@ -18,19 +21,42 @@ export function successBox(message: string, details?: Record<string, string | nu
     return output;
   }
 
-  const content = formatBoxContent(message, details, "success");
-  return boxen(content, {
-    borderColor: "green",
-    borderStyle: "round",
-    padding: 1,
-    margin: 1,
-  });
+  // Build modern-style box with ANSI codes
+  const lines: string[] = [];
+  const width = 56;
+  const border = "─".repeat(width);
+
+  lines.push(`${green}╭${border}╮${reset}`);
+  lines.push(`${green}│${reset}${" ".repeat(width)}${green}│${reset}`);
+  lines.push(
+    `${green}│${reset}  ${chalk.green("✓")} ${message}${" ".repeat(Math.max(0, width - 4 - message.length))}${green}│${reset}`
+  );
+
+  if (details && Object.keys(details).length > 0) {
+    lines.push(`${green}│${reset}${" ".repeat(width)}${green}│${reset}`);
+    for (const [key, value] of Object.entries(details)) {
+      const hint = `${key}  ${value}`;
+      const padding = width - hint.length - 4;
+      lines.push(
+        `${green}│${reset}  ${gray}${hint}${reset}${" ".repeat(Math.max(0, padding))}${green}│${reset}`
+      );
+    }
+  }
+
+  lines.push(`${green}│${reset}${" ".repeat(width)}${green}│${reset}`);
+  lines.push(`${green}╰${border}╯${reset}`);
+
+  return "\n" + lines.join("\n") + "\n";
 }
 
 /**
  * Display an error message in a colored box
  */
 export function errorBox(message: string, details?: Record<string, string | number>): string {
+  const red = "\x1b[31m";
+  const gray = "\x1b[90m";
+  const reset = "\x1b[0m";
+
   if (!isFancyTerminal()) {
     // Simple fallback for dumb terminals
     let output = "✗ " + message;
@@ -43,19 +69,42 @@ export function errorBox(message: string, details?: Record<string, string | numb
     return output;
   }
 
-  const content = formatBoxContent(message, details, "error");
-  return boxen(content, {
-    borderColor: "red",
-    borderStyle: "round",
-    padding: 1,
-    margin: 1,
-  });
+  // Build modern-style box with ANSI codes
+  const lines: string[] = [];
+  const width = 56;
+  const border = "─".repeat(width);
+
+  lines.push(`${red}╭${border}╮${reset}`);
+  lines.push(`${red}│${reset}${" ".repeat(width)}${red}│${reset}`);
+  lines.push(
+    `${red}│${reset}  ${chalk.red("✗")} ${message}${" ".repeat(Math.max(0, width - 4 - message.length))}${red}│${reset}`
+  );
+
+  if (details && Object.keys(details).length > 0) {
+    lines.push(`${red}│${reset}${" ".repeat(width)}${red}│${reset}`);
+    for (const [key, value] of Object.entries(details)) {
+      const hint = `${key}  ${value}`;
+      const padding = width - hint.length - 4;
+      lines.push(
+        `${red}│${reset}  ${gray}${hint}${reset}${" ".repeat(Math.max(0, padding))}${red}│${reset}`
+      );
+    }
+  }
+
+  lines.push(`${red}│${reset}${" ".repeat(width)}${red}│${reset}`);
+  lines.push(`${red}╰${border}╯${reset}`);
+
+  return "\n" + lines.join("\n") + "\n";
 }
 
 /**
  * Display a warning message in a colored box
  */
 export function warningBox(message: string, details?: Record<string, string | number>): string {
+  const yellow = "\x1b[33m";
+  const gray = "\x1b[90m";
+  const reset = "\x1b[0m";
+
   if (!isFancyTerminal()) {
     // Simple fallback for dumb terminals
     let output = "⚠ " + message;
@@ -68,19 +117,42 @@ export function warningBox(message: string, details?: Record<string, string | nu
     return output;
   }
 
-  const content = formatBoxContent(message, details, "warning");
-  return boxen(content, {
-    borderColor: "yellow",
-    borderStyle: "round",
-    padding: 1,
-    margin: 1,
-  });
+  // Build modern-style box with ANSI codes
+  const lines: string[] = [];
+  const width = 56;
+  const border = "─".repeat(width);
+
+  lines.push(`${yellow}╭${border}╮${reset}`);
+  lines.push(`${yellow}│${reset}${" ".repeat(width)}${yellow}│${reset}`);
+  lines.push(
+    `${yellow}│${reset}  ${chalk.yellow("⚠")} ${message}${" ".repeat(Math.max(0, width - 4 - message.length))}${yellow}│${reset}`
+  );
+
+  if (details && Object.keys(details).length > 0) {
+    lines.push(`${yellow}│${reset}${" ".repeat(width)}${yellow}│${reset}`);
+    for (const [key, value] of Object.entries(details)) {
+      const hint = `${key}  ${value}`;
+      const padding = width - hint.length - 4;
+      lines.push(
+        `${yellow}│${reset}  ${gray}${hint}${reset}${" ".repeat(Math.max(0, padding))}${yellow}│${reset}`
+      );
+    }
+  }
+
+  lines.push(`${yellow}│${reset}${" ".repeat(width)}${yellow}│${reset}`);
+  lines.push(`${yellow}╰${border}╯${reset}`);
+
+  return "\n" + lines.join("\n") + "\n";
 }
 
 /**
  * Display an info message in a colored box
  */
 export function infoBox(message: string, details?: Record<string, string | number>): string {
+  const cyan = "\x1b[36m";
+  const gray = "\x1b[90m";
+  const reset = "\x1b[0m";
+
   if (!isFancyTerminal()) {
     // Simple fallback for dumb terminals
     let output = "ℹ " + message;
@@ -93,58 +165,42 @@ export function infoBox(message: string, details?: Record<string, string | numbe
     return output;
   }
 
-  const content = formatBoxContent(message, details, "info");
-  return boxen(content, {
-    borderColor: "cyan",
-    borderStyle: "round",
-    padding: 1,
-    margin: 1,
-  });
-}
-
-/**
- * Format the content inside a box with message and optional details
- */
-function formatBoxContent(
-  message: string,
-  details?: Record<string, string | number>,
-  type: "success" | "error" | "warning" | "info" = "info"
-): string {
+  // Build modern-style box with ANSI codes
   const lines: string[] = [];
+  const width = 56;
+  const border = "─".repeat(width);
 
-  // Add main message with color
-  switch (type) {
-    case "success":
-      lines.push(chalk.green.bold("✓ " + message));
-      break;
-    case "error":
-      lines.push(chalk.red.bold("✗ " + message));
-      break;
-    case "warning":
-      lines.push(chalk.yellow.bold("⚠ " + message));
-      break;
-    case "info":
-      lines.push(chalk.cyan.bold("ℹ " + message));
-      break;
-  }
+  lines.push(`${cyan}╭${border}╮${reset}`);
+  lines.push(`${cyan}│${reset}${" ".repeat(width)}${cyan}│${reset}`);
+  lines.push(
+    `${cyan}│${reset}  ${chalk.cyan("ℹ")} ${message}${" ".repeat(Math.max(0, width - 4 - message.length))}${cyan}│${reset}`
+  );
 
-  // Add details if provided
   if (details && Object.keys(details).length > 0) {
-    lines.push("");
-    const maxKeyLength = Math.max(...Object.keys(details).map((k) => k.length));
+    lines.push(`${cyan}│${reset}${" ".repeat(width)}${cyan}│${reset}`);
     for (const [key, value] of Object.entries(details)) {
-      const paddedKey = key.padEnd(maxKeyLength);
-      lines.push(chalk.dim(`  ${paddedKey}  ${value}`));
+      const hint = `${key}  ${value}`;
+      const padding = width - hint.length - 4;
+      lines.push(
+        `${cyan}│${reset}  ${gray}${hint}${reset}${" ".repeat(Math.max(0, padding))}${cyan}│${reset}`
+      );
     }
   }
 
-  return lines.join("\n");
+  lines.push(`${cyan}│${reset}${" ".repeat(width)}${cyan}│${reset}`);
+  lines.push(`${cyan}╰${border}╯${reset}`);
+
+  return "\n" + lines.join("\n") + "\n";
 }
 
 /**
  * Display a key-value pair box (useful for status, config displays)
  */
 export function keyValueBox(title: string, pairs: Record<string, string | number>): string {
+  const cyan = "\x1b[36m";
+  const gray = "\x1b[90m";
+  const reset = "\x1b[0m";
+
   if (!isFancyTerminal()) {
     // Simple fallback
     let output = title;
@@ -155,19 +211,31 @@ export function keyValueBox(title: string, pairs: Record<string, string | number
     return output;
   }
 
-  const lines = [chalk.cyan.bold(title)];
+  // Build modern-style box with ANSI codes
+  const lines: string[] = [];
+  const width = 56;
+  const border = "─".repeat(width);
+
+  lines.push(`${cyan}╭${border}╮${reset}`);
+  lines.push(`${cyan}│${reset}${" ".repeat(width)}${cyan}│${reset}`);
+  lines.push(
+    `${cyan}│${reset}  ${chalk.cyan.bold(title)}${" ".repeat(Math.max(0, width - 4 - title.length))}${cyan}│${reset}`
+  );
+
   const maxKeyLength = Math.max(...Object.keys(pairs).map((k) => k.length));
   for (const [key, value] of Object.entries(pairs)) {
     const paddedKey = key.padEnd(maxKeyLength);
-    lines.push(chalk.dim(`  ${paddedKey}  ${value}`));
+    const content = `${paddedKey}  ${value}`;
+    const padding = width - content.length - 4;
+    lines.push(
+      `${cyan}│${reset}  ${gray}${content}${reset}${" ".repeat(Math.max(0, padding))}${cyan}│${reset}`
+    );
   }
 
-  return boxen(lines.join("\n"), {
-    borderColor: "cyan",
-    borderStyle: "round",
-    padding: 1,
-    margin: 1,
-  });
+  lines.push(`${cyan}│${reset}${" ".repeat(width)}${cyan}│${reset}`);
+  lines.push(`${cyan}╰${border}╯${reset}`);
+
+  return "\n" + lines.join("\n") + "\n";
 }
 
 /**

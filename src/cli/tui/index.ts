@@ -115,22 +115,21 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
       refreshInterval: refreshInterval as number,
     });
 
-    // Check for degraded mode and warn user
-    const screen = tui.getScreen();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (typeof (screen as any).box !== "function") {
+    // Check for actual terminal compatibility issues (only if TERM is unset)
+    const term = process.env.TERM;
+    if (!term || term === "dumb") {
       console.log("");
       console.log(chalk.yellow("⚠️  Terminal Compatibility Mode"));
       console.log(chalk.gray("───────────────────────────────────────────────────────────"));
+      console.log(chalk.yellow("  BOZLY detected an unsupported terminal."));
+      console.log(chalk.yellow("  Your TERM variable is not set or set to 'dumb'."));
+      console.log("");
+      console.log(chalk.gray("  To enable full features, set your terminal type:"));
+      console.log(chalk.cyan("    export TERM=xterm-256color"));
+      console.log("");
       console.log(
-        chalk.yellow("  Your terminal's xterm-256color definition has compatibility issues.")
+        chalk.gray("  For iTerm2: Settings → Profiles → Terminal → Report Terminal Type")
       );
-      console.log(chalk.yellow("  BOZLY is running in degraded mode with reduced styling."));
-      console.log("");
-      console.log(chalk.gray("  To enable full features, fix your terminfo database:"));
-      console.log(chalk.cyan("    brew reinstall ncurses          # macOS"));
-      console.log(chalk.cyan("    sudo apt-get install ncurses-bin # Linux"));
-      console.log("");
       console.log(chalk.gray("  For detailed instructions, see: docs/TROUBLESHOOTING.md"));
       console.log(chalk.gray("───────────────────────────────────────────────────────────"));
       console.log("");
@@ -139,7 +138,8 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
     // Initialize app
     tui.init();
 
-    // Register all screens (screen already retrieved above)
+    // Register all screens
+    const screen = tui.getScreen();
 
     const homeScreen = new HomeScreen(screen, apiClient, { id: "home", name: "Home" });
     const vaultsScreen = new VaultsScreen(screen, { id: "vaults", name: "Vaults" }, apiClient);

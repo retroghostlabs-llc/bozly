@@ -1,5 +1,6 @@
 import blessed from "@unblessed/blessed";
 import type { Widgets } from "@unblessed/blessed";
+import { homedir } from "os";
 
 export interface ScreenConfig {
   id: string;
@@ -10,17 +11,32 @@ export interface ScreenConfig {
  * Base class for all TUI screens
  * Each screen represents a main view in the navigation menu
  */
+/**
+ * Interface for app reference (allows screens to access app methods)
+ */
+export interface IAppReference {
+  showStatusMessage(message: string): void;
+}
+
 export abstract class Screen {
   protected id: string;
   protected name: string;
   protected parent: blessed.Widgets.Screen;
   protected box: blessed.Widgets.BoxElement | null = null;
   protected isActive: boolean = false;
+  protected appRef: IAppReference | null = null;
 
   constructor(parent: blessed.Widgets.Screen, config: ScreenConfig) {
     this.parent = parent;
     this.id = config.id;
     this.name = config.name;
+  }
+
+  /**
+   * Set app reference for status messages and other app-level interactions
+   */
+  setAppReference(app: IAppReference): void {
+    this.appRef = app;
   }
 
   /**
@@ -103,18 +119,20 @@ export abstract class Screen {
 
   /**
    * Create a simple text box for content display
+   * Accounts for status bar at the bottom (1 line height)
    */
   protected createBox(
     options: Partial<Widgets.BoxOptions> = {}
   ): blessed.Widgets.BoxElement | null {
     try {
       // Use blessed.box() with the parent screen
+      // bottom: 3 to account for status bar (1 line) and padding (2 lines)
       const boxElement = blessed.box({
         parent: this.parent,
         top: 2,
         left: 12,
         right: 0,
-        bottom: 2,
+        bottom: 3,
         border: "line",
         tags: true,
         style: {
@@ -224,5 +242,51 @@ export abstract class Screen {
       }
       this.parent.render();
     }, 2000);
+  }
+
+  /**
+   * Render a context header showing current directory (for all screens)
+   */
+  protected renderContextHeader(): string {
+    const gray = "\x1b[90m";
+    const cyan = "\x1b[36m";
+    const reset = "\x1b[0m";
+
+    const cwd = process.cwd();
+    const homeDir = homedir();
+    const displayPath = cwd.replace(homeDir, "~");
+    const screenTitle = this.name.toUpperCase();
+
+    return `${cyan}[${screenTitle}]${reset}  ${gray}📍 ${displayPath}${reset}\n\n`;
+  }
+
+  /**
+   * Render a status bar at the bottom showing vault info and working directory
+   * Appears on all screens with consistent styling
+   */
+  protected renderStatusBar(): string {
+    const bgDark = "\x1b[40m";
+    const cyan = "\x1b[36m";
+    const gray = "\x1b[90m";
+    const white = "\x1b[37m";
+    const reset = "\x1b[0m";
+
+    const cwd = process.cwd();
+    const homeDir = homedir();
+    const displayPath = cwd.replace(homeDir, "~");
+
+    // Extract potential vault from path (simple heuristic: folder after .bozly)
+    let vaultInfo = "none";
+    const bozlyMatch = cwd.match(/\/([^/]+)\/\.bozly/);
+    if (bozlyMatch && bozlyMatch[1]) {
+      vaultInfo = bozlyMatch[1];
+    }
+
+    const statusBar = `
+${bgDark}${cyan}┌──────────────────────────────────────────────────────────┐${reset}
+${bgDark}${cyan}│${reset}${bgDark} Vault: ${white}${vaultInfo}${reset}${bgDark}  │  Directory: ${gray}${displayPath}${reset}${bgDark}  ${cyan}│${reset}
+${bgDark}${cyan}└──────────────────────────────────────────────────────────┘${reset}`;
+
+    return statusBar;
   }
 }

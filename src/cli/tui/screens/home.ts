@@ -37,7 +37,6 @@ export class HomeScreen extends Screen {
     this.box = this.createBox({
       scrollable: true,
       mouse: true,
-      keys: true,
     });
 
     await this.loadStats();
@@ -64,26 +63,30 @@ export class HomeScreen extends Screen {
   }
 
   async handleKey(ch: string, key?: Record<string, unknown>): Promise<void> {
-    if (!key) {
-      return;
-    }
+    // Handle vim-style and character input
+    const keyName = key?.name as string | undefined;
 
     // Vim-style navigation
-    if (ch === "j" || key.name === "down") {
+    if (ch === "j" || keyName === "down") {
       this.box?.scroll(1);
-    } else if (ch === "k" || key.name === "up") {
+      this.appRef?.showStatusMessage("Scrolling down...");
+    } else if (ch === "k" || keyName === "up") {
       this.box?.scroll(-1);
-    } else if (ch === "g" && key.shift) {
+      this.appRef?.showStatusMessage("Scrolling up...");
+    } else if (ch === "G" || (ch === "g" && key?.shift)) {
       // G - go to end
-      this.box?.setScroll(this.box.getScrollHeight());
-    } else if (ch === "g" && !key.shift) {
+      this.box?.setScroll(this.box?.getScrollHeight() ?? 0);
+      this.appRef?.showStatusMessage("Jumped to bottom");
+    } else if (ch === "g" && !key?.shift) {
       // gg - go to top (requires double press)
       this.box?.setScroll(0);
-    } else if (ch === "n") {
+      this.appRef?.showStatusMessage("Jumped to top");
+    } else if (ch === "n" || ch === "N") {
       // Quick action: New session
-      // This would trigger a command launcher modal (Phase 2)
-    } else if (ch === "r") {
+      this.appRef?.showStatusMessage("New command (Phase 2)");
+    } else if (ch === "r" || ch === "R") {
       // Quick action: Refresh
+      this.appRef?.showStatusMessage("Refreshing statistics...");
       await this.refresh();
     }
 
@@ -91,16 +94,31 @@ export class HomeScreen extends Screen {
   }
 
   private renderHeader(): string {
-    // Use ANSI color codes for terminal output instead of blessed tags
+    // Use ANSI color codes matching BOZLY CLI theme colors
+    // Primary: Indigo (#6366f1 ≈ bright blue), Secondary: Purple (#8b5cf6 ≈ magenta)
     const bold = "\x1b[1m";
-    const cyan = "\x1b[36m";
-    const gray = "\x1b[90m";
+    const indigo = "\x1b[94m"; // Bright blue (closest to indigo #6366f1)
+    const purple = "\x1b[35m"; // Magenta (closest to purple #8b5cf6)
     const reset = "\x1b[0m";
 
-    return `${bold}${cyan}BOZLY Dashboard${reset}
-${gray}═══════════════════════════════════════════════════════════${reset}
+    // BOZLY ASCII art logo matching CLI theme gradient
+    const logo = `
+${indigo}╔═══════════════════════════════════════════════════════════╗${reset}
+${indigo}║${reset}                                                               ${indigo}║${reset}
+${indigo}║${reset}        ${bold}${purple}██████╗  ██████╗ ███████╗██╗  ██╗   ██╗${reset}          ${indigo}║${reset}
+${indigo}║${reset}        ${bold}${purple}██╔══██╗██╔═══██╗██╔════╝██║  ╚██╗ ██╔╝${reset}          ${indigo}║${reset}
+${indigo}║${reset}        ${bold}${purple}██████╔╝██║   ██║███████╗██║   ╚████╔╝${reset}           ${indigo}║${reset}
+${indigo}║${reset}        ${bold}${purple}██╔══██╗██║   ██║╚════██║██║    ╚██╔╝${reset}            ${indigo}║${reset}
+${indigo}║${reset}        ${bold}${purple}██████╔╝╚██████╔╝███████║███████╗██║${reset}             ${indigo}║${reset}
+${indigo}║${reset}        ${bold}${purple}╚═════╝  ╚═════╝ ╚══════╝╚══════╝╚═╝${reset}             ${indigo}║${reset}
+${indigo}║${reset}                                                               ${indigo}║${reset}
+${indigo}║${reset}             ${indigo}Build. Organize. Link. Yield.${reset}              ${indigo}║${reset}
+${indigo}║${reset}                                                               ${indigo}║${reset}
+${indigo}╚═══════════════════════════════════════════════════════════╝${reset}
 
 `;
+
+    return logo;
   }
 
   private renderStats(): string {
@@ -154,16 +172,27 @@ ${gray}────────────────────────�
 
   private renderQuickActions(): string {
     const bold = "\x1b[1m";
+    const cyan = "\x1b[36m";
     const gray = "\x1b[90m";
     const reset = "\x1b[0m";
 
-    return `${bold}Quick Actions${reset}
+    return `${bold}>> Navigation${reset}
 ${gray}───────────────────────────────────────────────────────────${reset}
-  [N]ew command        Run a command from current vault
-  [R]efresh            Update statistics
-  [1-8]                Jump to other screens
-  [?]                  Show help
-  [Q]uit               Exit application
+  ${cyan}[1]${reset} Vaults           Manage your AI workspaces
+  ${cyan}[2]${reset} Sessions         View command history & results
+  ${cyan}[3]${reset} Commands         Browse & run commands
+  ${cyan}[4]${reset} Memory           Indexed knowledge & context
+  ${cyan}[5]${reset} Workflows        Multi-step automation chains
+  ${cyan}[6]${reset} Config           Settings & configuration
+  ${cyan}[7]${reset} Health           System status & diagnostics
+  ${cyan}[8]${reset} Help             Documentation & shortcuts
+
+${bold}>> Quick Actions${reset}
+${gray}───────────────────────────────────────────────────────────${reset}
+  ${cyan}[N]${reset}ew              Run a command from current vault
+  ${cyan}[R]${reset}efresh           Update statistics
+  ${cyan}[?]${reset}                Show full help
+  ${cyan}[Q]${reset}uit              Exit application
 
 ${gray}═══════════════════════════════════════════════════════════${reset}
 `;

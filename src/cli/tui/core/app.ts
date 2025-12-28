@@ -1,6 +1,7 @@
 import blessed from "@unblessed/blessed";
+import { homedir } from "os";
 import { APIClient } from "./api-client.js";
-import { Screen } from "./screen.js";
+import { Screen, IAppReference } from "./screen.js";
 import { Modal } from "./modal.js";
 
 export interface BozlyTUIConfig {
@@ -12,7 +13,7 @@ export interface BozlyTUIConfig {
  * Main BozlyTUI Application
  * Manages blessed terminal UI, screen switching, modals, and keybindings
  */
-export class BozlyTUI {
+export class BozlyTUI implements IAppReference {
   private screen: blessed.Widgets.Screen;
   private apiClient: APIClient;
   private screens: Map<string, Screen> = new Map();
@@ -22,6 +23,7 @@ export class BozlyTUI {
   private updatePoller: NodeJS.Timeout | null = null;
   private refreshInterval: number = 5000;
   private isRunning: boolean = false;
+  private statusBar: blessed.Widgets.BoxElement | null = null;
 
   constructor(config: BozlyTUIConfig = {}) {
     // Initialize blessed screen with terminal capabilities fallback
@@ -75,6 +77,7 @@ export class BozlyTUI {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (typeof (this.screen as any).box === "function") {
         this.createMenu();
+        this.createStatusBar();
       }
 
       // Initialize screens (will be created in subclasses)
@@ -140,6 +143,7 @@ export class BozlyTUI {
    */
   registerScreen(screen: Screen): void {
     this.screens.set(screen.getId(), screen);
+    screen.setAppReference(this);
 
     // Set first screen as current
     if (!this.currentScreen) {
@@ -237,7 +241,7 @@ export class BozlyTUI {
       top: 0,
       left: 0,
       width: 12,
-      bottom: 0,
+      bottom: 1,
       border: "line",
       tags: true,
       style: {
@@ -269,6 +273,73 @@ export class BozlyTUI {
     content += `  [${bold}Q${reset}] Quit\n`;
 
     menu.setContent(content);
+  }
+
+  /**
+   * Create persistent status bar at the bottom of the screen
+   */
+  private createStatusBar(): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.statusBar = (this.screen as any).box({
+      parent: this.screen,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: 1,
+      tags: true,
+      style: {
+        bg: "blue",
+        fg: "white",
+      },
+    });
+
+    this.updateStatusBar();
+  }
+
+  /**
+   * Update status bar with current vault info and directory
+   */
+  private updateStatusBar(): void {
+    if (!this.statusBar) {
+      return;
+    }
+
+    const cwd = process.cwd();
+    const homeDir = homedir();
+    const displayPath = cwd.replace(homeDir, "~");
+
+    // Extract vault name from path (simple heuristic: folder after .bozly)
+    let vaultInfo = "none";
+    const bozlyMatch = cwd.match(/\/([^/]+)\/\.bozly/);
+    if (bozlyMatch && bozlyMatch[1]) {
+      vaultInfo = bozlyMatch[1];
+    }
+
+    const cyan = "\x1b[36m";
+    const gray = "\x1b[90m";
+    const reset = "\x1b[0m";
+
+    const status = `${cyan}[${this.currentScreen?.getName().toUpperCase() ?? "APP"}]${reset}  ${gray}Vault:${reset} ${vaultInfo}  ${gray}|${reset}  ${displayPath}`;
+    this.statusBar.setContent(status);
+  }
+
+  /**
+   * Show temporary status message (auto-dismisses after 2 seconds)
+   */
+  showStatusMessage(message: string): void {
+    if (!this.statusBar) {
+      return;
+    }
+
+    const cyan = "\x1b[36m";
+    const reset = "\x1b[0m";
+
+    this.statusBar.setContent(`${cyan}→${reset} ${message}`);
+
+    // Reset after 2 seconds
+    setTimeout(() => {
+      this.updateStatusBar();
+    }, 2000);
   }
 
   /**

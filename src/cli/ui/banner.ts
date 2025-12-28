@@ -16,7 +16,7 @@ const BANNER_ASCII = `
 
 const BANNER_SIMPLE = `
 ╔═════════════════════════════════════════╗
-║   BOZLY — Build. OrganiZe. Link. Yield. ║
+║   BOZLY — Build. Organize. Link. Yield. ║
 ╚═════════════════════════════════════════╝
 `;
 
@@ -33,7 +33,7 @@ export function renderBanner(): string {
   const bozlyGradient = gradient(theme.bannerGradient);
 
   const banner = bozlyGradient(BANNER_ASCII);
-  const tagline = chalk.dim("  Build. OrganiZe. Link. Yield.\n");
+  const tagline = chalk.dim("  Build. Organize. Link. Yield.\n");
 
   return banner + tagline;
 }
