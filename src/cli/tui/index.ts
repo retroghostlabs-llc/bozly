@@ -2,13 +2,16 @@
 
 import { select } from "@inquirer/prompts";
 import chalk from "chalk";
+import { homedir } from "os";
+import path from "path";
 import { BozlyTUI } from "./core/app.js";
 import { APIClient } from "./core/api-client.js";
 import { spawnAPIServer, waitForAPIServer } from "./utils/server.js";
 import { killServerOnPort } from "../../core/server-manager.js";
 import { getDefaultPort, getAPIURL } from "../../core/port-config.js";
+import { logger, LogLevel } from "../../core/logger.js";
 import { HomeScreen } from "./screens/home.js";
-import { VaultsScreen } from "./screens/vaults.js";
+import { NodesScreen } from "./screens/nodes.js";
 import { SessionsScreen } from "./screens/sessions.js";
 import { MemoryScreen } from "./screens/memory.js";
 import { CommandsScreen } from "./screens/commands.js";
@@ -22,6 +25,14 @@ import { HealthScreen } from "./screens/health.js";
  */
 export async function runTUI(options?: Record<string, unknown>): Promise<void> {
   try {
+    // Initialize logger
+    const logDir = path.join(homedir(), ".bozly", "logs");
+    await logger.init(logDir, {
+      level: LogLevel.DEBUG,
+      enableConsole: false, // Disable console for TUI since it uses the terminal
+      enableFile: true,
+    });
+
     // Get API URL from config or options
     const port = options?.port as number | undefined;
     const host = options?.host as string | undefined;
@@ -142,7 +153,7 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
     const screen = tui.getScreen();
 
     const homeScreen = new HomeScreen(screen, apiClient, { id: "home", name: "Home" });
-    const vaultsScreen = new VaultsScreen(screen, { id: "vaults", name: "Vaults" }, apiClient);
+    const nodesScreen = new NodesScreen(screen, { id: "nodes", name: "Nodes" }, apiClient);
     const sessionsScreen = new SessionsScreen(
       screen,
       { id: "sessions", name: "Sessions" },
@@ -162,22 +173,25 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
     const configScreen = new ConfigScreen(screen, { id: "config", name: "Config" }, apiClient);
     const healthScreen = new HealthScreen(screen, { id: "health", name: "Health" }, apiClient);
 
-    tui.registerScreen(homeScreen);
-    tui.registerScreen(vaultsScreen);
-    tui.registerScreen(sessionsScreen);
-    tui.registerScreen(memoryScreen);
-    tui.registerScreen(commandsScreen);
-    tui.registerScreen(workflowsScreen);
-    tui.registerScreen(configScreen);
-    tui.registerScreen(healthScreen);
+    tui.registerScreen(homeScreen); // Home is default/starting screen (no menu number)
+    tui.registerScreen(nodesScreen, 1);
+    tui.registerScreen(sessionsScreen, 2);
+    tui.registerScreen(commandsScreen, 3);
+    tui.registerScreen(memoryScreen, 4);
+    tui.registerScreen(workflowsScreen, 5);
+    tui.registerScreen(configScreen, 6);
+    tui.registerScreen(healthScreen, 7);
+    // Menu item 8 is Help, which is handled by the "?" key instead of a screen
 
     // Start TUI
     await tui.start();
   } catch (error) {
     if (error instanceof Error) {
       console.error(chalk.red("✗ TUI Error:"), error.message);
+      await logger.error("TUI Error", error);
     } else {
       console.error(chalk.red("✗ TUI Error:"), error);
+      await logger.error("TUI Error (unknown type)", { error: String(error) });
     }
 
     process.exit(1);

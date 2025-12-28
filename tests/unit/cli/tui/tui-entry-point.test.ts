@@ -362,9 +362,9 @@ describe('TUI Entry Point (runTUI)', () => {
       expect(HomeScreen).toBeDefined();
     });
 
-    it('should register VaultsScreen', async () => {
-      const { VaultsScreen } = await import('../../../../src/cli/tui/screens/vaults.js');
-      expect(VaultsScreen).toBeDefined();
+    it('should register NodesScreen', async () => {
+      const { NodesScreen } = await import('../../../../src/cli/tui/screens/nodes.js');
+      expect(NodesScreen).toBeDefined();
     });
 
     it('should register SessionsScreen', async () => {

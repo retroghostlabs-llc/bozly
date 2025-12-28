@@ -97,24 +97,20 @@ export class HomeScreen extends Screen {
     // Use ANSI color codes matching BOZLY CLI theme colors
     // Primary: Indigo (#6366f1 ≈ bright blue), Secondary: Purple (#8b5cf6 ≈ magenta)
     const bold = "\x1b[1m";
-    const indigo = "\x1b[94m"; // Bright blue (closest to indigo #6366f1)
     const purple = "\x1b[35m"; // Magenta (closest to purple #8b5cf6)
+    const cyan = "\x1b[36m";
     const reset = "\x1b[0m";
 
-    // BOZLY ASCII art logo matching CLI theme gradient
+    // BOZLY ASCII art logo (simple, no decorative box)
     const logo = `
-${indigo}╔═══════════════════════════════════════════════════════════╗${reset}
-${indigo}║${reset}                                                               ${indigo}║${reset}
-${indigo}║${reset}        ${bold}${purple}██████╗  ██████╗ ███████╗██╗  ██╗   ██╗${reset}          ${indigo}║${reset}
-${indigo}║${reset}        ${bold}${purple}██╔══██╗██╔═══██╗██╔════╝██║  ╚██╗ ██╔╝${reset}          ${indigo}║${reset}
-${indigo}║${reset}        ${bold}${purple}██████╔╝██║   ██║███████╗██║   ╚████╔╝${reset}           ${indigo}║${reset}
-${indigo}║${reset}        ${bold}${purple}██╔══██╗██║   ██║╚════██║██║    ╚██╔╝${reset}            ${indigo}║${reset}
-${indigo}║${reset}        ${bold}${purple}██████╔╝╚██████╔╝███████║███████╗██║${reset}             ${indigo}║${reset}
-${indigo}║${reset}        ${bold}${purple}╚═════╝  ╚═════╝ ╚══════╝╚══════╝╚═╝${reset}             ${indigo}║${reset}
-${indigo}║${reset}                                                               ${indigo}║${reset}
-${indigo}║${reset}             ${indigo}Build. Organize. Link. Yield.${reset}              ${indigo}║${reset}
-${indigo}║${reset}                                                               ${indigo}║${reset}
-${indigo}╚═══════════════════════════════════════════════════════════╝${reset}
+        ${bold}${purple}██████╗  ██████╗ ███████╗██╗  ██╗   ██╗${reset}
+        ${bold}${purple}██╔══██╗██╔═══██╗██╔════╝██║  ╚██╗ ██╔╝${reset}
+        ${bold}${purple}██████╔╝██║   ██║███████╗██║   ╚████╔╝${reset}
+        ${bold}${purple}██╔══██╗██║   ██║╚════██║██║    ╚██╔╝${reset}
+        ${bold}${purple}██████╔╝╚██████╔╝███████║███████╗██║${reset}
+        ${bold}${purple}╚═════╝  ╚═════╝ ╚══════╝╚══════╝╚═╝${reset}
+
+             ${cyan}Build. Organize. Link. Yield.${reset}
 
 `;
 
@@ -200,11 +196,11 @@ ${gray}════════════════════════�
 
   private async loadStats(): Promise<void> {
     try {
-      const vaults = await this.apiClient.getVaults();
+      const nodes = await this.apiClient.getVaults();
       const sessions = await this.apiClient.getSessions();
 
       let totalCommands = 0;
-      for (const vault of vaults) {
+      for (const vault of nodes) {
         const commands = await this.apiClient.getCommands(vault.id);
         totalCommands += commands.length;
       }
@@ -232,7 +228,7 @@ ${gray}════════════════════════�
       const recentSessions = sessions.slice(0, 5);
 
       this.stats = {
-        totalVaults: vaults.length,
+        totalVaults: nodes.length,
         totalSessions: sessions.length,
         totalCommands,
         uptime: "running",

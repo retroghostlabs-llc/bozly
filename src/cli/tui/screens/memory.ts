@@ -32,11 +32,7 @@ export class MemoryScreen extends Screen {
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async init(): Promise<void> {
-    const parent = this.parent as unknown as {
-      box: (opts: Record<string, unknown>) => blessed.Widgets.BoxElement;
-      list: (opts: Record<string, unknown>) => blessed.Widgets.ListElement;
-    };
-    this.box = parent.box({
+    this.box = blessed.box({
       parent: this.parent,
       top: 1,
       left: 0,
@@ -50,7 +46,7 @@ export class MemoryScreen extends Screen {
     });
 
     // Title
-    parent.box({
+    blessed.box({
       parent: this.box,
       top: 0,
       left: 2,
@@ -63,7 +59,7 @@ export class MemoryScreen extends Screen {
     });
 
     // List of memory entries
-    this.listBox = parent.list({
+    this.listBox = blessed.list({
       parent: this.box,
       top: 1,
       left: 1,
@@ -81,7 +77,7 @@ export class MemoryScreen extends Screen {
     });
 
     // Content viewer
-    this.contentBox = parent.box({
+    this.contentBox = blessed.box({
       parent: this.box,
       top: 1,
       right: 1,

@@ -34,11 +34,7 @@ export class SessionsScreen extends Screen {
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async init(): Promise<void> {
-    const parent = this.parent as unknown as {
-      box: (opts: Record<string, unknown>) => blessed.Widgets.BoxElement;
-      list: (opts: Record<string, unknown>) => blessed.Widgets.ListElement;
-    };
-    this.box = parent.box({
+    this.box = blessed.box({
       parent: this.parent,
       top: 1,
       left: 0,
@@ -52,7 +48,7 @@ export class SessionsScreen extends Screen {
     });
 
     // Create title
-    parent.box({
+    blessed.box({
       parent: this.box,
       top: 0,
       left: 2,
@@ -65,7 +61,7 @@ export class SessionsScreen extends Screen {
     });
 
     // Create search input line
-    parent.box({
+    blessed.box({
       parent: this.box,
       top: 1,
       left: 1,
@@ -78,7 +74,7 @@ export class SessionsScreen extends Screen {
     });
 
     // Create list box
-    this.listBox = parent.list({
+    this.listBox = blessed.list({
       parent: this.box,
       top: 3,
       left: 1,
@@ -96,7 +92,7 @@ export class SessionsScreen extends Screen {
     });
 
     // Create detail box
-    this.detailBox = parent.box({
+    this.detailBox = blessed.box({
       parent: this.box,
       top: 3,
       right: 1,

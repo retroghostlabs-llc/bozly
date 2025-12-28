@@ -2,7 +2,7 @@ import blessed from "@unblessed/blessed";
 import { Screen, ScreenConfig } from "../core/screen.js";
 import { APIClient } from "../core/api-client.js";
 
-interface VaultItem {
+interface NodeItem {
   id: string;
   name: string;
   path: string;
@@ -13,12 +13,12 @@ interface VaultItem {
 }
 
 /**
- * Vaults Screen - Browse and manage BOZLY vaults
- * Shows list of registered vaults with basic info
+ * Vaults Screen - Browse and manage BOZLY nodes
+ * Shows list of registered nodes with basic info
  * Allows viewing vault details and managing vault configuration
  */
-export class VaultsScreen extends Screen {
-  private vaults: VaultItem[] = [];
+export class NodesScreen extends Screen {
+  private nodes: NodeItem[] = [];
   private listBox?: blessed.Widgets.ListElement;
   private detailBox?: blessed.Widgets.BoxElement;
   private selectedIndex = 0;
@@ -33,16 +33,13 @@ export class VaultsScreen extends Screen {
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async init(): Promise<void> {
-    const parent = this.parent as unknown as {
-      box: (opts: Record<string, unknown>) => blessed.Widgets.BoxElement;
-      list: (opts: Record<string, unknown>) => blessed.Widgets.ListElement;
-    };
-    this.box = parent.box({
+    this.box = blessed.box({
       parent: this.parent,
       top: 1,
       left: 0,
       right: 0,
       bottom: 0,
+      border: "line",
       style: {
         border: {
           fg: "cyan",
@@ -54,7 +51,7 @@ export class VaultsScreen extends Screen {
     });
 
     // Create title
-    parent.box({
+    blessed.box({
       parent: this.box,
       top: 0,
       left: 2,
@@ -67,7 +64,7 @@ export class VaultsScreen extends Screen {
     });
 
     // Create list box for vault items
-    this.listBox = parent.list({
+    this.listBox = blessed.list({
       parent: this.box,
       top: 1,
       left: 1,
@@ -90,7 +87,7 @@ export class VaultsScreen extends Screen {
     });
 
     // Create detail box for vault information
-    this.detailBox = parent.box({
+    this.detailBox = blessed.box({
       parent: this.box,
       top: 1,
       right: 1,
@@ -111,17 +108,17 @@ export class VaultsScreen extends Screen {
 
   async render(): Promise<void> {
     try {
-      // Load vaults from API
-      this.vaults = await this.apiClient.getVaults();
+      // Load nodes from API
+      this.nodes = await this.apiClient.getVaults();
 
       if (this.listBox) {
         // Clear and populate list
         this.listBox.clearItems();
 
-        if (this.vaults.length === 0) {
-          this.listBox.addItem("No vaults found");
+        if (this.nodes.length === 0) {
+          this.listBox.addItem("No nodes found");
         } else {
-          this.vaults.forEach((vault) => {
+          this.nodes.forEach((vault) => {
             const label = `${vault.name} (${vault.sessions ?? 0} sessions)`;
             this.listBox?.addItem(label);
           });
@@ -133,7 +130,7 @@ export class VaultsScreen extends Screen {
       }
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
-      this.showError(`Failed to load vaults: ${msg}`);
+      this.showError(`Failed to load nodes: ${msg}`);
     }
   }
 
@@ -147,11 +144,11 @@ export class VaultsScreen extends Screen {
   }
 
   private updateDetailBox(index: number): void {
-    if (!this.detailBox || !this.vaults[index]) {
+    if (!this.detailBox || !this.nodes[index]) {
       return;
     }
 
-    const vault = this.vaults[index];
+    const vault = this.nodes[index];
     let content = "";
 
     content += `\n  Name: ${vault.name}\n`;
@@ -167,7 +164,7 @@ export class VaultsScreen extends Screen {
     this.parent.render();
   }
 
-  private async showVaultDetail(vault: VaultItem): Promise<void> {
+  private async showVaultDetail(vault: NodeItem): Promise<void> {
     const content = `\n  Vault Details: ${vault.name}\n\n  ID: ${vault.id}\n  Path: ${vault.path}\n  Status: ${vault.status ?? "active"}\n  Sessions: ${vault.sessions ?? 0}\n  Commands: ${vault.commands ?? 0}\n  Created: ${vault.created ?? "N/A"}\n\n  [Press any key to close]\n`;
 
     const modalParent = this.parent as unknown as {
@@ -262,7 +259,7 @@ export class VaultsScreen extends Screen {
     if (this.listBox) {
       // Handle vim-style navigation
       this.listBox.key(["j", "down"], () => {
-        this.selectedIndex = Math.min(this.vaults.length - 1, this.selectedIndex + 1);
+        this.selectedIndex = Math.min(this.nodes.length - 1, this.selectedIndex + 1);
         this.updateDetailBox(this.selectedIndex);
       });
 
@@ -273,7 +270,7 @@ export class VaultsScreen extends Screen {
 
       // Select item
       this.listBox.key(["enter"], () => {
-        const vault = this.vaults[this.selectedIndex];
+        const vault = this.nodes[this.selectedIndex];
         if (vault) {
           this.showVaultDetail(vault);
         }
@@ -281,7 +278,7 @@ export class VaultsScreen extends Screen {
 
       // Delete vault
       this.listBox.key(["d"], () => {
-        const vault = this.vaults[this.selectedIndex];
+        const vault = this.nodes[this.selectedIndex];
         if (vault) {
           this.showConfirmDialog(
             `Delete vault "${vault.name}"?`,

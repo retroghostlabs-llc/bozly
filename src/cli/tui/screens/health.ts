@@ -39,10 +39,7 @@ export class HealthScreen extends Screen {
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async init(): Promise<void> {
-    const parent = this.parent as unknown as {
-      box: (opts: Record<string, unknown>) => blessed.Widgets.BoxElement;
-    };
-    this.box = parent.box({
+    this.box = blessed.box({
       parent: this.parent,
       top: 1,
       left: 0,
@@ -56,7 +53,7 @@ export class HealthScreen extends Screen {
     });
 
     // Title
-    parent.box({
+    blessed.box({
       parent: this.box,
       top: 0,
       left: 2,
@@ -69,7 +66,7 @@ export class HealthScreen extends Screen {
     });
 
     // Health info
-    this.healthBox = parent.box({
+    this.healthBox = blessed.box({
       parent: this.box,
       top: 1,
       left: 1,

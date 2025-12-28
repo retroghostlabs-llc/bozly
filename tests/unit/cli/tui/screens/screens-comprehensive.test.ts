@@ -107,22 +107,22 @@ describe('Screen Implementations Comprehensive', () => {
     });
   });
 
-  describe('VaultsScreen', () => {
+  describe('NodesScreen', () => {
     it('should be defined and importable', async () => {
-      const module = await import('../../../../../src/cli/tui/screens/vaults.js');
-      expect(module.VaultsScreen).toBeDefined();
+      const module = await import('../../../../../src/cli/tui/screens/nodes.js');
+      expect(module.NodesScreen).toBeDefined();
     });
 
     it('should instantiate with valid parameters', async () => {
-      const { VaultsScreen } = await import('../../../../../src/cli/tui/screens/vaults.js');
-      const screen = new VaultsScreen(mockScreen, { id: 'vaults', name: 'Vaults' }, mockAPIClient);
+      const { NodesScreen } = await import('../../../../../src/cli/tui/screens/nodes.js');
+      const screen = new NodesScreen(mockScreen, { id: 'nodes', name: 'Nodes' }, mockAPIClient);
       expect(screen).toBeDefined();
-      expect(screen.getId()).toBe('vaults');
+      expect(screen.getId()).toBe('nodes');
     });
 
     it('should have required methods', async () => {
-      const { VaultsScreen } = await import('../../../../../src/cli/tui/screens/vaults.js');
-      const screen = new VaultsScreen(mockScreen, { id: 'vaults', name: 'Vaults' }, mockAPIClient);
+      const { NodesScreen } = await import('../../../../../src/cli/tui/screens/nodes.js');
+      const screen = new NodesScreen(mockScreen, { id: 'nodes', name: 'Nodes' }, mockAPIClient);
       expect(typeof screen.init).toBe('function');
       expect(typeof screen.render).toBe('function');
       expect(typeof screen.refresh).toBe('function');
@@ -130,8 +130,8 @@ describe('Screen Implementations Comprehensive', () => {
     });
 
     it('should extend Screen base class', async () => {
-      const { VaultsScreen } = await import('../../../../../src/cli/tui/screens/vaults.js');
-      const screen = new VaultsScreen(mockScreen, { id: 'vaults', name: 'Vaults' }, mockAPIClient);
+      const { NodesScreen } = await import('../../../../../src/cli/tui/screens/nodes.js');
+      const screen = new NodesScreen(mockScreen, { id: 'nodes', name: 'Nodes' }, mockAPIClient);
       expect(typeof screen.activate).toBe('function');
       expect(typeof screen.deactivate).toBe('function');
       expect(typeof screen.destroy).toBe('function');
@@ -304,7 +304,7 @@ describe('Screen Implementations Comprehensive', () => {
     it('should all implement Screen interface', async () => {
       const modules = await Promise.all([
         import('../../../../../src/cli/tui/screens/home.js'),
-        import('../../../../../src/cli/tui/screens/vaults.js'),
+        import('../../../../../src/cli/tui/screens/nodes.js'),
         import('../../../../../src/cli/tui/screens/sessions.js'),
         import('../../../../../src/cli/tui/screens/commands.js'),
         import('../../../../../src/cli/tui/screens/workflows.js'),
@@ -315,7 +315,7 @@ describe('Screen Implementations Comprehensive', () => {
 
       const screens = [
         modules[0].HomeScreen,
-        modules[1].VaultsScreen,
+        modules[1].NodesScreen,
         modules[2].SessionsScreen,
         modules[3].CommandsScreen,
         modules[4].WorkflowsScreen,
@@ -335,13 +335,13 @@ describe('Screen Implementations Comprehensive', () => {
 
     it('should all have consistent constructor signatures', async () => {
       const { HomeScreen } = await import('../../../../../src/cli/tui/screens/home.js');
-      const { VaultsScreen } = await import('../../../../../src/cli/tui/screens/vaults.js');
+      const { NodesScreen } = await import('../../../../../src/cli/tui/screens/nodes.js');
 
       const homeScreen = new HomeScreen(mockScreen, mockAPIClient, {
         id: 'home',
         name: 'Home',
       });
-      const vaultsScreen = new VaultsScreen(mockScreen, { id: 'vaults', name: 'Vaults' }, mockAPIClient);
+      const vaultsScreen = new NodesScreen(mockScreen, { id: 'nodes', name: 'Nodes' }, mockAPIClient);
 
       expect(homeScreen.getId()).toBeDefined();
       expect(vaultsScreen.getId()).toBeDefined();
@@ -369,7 +369,7 @@ describe('Screen Implementations Comprehensive', () => {
     });
 
     it('should support all 8 screen IDs', async () => {
-      const screenIds = ['home', 'vaults', 'sessions', 'commands', 'workflows', 'config', 'health', 'memory'];
+      const screenIds = ['home', 'nodes', 'sessions', 'commands', 'workflows', 'config', 'health', 'memory'];
 
       for (const id of screenIds) {
         expect(id).toBeDefined();
@@ -380,14 +380,14 @@ describe('Screen Implementations Comprehensive', () => {
   describe('Screen Integration', () => {
     it('should be usable together in TUI', async () => {
       const { HomeScreen } = await import('../../../../../src/cli/tui/screens/home.js');
-      const { VaultsScreen } = await import('../../../../../src/cli/tui/screens/vaults.js');
+      const { NodesScreen } = await import('../../../../../src/cli/tui/screens/nodes.js');
       const { SessionsScreen } = await import('../../../../../src/cli/tui/screens/sessions.js');
 
       const homeScreen = new HomeScreen(mockScreen, mockAPIClient, {
         id: 'home',
         name: 'Home',
       });
-      const vaultsScreen = new VaultsScreen(mockScreen, { id: 'vaults', name: 'Vaults' }, mockAPIClient);
+      const vaultsScreen = new NodesScreen(mockScreen, { id: 'nodes', name: 'Nodes' }, mockAPIClient);
       const sessionsScreen = new SessionsScreen(
         mockScreen,
         { id: 'sessions', name: 'Sessions' },
@@ -398,16 +398,16 @@ describe('Screen Implementations Comprehensive', () => {
       const screenIds = screens.map(s => s.getId());
 
       expect(screenIds).toContain('home');
-      expect(screenIds).toContain('vaults');
+      expect(screenIds).toContain('nodes');
       expect(screenIds).toContain('sessions');
     });
 
     it('should handle screen switching', async () => {
       const { HomeScreen } = await import('../../../../../src/cli/tui/screens/home.js');
-      const { VaultsScreen } = await import('../../../../../src/cli/tui/screens/vaults.js');
+      const { NodesScreen } = await import('../../../../../src/cli/tui/screens/nodes.js');
 
       const home = new HomeScreen(mockScreen, mockAPIClient, { id: 'home', name: 'Home' });
-      const vaults = new VaultsScreen(mockScreen, { id: 'vaults', name: 'Vaults' }, mockAPIClient);
+      const vaults = new NodesScreen(mockScreen, { id: 'nodes', name: 'Nodes' }, mockAPIClient);
 
       expect(home.getId()).not.toBe(vaults.getId());
     });

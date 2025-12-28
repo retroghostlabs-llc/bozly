@@ -3,6 +3,7 @@ import { homedir } from "os";
 import { APIClient } from "./api-client.js";
 import { Screen, IAppReference } from "./screen.js";
 import { Modal } from "./modal.js";
+import { logger } from "../../../core/logger.js";
 
 export interface BozlyTUIConfig {
   apiUrl?: string;
@@ -73,12 +74,9 @@ export class BozlyTUI implements IAppReference {
   init(): void {
     try {
       // Note: API health already checked in index.ts before creating this instance
-      // Skip menu creation if screen.box is not available (degraded blessed mode)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (typeof (this.screen as any).box === "function") {
-        this.createMenu();
-        this.createStatusBar();
-      }
+      // Temporarily skip menu and status bar - focus on keyboard input first
+      // this.createMenu();
+      // this.createStatusBar();
 
       // Initialize screens (will be created in subclasses)
       // For now, just setup the structure
@@ -108,7 +106,6 @@ export class BozlyTUI implements IAppReference {
     // Start polling for updates
     this.startPolling();
 
-    // Keep screen running
     this.screen.render();
   }
 
@@ -141,13 +138,18 @@ export class BozlyTUI implements IAppReference {
   /**
    * Register a screen
    */
-  registerScreen(screen: Screen): void {
+  registerScreen(screen: Screen, menuNumber?: number): void {
     this.screens.set(screen.getId(), screen);
     screen.setAppReference(this);
 
     // Set first screen as current
     if (!this.currentScreen) {
       this.currentScreen = screen;
+    }
+
+    // Register menu shortcut if provided
+    if (menuNumber !== undefined && menuNumber >= 1 && menuNumber <= 8) {
+      this.menuItems.set(menuNumber, screen.getId());
     }
   }
 
@@ -157,7 +159,7 @@ export class BozlyTUI implements IAppReference {
   async switchScreen(screenId: string): Promise<void> {
     const screen = this.screens.get(screenId);
     if (!screen) {
-      console.error(`Screen not found: ${screenId}`);
+      await logger.error("Screen not found", { screenId });
       return;
     }
 
@@ -232,71 +234,6 @@ export class BozlyTUI implements IAppReference {
   }
 
   /**
-   * Create main menu
-   */
-  private createMenu(): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const menu = (this.screen as any).box({
-      parent: this.screen,
-      top: 0,
-      left: 0,
-      width: 12,
-      bottom: 1,
-      border: "line",
-      tags: true,
-      style: {
-        border: { fg: "cyan" },
-      },
-    });
-
-    const items = [
-      { num: 1, name: "Home", id: "home" },
-      { num: 2, name: "Vaults", id: "vaults" },
-      { num: 3, name: "Sessions", id: "sessions" },
-      { num: 4, name: "Memory", id: "memory" },
-      { num: 5, name: "Commands", id: "commands" },
-      { num: 6, name: "Workflows", id: "workflows" },
-      { num: 7, name: "Config", id: "config" },
-      { num: 8, name: "Health", id: "health" },
-    ];
-
-    const bold = "\x1b[1m";
-    const reset = "\x1b[0m";
-
-    let content = "\n";
-    for (const item of items) {
-      this.menuItems.set(item.num, item.id);
-      content += `  [${bold}${item.num}${reset}] ${item.name}\n`;
-    }
-
-    content += `\n  [${bold}?${reset}] Help\n`;
-    content += `  [${bold}Q${reset}] Quit\n`;
-
-    menu.setContent(content);
-  }
-
-  /**
-   * Create persistent status bar at the bottom of the screen
-   */
-  private createStatusBar(): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.statusBar = (this.screen as any).box({
-      parent: this.screen,
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: 1,
-      tags: true,
-      style: {
-        bg: "blue",
-        fg: "white",
-      },
-    });
-
-    this.updateStatusBar();
-  }
-
-  /**
    * Update status bar with current vault info and directory
    */
   private updateStatusBar(): void {
@@ -346,14 +283,24 @@ export class BozlyTUI implements IAppReference {
    * Setup global keybindings
    */
   private setupGlobalKeybindings(): void {
-    this.screen.key(["escape", "q", "Q"], () => {
+    // Escape to close modals
+    this.screen.key(["escape"], () => {
       if (this.currentModal) {
         this.closeModal();
       }
     });
 
+    // Quit on Ctrl+C or Q
     this.screen.key(["C-c"], () => {
       this.shutdown();
+    });
+
+    this.screen.key(["q", "Q"], () => {
+      if (this.currentModal) {
+        this.closeModal();
+      } else {
+        this.shutdown();
+      }
     });
 
     // Menu shortcuts (1-8)
@@ -366,14 +313,18 @@ export class BozlyTUI implements IAppReference {
       });
     }
 
-    // Help
-    this.screen.key(["?"], () => {
-      this.showHelpModal();
+    // Home shortcut (0)
+    this.screen.key(["0"], () => {
+      this.switchScreen("home").catch(console.error);
     });
 
-    // Quit
-    this.screen.key(["Q"], () => {
-      this.shutdown();
+    // Help
+    this.screen.key(["?"], () => {
+      this.showHelpModal().catch((err) => {
+        logger.error("Error showing help modal", err).catch(() => {
+          // Silently ignore logging errors
+        });
+      });
     });
 
     // Refresh
@@ -395,24 +346,32 @@ export class BozlyTUI implements IAppReference {
   /**
    * Show help modal
    */
-  private showHelpModal(): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const helpBox = (this.screen as any).box({
-      parent: this.screen,
-      top: "center",
-      left: "center",
-      width: 70,
-      height: 25,
-      border: "line",
-      label: " Help ",
-      tags: true,
-      style: {
-        border: { fg: "cyan" },
-      },
-    });
+  private async showHelpModal(): Promise<void> {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const helpBox = (this.screen as any).box as ((options: any) => any) | undefined;
+      if (!helpBox) {
+        console.warn("[TUI] blessed screen.box() not available for help modal");
+        return;
+      }
 
-    const helpText = `
+      const modal = helpBox({
+        parent: this.screen,
+        top: "center",
+        left: "center",
+        width: 70,
+        height: 25,
+        border: "line",
+        label: " Help ",
+        tags: true,
+        style: {
+          border: { fg: "cyan" },
+        },
+      });
+
+      const helpText = `
 Global Keybindings:
+  [0]        Go to Home
   [1-8]      Jump to menu item
   [?]        This help screen
   [Q]        Quit application
@@ -438,15 +397,22 @@ Form Input:
   [Esc]         Cancel
     `;
 
-    helpBox.setContent(helpText);
-    this.screen.render();
-
-    this.screen.once("key", () => {
-      if (!helpBox.destroyed) {
-        helpBox.destroy();
-      }
+      modal.setContent(helpText);
       this.screen.render();
-    });
+
+      this.screen.once("key", () => {
+        if (!modal.destroyed) {
+          modal.destroy();
+        }
+        this.screen.render();
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        await logger.error("Failed to show help modal", error);
+      } else {
+        await logger.error("Failed to show help modal (unknown error)", { error: String(error) });
+      }
+    }
   }
 
   /**
