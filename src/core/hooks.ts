@@ -17,6 +17,7 @@ import fs from "fs/promises";
 import path from "path";
 import { spawn } from "child_process";
 import { logger } from "./logger.js";
+import { ConfigManager } from "./config-manager.js";
 import { HookType, HookMetadata, HookContext, HookResult } from "./types.js";
 
 /**
@@ -57,7 +58,7 @@ export async function discoverHooks(hooksPath: string): Promise<HookMetadata[]> 
         type: parsed.type,
         file: fullPath,
         enabled: true, // TODO: Support enabling/disabling via comments in hook file
-        timeout: 30000, // Default 30 second timeout
+        timeout: ConfigManager.getInstance().getProcess().hookTimeoutMs,
       });
 
       await logger.debug("Discovered hook", {

@@ -18,6 +18,7 @@
 import fs from "fs/promises";
 import path from "path";
 import chalk from "chalk";
+import { ConfigManager } from "./config-manager.js";
 
 /**
  * Log levels in order of severity
@@ -93,13 +94,24 @@ class Logger {
    * Initialize logger with configuration
    */
   constructor(config: Partial<LoggerConfig> = {}) {
+    const loggingConfig = ConfigManager.getInstance().getLogging();
+
+    // Map LogLevel string to enum value
+    const levelMap: Record<string, LogLevel> = {
+      debug: LogLevel.DEBUG,
+      info: LogLevel.INFO,
+      warn: LogLevel.WARN,
+      error: LogLevel.ERROR,
+      fatal: LogLevel.FATAL,
+    };
+
     this.config = {
-      level: LogLevel.INFO,
-      enableFile: true,
-      enableConsole: true,
-      enableColor: process.stdout.isTTY ?? false,
-      includeContext: true,
-      includeTimestamp: true,
+      level: levelMap[loggingConfig.level] ?? LogLevel.INFO,
+      enableFile: loggingConfig.enableFile,
+      enableConsole: loggingConfig.enableConsole,
+      enableColor: loggingConfig.enableColor ?? process.stdout.isTTY ?? false,
+      includeContext: loggingConfig.includeContext,
+      includeTimestamp: loggingConfig.includeTimestamp,
       ...config,
     };
   }

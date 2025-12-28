@@ -1,6 +1,7 @@
 import blessed from "@unblessed/blessed";
 import { Screen, ScreenConfig } from "../core/screen.js";
 import { APIClient } from "../core/api-client.js";
+import { ConfigManager } from "../../../core/config-manager.js";
 
 interface HealthData {
   status: "ok" | "degraded" | "error";
@@ -27,7 +28,7 @@ export class HealthScreen extends Screen {
   private healthData: HealthData = { status: "ok" };
   private healthBox?: blessed.Widgets.BoxElement;
   private lastUpdate = 0;
-  private updateInterval = 5000; // 5 seconds
+  private updateInterval: number;
 
   constructor(
     parent: blessed.Widgets.Screen,
@@ -35,6 +36,7 @@ export class HealthScreen extends Screen {
     private apiClient: APIClient
   ) {
     super(parent, config);
+    this.updateInterval = ConfigManager.getInstance().getClient().tuiRefreshIntervalMs;
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
@@ -86,9 +88,12 @@ export class HealthScreen extends Screen {
   async render(): Promise<void> {
     try {
       // Check health with timeout
+      const healthCheckTimeout = ConfigManager.getInstance().getServer().healthCheckTimeout;
       const isHealthy = await Promise.race([
         this.apiClient.isHealthy(),
-        new Promise((_resolve, reject) => setTimeout(() => reject(new Error("timeout")), 5000)),
+        new Promise((_resolve, reject) =>
+          setTimeout(() => reject(new Error("timeout")), healthCheckTimeout)
+        ),
       ]);
 
       if (isHealthy) {

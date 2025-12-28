@@ -3,6 +3,7 @@ import { confirm } from "@inquirer/prompts";
 import { startServer } from "../../server/index.js";
 import { killServerOnPort, findServerPID } from "../../core/server-manager.js";
 import { getDefaultPort, getDefaultHost, isValidPort } from "../../core/port-config.js";
+import { ConfigManager } from "../../core/config-manager.js";
 import { errorBox, successBox, infoBox, warningBox } from "../ui/index.js";
 
 export const serveCommand = new Command()
@@ -10,7 +11,7 @@ export const serveCommand = new Command()
   .description("Start BOZLY web dashboard server")
   .option("-p, --port <port>", "Server port (default: 3847, or BOZLY_PORT env)")
   .option("-h, --host <host>", "Server host (default: 127.0.0.1, or BOZLY_HOST env)")
-  .option("-o, --open", "Open browser automatically", true)
+  .option("-o, --open", "Open browser automatically")
   .option("--no-open", "Do not open browser automatically")
   .action(async (options) => {
     try {
@@ -18,7 +19,16 @@ export const serveCommand = new Command()
       const portStr = options.port ?? getDefaultPort().toString();
       const port = parseInt(portStr, 10);
       const host = options.host ?? getDefaultHost();
-      const openBrowser = options.open;
+
+      // Determine openBrowser: CLI flag takes precedence, then config default
+      let openBrowser: boolean;
+      if (options.open === true) {
+        openBrowser = true;
+      } else if (options.open === false) {
+        openBrowser = false;
+      } else {
+        openBrowser = ConfigManager.getInstance().getServer().openBrowser;
+      }
 
       if (!isValidPort(port)) {
         errorBox("Invalid port number. Must be between 1 and 65535.");

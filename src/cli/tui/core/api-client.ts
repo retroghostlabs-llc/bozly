@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { getAPIURL } from "../../../core/port-config.js";
+import { ConfigManager } from "../../../core/config-manager.js";
 
 export interface APIError {
   code: string;
@@ -12,12 +13,12 @@ export class APIClient {
   private client: AxiosInstance;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private cache: Map<string, { data: any; timestamp: number }> = new Map();
-  private cacheTimeout: number = 5000; // 5 seconds
 
   constructor(baseUrl: string = getAPIURL()) {
+    const config = ConfigManager.getInstance().getClient();
     this.client = axios.create({
       baseURL: baseUrl,
-      timeout: 10000,
+      timeout: config.apiTimeoutMs,
       headers: {
         "Content-Type": "application/json",
       },
@@ -320,8 +321,9 @@ export class APIClient {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private getCachedOrFetch<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+    const cacheTimeout = ConfigManager.getInstance().getClient().apiCacheTimeoutMs;
     const cached = this.cache.get(key);
-    if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
+    if (cached && Date.now() - cached.timestamp < cacheTimeout) {
       return Promise.resolve(cached.data as T);
     }
 

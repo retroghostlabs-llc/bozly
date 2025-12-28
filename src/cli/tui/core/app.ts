@@ -4,6 +4,7 @@ import { APIClient } from "./api-client.js";
 import { Screen, IAppReference } from "./screen.js";
 import { Modal } from "./modal.js";
 import { logger } from "../../../core/logger.js";
+import { ConfigManager } from "../../../core/config-manager.js";
 
 export interface BozlyTUIConfig {
   apiUrl?: string;
@@ -22,7 +23,7 @@ export class BozlyTUI implements IAppReference {
   private currentModal: Modal | null = null;
   private menuItems: Map<number, string> = new Map();
   private updatePoller: NodeJS.Timeout | null = null;
-  private refreshInterval: number = 5000;
+  private refreshInterval: number;
   private isRunning: boolean = false;
   private statusBar: blessed.Widgets.BoxElement | null = null;
 
@@ -63,7 +64,8 @@ export class BozlyTUI implements IAppReference {
     }
 
     this.apiClient = new APIClient(config.apiUrl);
-    this.refreshInterval = config.refreshInterval ?? 5000;
+    this.refreshInterval =
+      config.refreshInterval ?? ConfigManager.getInstance().getClient().tuiRefreshIntervalMs;
 
     this.setupGlobalKeybindings();
   }
@@ -248,7 +250,7 @@ export class BozlyTUI implements IAppReference {
     // Extract vault name from path (simple heuristic: folder after .bozly)
     let vaultInfo = "none";
     const bozlyMatch = cwd.match(/\/([^/]+)\/\.bozly/);
-    if (bozlyMatch && bozlyMatch[1]) {
+    if (bozlyMatch?.[1]) {
       vaultInfo = bozlyMatch[1];
     }
 

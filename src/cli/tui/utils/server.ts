@@ -1,6 +1,7 @@
 import { spawn } from "child_process";
 import axios from "axios";
 import { logger } from "../../../core/logger.js";
+import { ConfigManager } from "../../../core/config-manager.js";
 
 /**
  * Spawn the BOZLY API server in background
@@ -26,19 +27,24 @@ export function spawnAPIServer(): Promise<void> {
 
 /**
  * Wait for API server to be healthy
- * Default: 120 attempts × 500ms = 60 seconds timeout
+ * Uses configured health check timeout and interval from ConfigManager
  */
 export async function waitForAPIServer(
   apiUrl: string,
-  maxAttempts: number = 120,
-  delayMs: number = 500
+  maxAttempts?: number,
+  delayMs?: number
 ): Promise<boolean> {
+  const config = ConfigManager.getInstance().getServer();
+  const actualMaxAttempts = maxAttempts ?? 120;
+  const actualDelayMs = delayMs ?? config.healthCheckIntervalMs;
+  const healthCheckTimeout = config.healthCheckTimeout;
+
   let attempts = 0;
   let lastError: Error | null = null;
 
-  while (attempts < maxAttempts) {
+  while (attempts < actualMaxAttempts) {
     try {
-      await axios.get(`${apiUrl}/health`, { timeout: 2000 });
+      await axios.get(`${apiUrl}/health`, { timeout: healthCheckTimeout });
       return true;
     } catch (error) {
       lastError = error as Error;
@@ -46,7 +52,7 @@ export async function waitForAPIServer(
     }
 
     attempts++;
-    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    await new Promise((resolve) => setTimeout(resolve, actualDelayMs));
   }
 
   // Log the last error for debugging
@@ -54,7 +60,7 @@ export async function waitForAPIServer(
     await logger.debug(`Server health check failed: ${lastError.message}`, {
       error: lastError.message,
       attempts,
-      maxAttempts,
+      maxAttempts: actualMaxAttempts,
     });
   }
 
