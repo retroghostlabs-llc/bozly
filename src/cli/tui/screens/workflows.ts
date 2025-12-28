@@ -94,6 +94,7 @@ export class WorkflowsScreen extends Screen {
       },
     });
 
+    this.createFooterBox();
     this.setupKeybindings();
   }
 

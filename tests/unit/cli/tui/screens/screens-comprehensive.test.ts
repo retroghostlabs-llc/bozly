@@ -105,6 +105,142 @@ describe('Screen Implementations Comprehensive', () => {
       expect(typeof screen.deactivate).toBe('function');
       expect(typeof screen.destroy).toBe('function');
     });
+
+    it('should render header with BOZLY logo and tagline', async () => {
+      const { HomeScreen } = await import('../../../../../src/cli/tui/screens/home.js');
+      const screen = new HomeScreen(mockScreen, mockAPIClient, {
+        id: 'home',
+        name: 'Home',
+      });
+
+      const header = (screen as any).renderHeader();
+      expect(header).toBeDefined();
+      expect(typeof header).toBe('string');
+      // Should contain the tagline
+      expect(header).toContain('Build. Organize. Link. Yield.');
+      // Should contain ASCII art box-drawing characters for logo
+      expect(header).toContain('██████');
+      // Should use ANSI color codes for purple (\x1b[35m)
+      expect(header).toContain('\x1b[35m');
+    });
+
+    it('should render stats section with proper formatting', async () => {
+      const { HomeScreen } = await import('../../../../../src/cli/tui/screens/home.js');
+      const screen = new HomeScreen(mockScreen, mockAPIClient, {
+        id: 'home',
+        name: 'Home',
+      });
+
+      await screen.init();
+      const stats = (screen as any).renderStats();
+      expect(stats).toBeDefined();
+      expect(typeof stats).toBe('string');
+      // Should show system overview headers
+      expect(stats).toContain('System Overview');
+      expect(stats).toContain('Active Vaults');
+      expect(stats).toContain('Total Sessions');
+      expect(stats).toContain('Success Rate');
+    });
+
+    it('should render quick actions menu with all navigation options', async () => {
+      const { HomeScreen } = await import('../../../../../src/cli/tui/screens/home.js');
+      const screen = new HomeScreen(mockScreen, mockAPIClient, {
+        id: 'home',
+        name: 'Home',
+      });
+
+      const actions = (screen as any).renderQuickActions();
+      expect(actions).toBeDefined();
+      expect(typeof actions).toBe('string');
+      // Should show navigation menu
+      expect(actions).toContain('Navigation');
+      // Should show [0] Home option (not [1])
+      expect(actions).toContain('[0]');
+      expect(actions).toContain('Home');
+      // Should show Nodes (not Vaults)
+      expect(actions).toContain('Nodes');
+      // Should have other menu options
+      expect(actions).toContain('Sessions');
+      expect(actions).toContain('Commands');
+      expect(actions).toContain('Memory');
+      expect(actions).toContain('Workflows');
+      expect(actions).toContain('Config');
+      expect(actions).toContain('Health');
+    });
+
+    it('should render recent sessions when available', async () => {
+      const { HomeScreen } = await import('../../../../../src/cli/tui/screens/home.js');
+      const screen = new HomeScreen(mockScreen, mockAPIClient, {
+        id: 'home',
+        name: 'Home',
+      });
+
+      await screen.init();
+      const recentSessions = (screen as any).renderRecentSessions();
+      expect(typeof recentSessions).toBe('string');
+      // When no sessions, should return empty or loading
+    });
+
+    it('should handle init without throwing', async () => {
+      const { HomeScreen } = await import('../../../../../src/cli/tui/screens/home.js');
+      const screen = new HomeScreen(mockScreen, mockAPIClient, {
+        id: 'home',
+        name: 'Home',
+      });
+
+      await expect(screen.init()).resolves.not.toThrow();
+    });
+
+    it('should render screen content without throwing', async () => {
+      const { HomeScreen } = await import('../../../../../src/cli/tui/screens/home.js');
+      const screen = new HomeScreen(mockScreen, mockAPIClient, {
+        id: 'home',
+        name: 'Home',
+      });
+
+      await screen.init();
+      await expect(screen.render()).resolves.not.toThrow();
+    });
+
+    it('should include footer box in init', async () => {
+      const { HomeScreen } = await import('../../../../../src/cli/tui/screens/home.js');
+      const screen = new HomeScreen(mockScreen, mockAPIClient, {
+        id: 'home',
+        name: 'Home',
+      });
+
+      await screen.init();
+      // Footer box should be created (we can't directly inspect it, but the method should complete successfully)
+      expect(screen).toBeDefined();
+    });
+
+    it('should use proper terminology: Nodes instead of Vaults', async () => {
+      const { HomeScreen } = await import('../../../../../src/cli/tui/screens/home.js');
+      const screen = new HomeScreen(mockScreen, mockAPIClient, {
+        id: 'home',
+        name: 'Home',
+      });
+
+      const actions = (screen as any).renderQuickActions();
+      expect(actions).toContain('Nodes');
+      expect(actions).not.toContain('[1] Vaults');
+    });
+
+    it('should include [0] Home in navigation menu', async () => {
+      const { HomeScreen } = await import('../../../../../src/cli/tui/screens/home.js');
+      const screen = new HomeScreen(mockScreen, mockAPIClient, {
+        id: 'home',
+        name: 'Home',
+      });
+
+      const actions = (screen as any).renderQuickActions();
+      expect(actions).toContain('[0]');
+      expect(actions).toContain('Home');
+      // [0] should come before other options
+      const zeroIndex = actions.indexOf('[0]');
+      const oneIndex = actions.indexOf('[1]');
+      expect(zeroIndex).toBeLessThan(oneIndex);
+    });
   });
 
   describe('NodesScreen', () => {

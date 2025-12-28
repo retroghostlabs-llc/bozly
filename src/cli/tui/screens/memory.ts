@@ -93,6 +93,7 @@ export class MemoryScreen extends Screen {
       },
     });
 
+    this.createFooterBox();
     this.setupKeybindings();
   }
 

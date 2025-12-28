@@ -63,6 +63,8 @@ export class ConfigScreen extends Screen {
         },
       },
     });
+
+    this.createFooterBox();
   }
 
   async render(): Promise<void> {

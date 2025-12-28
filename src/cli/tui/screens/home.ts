@@ -39,6 +39,7 @@ export class HomeScreen extends Screen {
       mouse: true,
     });
 
+    this.createFooterBox();
     await this.loadStats();
   }
 
@@ -52,6 +53,7 @@ export class HomeScreen extends Screen {
     content += this.renderStats();
     content += this.renderRecentSessions();
     content += this.renderQuickActions();
+    // Footer is now rendered as a separate box at screen bottom, not as content
 
     this.box.setContent(content);
     this.parent.render();
@@ -101,14 +103,14 @@ export class HomeScreen extends Screen {
     const cyan = "\x1b[36m";
     const reset = "\x1b[0m";
 
-    // BOZLY ASCII art logo (simple, no decorative box)
+    // BOZLY ASCII art logo (B-O-Z-L-Y, each letter 4-5 chars wide)
     const logo = `
-        ${bold}${purple}██████╗  ██████╗ ███████╗██╗  ██╗   ██╗${reset}
-        ${bold}${purple}██╔══██╗██╔═══██╗██╔════╝██║  ╚██╗ ██╔╝${reset}
-        ${bold}${purple}██████╔╝██║   ██║███████╗██║   ╚████╔╝${reset}
-        ${bold}${purple}██╔══██╗██║   ██║╚════██║██║    ╚██╔╝${reset}
-        ${bold}${purple}██████╔╝╚██████╔╝███████║███████╗██║${reset}
-        ${bold}${purple}╚═════╝  ╚═════╝ ╚══════╝╚══════╝╚═╝${reset}
+        ${bold}${purple} ██████╗  ██████╗  ███████╗ ██╗     ██╗   ██╗${reset}
+        ${bold}${purple} ██╔══██╗ ██╔═══██╗ ╚════██║ ██║     ╚██╗ ██╔╝${reset}
+        ${bold}${purple} ██████╔╝ ██║   ██║  ███╔═╝  ██║      ╚████╔╝ ${reset}
+        ${bold}${purple} ██╔══██╗ ██║   ██║ ██╔══╝   ██║       ╚██╔╝  ${reset}
+        ${bold}${purple} ██████╔╝ ╚██████╔╝ ███████╗ ███████╗   ██║   ${reset}
+        ${bold}${purple} ╚═════╝   ╚═════╝  ╚══════╝ ╚══════╝   ╚═╝   ${reset}
 
              ${cyan}Build. Organize. Link. Yield.${reset}
 
@@ -174,7 +176,8 @@ ${gray}────────────────────────�
 
     return `${bold}>> Navigation${reset}
 ${gray}───────────────────────────────────────────────────────────${reset}
-  ${cyan}[1]${reset} Vaults           Manage your AI workspaces
+  ${cyan}[0]${reset} Home             Back to main dashboard
+  ${cyan}[1]${reset} Nodes            Manage your AI workspaces
   ${cyan}[2]${reset} Sessions         View command history & results
   ${cyan}[3]${reset} Commands         Browse & run commands
   ${cyan}[4]${reset} Memory           Indexed knowledge & context
@@ -185,7 +188,7 @@ ${gray}────────────────────────�
 
 ${bold}>> Quick Actions${reset}
 ${gray}───────────────────────────────────────────────────────────${reset}
-  ${cyan}[N]${reset}ew              Run a command from current vault
+  ${cyan}[N]${reset}ew              Run a command from current node
   ${cyan}[R]${reset}efresh           Update statistics
   ${cyan}[?]${reset}                Show full help
   ${cyan}[Q]${reset}uit              Exit application

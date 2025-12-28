@@ -93,6 +93,7 @@ export class CommandsScreen extends Screen {
       },
     });
 
+    this.createFooterBox();
     this.setupKeybindings();
   }
 

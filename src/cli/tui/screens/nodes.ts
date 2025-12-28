@@ -103,6 +103,7 @@ export class NodesScreen extends Screen {
       keys: true,
     });
 
+    this.createFooterBox();
     this.setupKeybindings();
   }
 

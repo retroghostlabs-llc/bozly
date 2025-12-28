@@ -23,6 +23,7 @@ export abstract class Screen {
   protected name: string;
   protected parent: blessed.Widgets.Screen;
   protected box: blessed.Widgets.BoxElement | null = null;
+  protected footerBox: blessed.Widgets.BoxElement | null = null;
   protected isActive: boolean = false;
   protected appRef: IAppReference | null = null;
 
@@ -69,6 +70,13 @@ export abstract class Screen {
     if (this.box) {
       try {
         this.box.destroy();
+      } catch {
+        // Ignore destroy errors
+      }
+    }
+    if (this.footerBox) {
+      try {
+        this.footerBox.destroy();
       } catch {
         // Ignore destroy errors
       }
@@ -288,5 +296,59 @@ ${bgDark}${cyan}│${reset}${bgDark} Vault: ${white}${vaultInfo}${reset}${bgDark
 ${bgDark}${cyan}└──────────────────────────────────────────────────────────┘${reset}`;
 
     return statusBar;
+  }
+
+  /**
+   * Render a simple footer bar showing current page and navigation hints
+   * Consistent across all screens (for text-based rendering)
+   */
+  protected renderFooter(): string {
+    const gray = "\x1b[90m";
+    const cyan = "\x1b[36m";
+    const reset = "\x1b[0m";
+
+    const pageName = this.name.charAt(0).toUpperCase() + this.name.slice(1);
+    const footer = `
+${gray}${cyan}[${pageName}]${reset}${gray}  │  ${cyan}[0]${reset}${gray} Main Menu  │  ${cyan}[?]${reset}${gray} Help  │  ${cyan}[Q]${reset}${gray} Quit${reset}`;
+
+    return footer;
+  }
+
+  /**
+   * Create a footer box showing current page and navigation hints
+   * Positioned at absolute bottom of screen (always visible, not scrollable)
+   * Uses bright colors that work on both light and dark terminal backgrounds
+   */
+  protected createFooterBox(): blessed.Widgets.BoxElement | null {
+    try {
+      const cyan = "\x1b[36m"; // Bright cyan - visible on dark backgrounds
+      const dimWhite = "\x1b[97m"; // Bright white for better contrast
+      const reset = "\x1b[0m";
+
+      const pageName = this.name.charAt(0).toUpperCase() + this.name.slice(1);
+      // Use bright colors that work on both light and dark terminal backgrounds
+      const footerText = `${cyan}[${pageName}]${reset}${dimWhite}  │  ${cyan}[0]${reset}${dimWhite} Main Menu  │  ${cyan}[?]${reset}${dimWhite} Help  │  ${cyan}[Q]${reset}${dimWhite} Quit${reset}`;
+
+      // Create footer as child of parent screen (not main content box)
+      // This ensures it stays visible even when content scrolls
+      this.footerBox = blessed.box({
+        parent: this.parent,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: 1,
+        content: footerText,
+        tags: true,
+        // Don't set bg/fg - let ANSI codes in text handle it (works on any background)
+      });
+
+      return this.footerBox;
+    } catch (error) {
+      console.log(
+        "[DEBUG] Failed to create footer box:",
+        error instanceof Error ? error.message : error
+      );
+      return null;
+    }
   }
 }

@@ -108,6 +108,7 @@ export class SessionsScreen extends Screen {
       },
     });
 
+    this.createFooterBox();
     this.setupKeybindings();
   }
 

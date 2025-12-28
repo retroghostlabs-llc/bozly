@@ -83,6 +83,8 @@ export class HealthScreen extends Screen {
         },
       },
     });
+
+    this.createFooterBox();
   }
 
   async render(): Promise<void> {
