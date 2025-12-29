@@ -58,6 +58,7 @@ const LOG_LEVEL_COLORS: Record<LogLevel, (text: string) => string> = {
  */
 interface LoggerConfig {
   level: LogLevel;
+  consoleLevel: LogLevel; // Separate level for console output (only WARN+ by default)
   logDir?: string;
   enableFile: boolean;
   enableConsole: boolean;
@@ -107,6 +108,7 @@ class Logger {
 
     this.config = {
       level: levelMap[loggingConfig.level] ?? LogLevel.INFO,
+      consoleLevel: LogLevel.WARN, // Only WARN, ERROR, FATAL on console by default
       enableFile: loggingConfig.enableFile,
       enableConsole: loggingConfig.enableConsole,
       enableColor: loggingConfig.enableColor ?? process.stdout.isTTY ?? false,
@@ -208,12 +210,21 @@ Started: ${new Date().toISOString()}
    * Write log entry to outputs
    */
   private async writeLogEntry(entry: LogEntry): Promise<void> {
-    // Write to console
-    if (this.config.enableConsole) {
-      const output = this.formatConsoleOutput(entry);
-      const level = entry.level as unknown as LogLevel;
+    // Convert level string to enum for comparison
+    const levelMap: Record<string, LogLevel> = {
+      DEBUG: LogLevel.DEBUG,
+      INFO: LogLevel.INFO,
+      WARN: LogLevel.WARN,
+      ERROR: LogLevel.ERROR,
+      FATAL: LogLevel.FATAL,
+    };
+    const entryLevel = levelMap[entry.level] ?? LogLevel.INFO;
 
-      if (level >= LogLevel.ERROR) {
+    // Write to console only if level meets consoleLevel threshold
+    if (this.config.enableConsole && entryLevel >= this.config.consoleLevel) {
+      const output = this.formatConsoleOutput(entry);
+
+      if (entryLevel >= LogLevel.ERROR) {
         // eslint-disable-next-line no-console
         console.error(output);
       } else {

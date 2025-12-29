@@ -115,6 +115,7 @@ export class HomeScreen extends Screen {
     const bold = "\x1b[1m";
     const purple = "\x1b[35m"; // Magenta (closest to purple #8b5cf6)
     const cyan = "\x1b[36m";
+    const gray = "\x1b[90m";
     const reset = "\x1b[0m";
 
     // BOZLY ASCII art logo (B-O-Z-L-Y, each letter 4-5 chars wide)
@@ -127,6 +128,7 @@ export class HomeScreen extends Screen {
         ${bold}${purple} ╚═════╝   ╚═════╝  ╚══════╝ ╚══════╝   ╚═╝   ${reset}
 
              ${cyan}Build. Organize. Link. Yield.${reset}
+             ${gray}v0.6.0-beta.1${reset}
 
 `;
 
