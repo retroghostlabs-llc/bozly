@@ -132,6 +132,7 @@ export interface RunOptions {
   dryRun?: boolean;
   includeContext?: boolean;
   pastMemories?: string[]; // Optional past session memories to inject
+  params?: string; // Optional parameters to pass to command
 }
 
 /**

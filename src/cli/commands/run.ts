@@ -27,13 +27,13 @@ import { NodeInfo } from "../../core/types.js";
 export const runCommand = new Command("run")
   .description("Execute a node command with optional AI provider integration")
   .argument("[command]", "Command to run (e.g., daily, weekly)")
+  .argument("[params...]", "Parameters to pass to the command")
   .option("--ai <provider>", "AI provider (claude, gpt, gemini, ollama)")
   .option("--dry", "Show what would be sent without executing")
   .option("--no-context", "Run without node context")
   .option("--list-providers", "Show available AI providers and installation status")
   .option("--verbose", "Include full prompt/response in session logs")
-  .option("--workflow", "Execute as a workflow instead of a command")
-  .action(async (commandArg, options) => {
+  .action(async (commandArg, params, options) => {
     let node: NodeInfo | null = null; // Will be set after validation
     let cancelRequested = false;
 
@@ -87,8 +87,8 @@ export const runCommand = new Command("run")
         console.error(
           errorBox("Command argument is required", {
             usage1: "bozly run <command> [options]",
-            usage2: "bozly run --list-providers",
-            usage3: "bozly run --workflow <id> [options]",
+            usage2: 'bozly run <command> "<parameter>"',
+            usage3: "bozly run --list-providers",
           })
         );
         process.exit(1);
@@ -100,7 +100,6 @@ export const runCommand = new Command("run")
         dryRun: options.dry,
         includeContext: options.context,
         listProviders: options.listProviders,
-        workflow: options.workflow,
       });
 
       node = await getCurrentNode();
@@ -115,22 +114,21 @@ export const runCommand = new Command("run")
         process.exit(1);
       }
 
-      // Handle workflow execution
-      if (options.workflow) {
-        try {
-          const workflow = await loadWorkflow(node.path, commandArg);
-          if (!workflow) {
-            console.error(errorBox(`Workflow not found: ${commandArg}`));
-            process.exit(1);
-          }
+      // Auto-detect whether this is a workflow or command
+      // Try loading as workflow first
+      const possibleWorkflow = await loadWorkflow(node.path, commandArg);
+      const isWorkflow = possibleWorkflow !== null;
 
+      if (isWorkflow && possibleWorkflow) {
+        // Handle workflow execution
+        try {
           await logger.info("Executing workflow", {
-            id: workflow.id,
-            steps: workflow.steps.length,
+            id: possibleWorkflow.id,
+            steps: possibleWorkflow.steps.length,
             dryRun: options.dry,
           });
 
-          const result = await executeWorkflow(workflow, {
+          const result = await executeWorkflow(possibleWorkflow, {
             dryRun: options.dry,
             verbose: options.verbose,
           });
@@ -139,13 +137,13 @@ export const runCommand = new Command("run")
           console.log("");
           const workflowBox =
             result.stepsFailed > 0
-              ? warningBox(`Workflow '${workflow.id}' completed`, {
-                  Steps: `${result.stepsCompleted}/${workflow.steps.length}`,
+              ? warningBox(`Workflow '${possibleWorkflow.id}' completed`, {
+                  Steps: `${result.stepsCompleted}/${possibleWorkflow.steps.length}`,
                   Duration: `${result.duration}ms`,
                   Failed: String(result.stepsFailed),
                 })
-              : successBox(`Workflow '${workflow.id}' completed`, {
-                  Steps: `${result.stepsCompleted}/${workflow.steps.length}`,
+              : successBox(`Workflow '${possibleWorkflow.id}' completed`, {
+                  Steps: `${result.stepsCompleted}/${possibleWorkflow.steps.length}`,
                   Duration: `${result.duration}ms`,
                 });
           console.log(workflowBox);
@@ -255,6 +253,7 @@ export const runCommand = new Command("run")
           dryRun: options.dry,
           includeContext: options.context,
           pastMemories,
+          params: params && params.length > 0 ? params.join(" ") : undefined,
         });
 
         await logger.info("Command execution completed", {

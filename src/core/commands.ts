@@ -220,7 +220,7 @@ export async function runNodeCommand(
   }
 
   // Build prompt
-  const prompt = buildPrompt(context, modelContent, command);
+  const prompt = buildPrompt(context, modelContent, command, options.params);
   const provider = options.provider ?? "claude";
 
   if (options.dryRun) {
@@ -291,7 +291,12 @@ export async function runNodeCommand(
 /**
  * Build the full prompt with context, model, and command
  */
-function buildPrompt(context: string, modelContent: string, command: NodeCommand): string {
+function buildPrompt(
+  context: string,
+  modelContent: string,
+  command: NodeCommand,
+  params?: string
+): string {
   let prompt = context;
 
   if (modelContent) {
@@ -299,6 +304,11 @@ function buildPrompt(context: string, modelContent: string, command: NodeCommand
   }
 
   prompt += `\n\n---\n\n## Command: /${command.name}\n\n${command.content}`;
+
+  // Inject parameters if provided
+  if (params) {
+    prompt += `\n\n---\n\n## Parameters\n\n${params}`;
+  }
 
   return prompt;
 }
