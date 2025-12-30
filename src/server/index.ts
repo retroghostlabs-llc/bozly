@@ -49,13 +49,21 @@ export async function startServer(config: ServerConfig) {
       port: serverConfig.port,
     });
 
-    if (serverConfig.openBrowser) {
+    // Detect headless/SSH environments
+    const isHeadless = !process.env.DISPLAY && process.env.SSH_CONNECTION;
+
+    if (serverConfig.openBrowser && !isHeadless) {
       try {
         const open = (await import("open")).default;
         await open(url);
       } catch (error) {
-        await logger.info(`Open server in browser: ${url}`, { url });
+        await logger.warn(
+          `Failed to open browser automatically: ${error instanceof Error ? error.message : String(error)}`,
+          { url, error: error instanceof Error ? error.message : String(error) }
+        );
       }
+    } else if (isHeadless) {
+      await logger.info(`Running in headless/SSH environment. Open browser at: ${url}`, { url });
     }
 
     return fastify;

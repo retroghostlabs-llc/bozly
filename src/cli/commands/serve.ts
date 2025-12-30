@@ -39,25 +39,31 @@ export const serveCommand = new Command()
       const existingPID = await findServerPID(port);
       if (existingPID) {
         warningBox(`Server already running on port ${port} (PID: ${existingPID})`);
+        console.log(`\nThe BOZLY server is already running. You can:
+  1. Use the existing server (just open the browser)
+  2. Kill the existing server and start a fresh one\n`);
 
         const shouldKill = await confirm({
-          message: "Kill existing server and start new one?",
-          default: true,
+          message: "Kill existing server and start a new one?",
+          default: false, // Changed default to false - safer to reuse existing
         });
 
-        if (shouldKill) {
-          infoBox("Stopping existing server...");
-          const killed = await killServerOnPort(port);
-          if (killed) {
-            successBox("Existing server stopped");
-            // Wait a moment before starting new one
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-          } else {
-            errorBox("Failed to stop existing server");
-            process.exit(1);
-          }
+        if (!shouldKill) {
+          successBox(`BOZLY Server is already running!`);
+          const serverUrl = `http://${host}:${port}`;
+          console.log(`\n  Web Dashboard: ${serverUrl}/`);
+          console.log(`  API Health:    ${serverUrl}/api/health\n`);
+          process.exit(0);
+        }
+
+        infoBox("Stopping existing server...");
+        const killed = await killServerOnPort(port);
+        if (killed) {
+          successBox("Existing server stopped");
+          // Wait a moment before starting new one
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         } else {
-          infoBox("Use 'bozly stop' to stop the server manually");
+          errorBox("Failed to stop existing server");
           process.exit(1);
         }
       }
@@ -69,6 +75,11 @@ export const serveCommand = new Command()
         host,
         openBrowser,
       });
+
+      // Show success message with URL
+      successBox(`BOZLY Server is running!`);
+      console.log(`\n  Web Dashboard: http://${host}:${port}/`);
+      console.log(`  API Health:    http://${host}:${port}/api/health\n`);
 
       // Graceful shutdown
       const signals = ["SIGINT", "SIGTERM"];
