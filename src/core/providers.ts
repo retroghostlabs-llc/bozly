@@ -230,22 +230,40 @@ After installation, retry:
 /**
  * Validate provider can be used
  *
+ * Allows unavailable providers with a warning (for testing/development).
+ * This enables testing provider integrations without installation.
+ *
  * @param providerName - Provider name
- * @throws Error if provider not installed with helpful setup message
+ * @param allowUnavailable - If true, log warning instead of throwing for unavailable providers
  */
-export async function validateProvider(providerName: string): Promise<void> {
+export async function validateProvider(
+  providerName: string,
+  allowUnavailable: boolean = false
+): Promise<void> {
   const config = getProviderConfig(providerName);
 
   if (!config.installed) {
-    const instructions = getSetupInstructions(providerName);
-    throw new Error(`Provider '${providerName}' is not installed.\n${instructions}`);
+    if (allowUnavailable) {
+      await logger.warn(
+        `Provider '${providerName}' is not installed, but proceeding anyway (testing mode)`,
+        {
+          provider: providerName,
+          command: config.command,
+          installed: false,
+          testingMode: true,
+        }
+      );
+    } else {
+      const instructions = getSetupInstructions(providerName);
+      throw new Error(`Provider '${providerName}' is not installed.\n${instructions}`);
+    }
+  } else {
+    await logger.debug("Provider validated", {
+      provider: providerName,
+      command: config.command,
+      installed: true,
+    });
   }
-
-  await logger.debug("Provider validated", {
-    provider: providerName,
-    command: config.command,
-    installed: true,
-  });
 }
 
 /**

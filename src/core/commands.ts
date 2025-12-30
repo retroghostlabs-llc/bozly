@@ -36,12 +36,16 @@ export async function getNodeCommands(vaultPath: string): Promise<NodeCommand[]>
         const filePath = path.join(commandsPath, file);
         const content = await fs.readFile(filePath, "utf-8");
         const description = extractDescription(content);
+        const provider = extractProviderFromFrontmatter(content);
+        const model = extractModelName(content);
 
         commands.push({
           name,
           description,
           file: filePath,
           content,
+          provider,
+          model,
         });
       }
     }
@@ -67,6 +71,8 @@ export async function getCommand(
   try {
     const content = await fs.readFile(filePath, "utf-8");
     const description = extractDescription(content);
+    const provider = extractProviderFromFrontmatter(content);
+    const model = extractModelName(content);
 
     return {
       name: commandName,
@@ -74,6 +80,8 @@ export async function getCommand(
       file: filePath,
       content,
       source: "vault",
+      provider,
+      model,
     };
   } catch {
     // Try global commands
@@ -105,6 +113,8 @@ export async function getGlobalCommands(): Promise<NodeCommand[]> {
         const filePath = path.join(globalPath, file);
         const content = await fs.readFile(filePath, "utf-8");
         const description = extractDescription(content);
+        const provider = extractProviderFromFrontmatter(content);
+        const model = extractModelName(content);
 
         commands.push({
           name,
@@ -112,6 +122,8 @@ export async function getGlobalCommands(): Promise<NodeCommand[]> {
           file: filePath,
           content,
           source: "global",
+          provider,
+          model,
         });
       }
     }
@@ -138,7 +150,12 @@ export async function getAllCommands(vaultPath: string): Promise<NodeCommand[]> 
   // Load vault commands (override global)
   const vaultCommands = await getNodeCommands(vaultPath);
   for (const cmd of vaultCommands) {
-    commandsByName.set(cmd.name, { ...cmd, source: "vault" });
+    commandsByName.set(cmd.name, {
+      ...cmd,
+      source: "vault",
+      provider: cmd.provider,
+      model: cmd.model,
+    });
   }
 
   return Array.from(commandsByName.values());
@@ -319,9 +336,9 @@ function buildPrompt(
  * Looks for "model: model-name" in YAML frontmatter
  * @internal
  */
-function extractModelName(content: string | undefined): string | null {
+function extractModelName(content: string | undefined): string | undefined {
   if (!content) {
-    return null;
+    return undefined;
   }
 
   const lines = content.split("\n");
@@ -333,12 +350,43 @@ function extractModelName(content: string | undefined): string | null {
       }
       const match = lines[i].match(/^model:\s*(.+)$/);
       if (match) {
-        return match[1].trim();
+        const value = match[1].trim();
+        return value || undefined;
       }
     }
   }
 
-  return null;
+  return undefined;
+}
+
+/**
+ * Extract provider override from command frontmatter (if specified)
+ *
+ * Looks for "provider: provider-name" in YAML frontmatter
+ * Does NOT validate provider - validation happens at execution time
+ * @internal
+ */
+function extractProviderFromFrontmatter(content: string | undefined): string | undefined {
+  if (!content) {
+    return undefined;
+  }
+
+  const lines = content.split("\n");
+
+  if (lines[0] === "---") {
+    for (let i = 1; i < lines.length; i++) {
+      if (lines[i] === "---") {
+        break;
+      }
+      const match = lines[i].match(/^provider:\s*(.+)$/);
+      if (match) {
+        const value = match[1].trim();
+        return value || undefined;
+      }
+    }
+  }
+
+  return undefined;
 }
 
 /**

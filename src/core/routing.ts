@@ -31,7 +31,7 @@ export interface ProviderConfig {
 export interface ProviderResolutionContext {
   selectedProvider: string;
   selectedModel?: string;
-  resolvedFrom: "cli" | "command" | "node" | "global" | "default";
+  resolvedFrom: "cli" | "frontmatter" | "command" | "node" | "global" | "default";
   fallbackChain?: string[];
 }
 

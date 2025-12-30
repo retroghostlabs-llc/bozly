@@ -14,7 +14,7 @@ import { Command } from "commander";
 import path from "path";
 import { logger } from "../../core/logger.js";
 import { getCurrentNode } from "../../core/node.js";
-import { runNodeCommand } from "../../core/commands.js";
+import { runNodeCommand, getCommand } from "../../core/commands.js";
 import { recordSession, loadPastMemories } from "../../core/sessions.js";
 import { executeHooks, HookContext } from "../../core/hooks.js";
 import { getDefaultProvider, formatProvidersList, validateProvider } from "../../core/providers.js";
@@ -178,15 +178,28 @@ export const runCommand = new Command("run")
         let resolvedFrom = "cli";
 
         if (!provider) {
-          // Use smart routing hierarchy: command > vault > global > default
-          const resolution = await resolveProvider(commandArg, undefined);
-          provider = resolution.selectedProvider;
-          resolvedFrom = resolution.resolvedFrom;
-          await logger.info("Smart routing resolved provider", {
-            provider,
-            resolvedFrom,
-            command: commandArg,
-          });
+          // Load command to check for frontmatter provider override
+          const command = await getCommand(node.path, commandArg);
+
+          if (command?.provider) {
+            // Command has frontmatter provider override
+            provider = command.provider;
+            resolvedFrom = "frontmatter";
+            await logger.info("Using frontmatter provider override", {
+              provider,
+              command: commandArg,
+            });
+          } else {
+            // Use smart routing hierarchy: command config > vault config > global config > default
+            const resolution = await resolveProvider(commandArg, undefined);
+            provider = resolution.selectedProvider;
+            resolvedFrom = resolution.resolvedFrom;
+            await logger.info("Smart routing resolved provider", {
+              provider,
+              resolvedFrom,
+              command: commandArg,
+            });
+          }
         } else {
           await logger.info("Using CLI-provided provider", { provider });
         }

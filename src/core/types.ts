@@ -110,9 +110,10 @@ export interface NodeCommand {
   description?: string;
   file: string;
   content?: string;
-  source?: "vault" | "global" | "builtin"; // NEW: where command comes from
-  model?: string; // NEW: reference to domain model
-  tags?: string[]; // NEW: command categorization
+  source?: "vault" | "global" | "builtin"; // where command comes from
+  provider?: string; // NEW: provider override from frontmatter
+  model?: string; // reference to domain model
+  tags?: string[]; // command categorization
 }
 
 /**

@@ -318,7 +318,7 @@ describe("Provider Management Module", () => {
       await expect(validateProvider("claude")).resolves.toBeUndefined();
     });
 
-    it("should throw for uninstalled provider", async () => {
+    it("should throw for uninstalled provider by default", async () => {
       vi.mocked(execSync).mockImplementation(() => {
         throw new Error("not found");
       });
@@ -328,13 +328,34 @@ describe("Provider Management Module", () => {
       );
     });
 
-    it("should include setup instructions in error", async () => {
+    it("should allow uninstalled provider when allowUnavailable=true", async () => {
+      vi.mocked(execSync).mockImplementation(() => {
+        throw new Error("not found");
+      });
+
+      // Should not throw, just log warning
+      await expect(
+        validateProvider("claude", true)
+      ).resolves.toBeUndefined();
+    });
+
+    it("should log warning for unavailable provider in testing mode", async () => {
+      vi.mocked(execSync).mockImplementation(() => {
+        throw new Error("not found");
+      });
+
+      // Just verify it doesn't throw
+      const result = await validateProvider("claude", true);
+      expect(result).toBeUndefined();
+    });
+
+    it("should include setup instructions in error when strict", async () => {
       vi.mocked(execSync).mockImplementation(() => {
         throw new Error("not found");
       });
 
       try {
-        await validateProvider("claude");
+        await validateProvider("claude", false);
         expect.fail("Should have thrown");
       } catch (error) {
         const message = (error as Error).message;
@@ -343,7 +364,11 @@ describe("Provider Management Module", () => {
       }
     });
 
-    it("should throw for unknown provider", async () => {
+    it("should throw for unknown provider even with allowUnavailable=true", async () => {
+      await expect(validateProvider("unknown", true)).rejects.toThrow();
+    });
+
+    it("should throw for unknown provider when strict", async () => {
       await expect(validateProvider("unknown")).rejects.toThrow();
     });
 
@@ -352,6 +377,25 @@ describe("Provider Management Module", () => {
       await validateProvider("claude");
       // Validation succeeds without error
       expect(true).toBe(true);
+    });
+
+    it("should accept allowUnavailable parameter", async () => {
+      vi.mocked(execSync).mockImplementation(() => {
+        throw new Error("not found");
+      });
+
+      // Testing that the parameter is accepted and works
+      await expect(validateProvider("gpt", true)).resolves.toBeUndefined();
+      await expect(validateProvider("gpt", false)).rejects.toThrow();
+    });
+
+    it("should default to strict mode (allowUnavailable=false)", async () => {
+      vi.mocked(execSync).mockImplementation(() => {
+        throw new Error("not found");
+      });
+
+      // No second parameter = strict mode
+      await expect(validateProvider("ollama")).rejects.toThrow();
     });
   });
 

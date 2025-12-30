@@ -413,4 +413,64 @@ Content`;
       expect(commands[0].description).toBe(descriptionText);
     });
   });
+
+  describe("Frontmatter Provider Extraction", () => {
+    it("should extract provider from command frontmatter", async () => {
+      const commandsPath = path.join(testVaultPath, ".bozly", "commands");
+      const content = "---\ndescription: Test command\nprovider: gpt\n---\nCommand content";
+      await fs.writeFile(path.join(commandsPath, "test.md"), content, "utf-8");
+
+      const commands = await getNodeCommands(testVaultPath);
+      expect(commands[0].provider).toBe("gpt");
+    });
+
+    it("should return null provider when not specified", async () => {
+      const commandsPath = path.join(testVaultPath, ".bozly", "commands");
+      const content = "---\ndescription: Test command\n---\nCommand content";
+      await fs.writeFile(path.join(commandsPath, "test.md"), content, "utf-8");
+
+      const commands = await getNodeCommands(testVaultPath);
+      expect(commands[0].provider).toBeUndefined();
+    });
+
+    it("should extract both provider and model from frontmatter", async () => {
+      const commandsPath = path.join(testVaultPath, ".bozly", "commands");
+      const content = "---\ndescription: Test command\nprovider: gpt\nmodel: gpt-4o\n---\nCommand content";
+      await fs.writeFile(path.join(commandsPath, "test.md"), content, "utf-8");
+
+      const commands = await getNodeCommands(testVaultPath);
+      expect(commands[0].provider).toBe("gpt");
+      expect(commands[0].model).toBe("gpt-4o");
+    });
+
+    it("should handle empty provider value", async () => {
+      const commandsPath = path.join(testVaultPath, ".bozly", "commands");
+      const content = "---\ndescription: Test command\nprovider: \n---\nCommand content";
+      await fs.writeFile(path.join(commandsPath, "test.md"), content, "utf-8");
+
+      const commands = await getNodeCommands(testVaultPath);
+      expect(commands[0].provider).toBeUndefined();
+    });
+
+    it("should extract provider from getCommand()", async () => {
+      const commandsPath = path.join(testVaultPath, ".bozly", "commands");
+      const content = "---\ndescription: GPT command\nprovider: gpt\n---\nPrompt for GPT";
+      await fs.writeFile(path.join(commandsPath, "analyze.md"), content, "utf-8");
+
+      const command = await getCommand(testVaultPath, "analyze");
+      expect(command).not.toBeNull();
+      expect(command?.provider).toBe("gpt");
+      expect(command?.model).toBeUndefined();
+    });
+
+    it("should not validate provider (allow any string)", async () => {
+      const commandsPath = path.join(testVaultPath, ".bozly", "commands");
+      const content = "---\ndescription: Test\nprovider: invalid-provider\n---\nContent";
+      await fs.writeFile(path.join(commandsPath, "test.md"), content, "utf-8");
+
+      // Should extract without error (validation happens at execution time)
+      const commands = await getNodeCommands(testVaultPath);
+      expect(commands[0].provider).toBe("invalid-provider");
+    });
+  });
 });
