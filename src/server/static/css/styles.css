@@ -10,14 +10,17 @@
   --bozly-cyan-light: #4DC3E8;
   --bozly-dark-gray: #4A4E5A;
   --bozly-charcoal: #2a2d35;
+  --bozly-text-light: #E0E0E0;
+  --bozly-text-muted: #A0A0A0;
 
   /* Pico overrides for BOZLY theme */
-  --pico-spacing: 1rem;
-  --pico-form-element-spacing-vertical: 0.5rem;
-  --pico-form-element-spacing-horizontal: 0.75rem;
+  --pico-spacing: 1.25rem;
+  --pico-form-element-spacing-vertical: 0.75rem;
+  --pico-form-element-spacing-horizontal: 1rem;
   --pico-border-radius: 0.5rem;
   --pico-primary: var(--bozly-cyan);
   --pico-primary-hover: var(--bozly-cyan-light);
+  --pico-font-size: 16px;
 }
 
 /* Dark theme adjustments */
@@ -33,11 +36,14 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  font-size: 16px;
+  line-height: 1.6;
 }
 
 main {
   flex: 1;
   padding: 2rem 0;
+  color: var(--bozly-text-light);
 }
 
 footer {
@@ -122,14 +128,17 @@ nav strong {
 .vault-card h3,
 .command-card h3 {
   margin-top: 0;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.25rem;
+  color: var(--bozly-tan);
 }
 
 .vault-card p,
 .command-card p {
-  margin: 0.25rem 0;
-  font-size: 0.875rem;
-  color: var(--pico-muted-color);
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  color: var(--bozly-text-muted);
+  line-height: 1.5;
 }
 
 /* Quick Stats */
@@ -198,10 +207,11 @@ table td {
   background: none;
   border: none;
   border-bottom: 3px solid transparent;
-  padding: 0.75rem 1rem;
-  color: var(--pico-muted-color);
+  padding: 1rem 1.5rem;
+  color: var(--bozly-text-muted);
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: 1rem;
+  font-weight: 500;
   transition: all 0.2s ease;
 }
 
@@ -238,12 +248,14 @@ table td {
 }
 
 .tab-content pre {
-  background-color: var(--pico-form-element-background-color);
+  background-color: #0f1117;
   border-radius: var(--pico-border-radius);
-  padding: 1rem;
+  padding: 1.5rem;
   overflow-x: auto;
-  font-size: 0.85rem;
-  line-height: 1.5;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--bozly-text-light);
+  border: 1px solid var(--bozly-dark-gray);
 }
 
 /* Session Header */
@@ -254,12 +266,14 @@ table td {
 }
 
 .session-header h1 {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 2rem;
 }
 
 .session-header p {
-  margin: 0;
-  color: var(--pico-muted-color);
+  margin: 0.5rem 0;
+  color: var(--bozly-text-muted);
+  font-size: 1rem;
 }
 
 /* Session Actions */
