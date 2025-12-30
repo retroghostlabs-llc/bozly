@@ -164,7 +164,7 @@ function createListCommand(): Command {
 function createCreateCommand(): Command {
   return new Command("create")
     .description("Create a new command (global or local)")
-    .option("-l, --local", "Create in current node instead of global")
+    .option("-l, --local", "Create in current vault instead of global")
     .option("--ai", "Use AI to generate command prompt")
     .option("--provider <name>", "AI provider to use (claude, gpt, gemini, ollama)")
     .action(async (options) => {
@@ -212,7 +212,7 @@ function createCreateCommand(): Command {
           const node = await getCurrentNode();
           if (!node) {
             console.log(
-              errorBox("Not in a node directory", {
+              errorBox("Not in a vault directory", {
                 hint: "Run 'bozly init' first or use without --local for global command",
               })
             );
@@ -227,7 +227,7 @@ function createCreateCommand(): Command {
           // Check if exists
           try {
             await fs.access(filePath);
-            console.log(errorBox(`Command '${name}' already exists in this node`));
+            console.log(errorBox(`Command '${name}' already exists in this vault`));
             process.exit(1);
           } catch {
             // File doesn't exist, OK to create

@@ -10,7 +10,7 @@ Complete reference for all 20 BOZLY commands.
 
 1. [Command Overview](#command-overview)
 2. [Vault Commands](#vault-commands)
-3. [Node Commands](#node-commands)
+3. [Vault Status Commands](#vault-status-commands)
 4. [Configuration Commands](#configuration-commands)
 5. [Session Commands](#session-commands)
 6. [Workflow Commands](#workflow-commands)
@@ -229,7 +229,7 @@ Registered Vaults (2):
 
 ---
 
-## Node Commands
+## Vault Status Commands
 
 ### bozly status
 

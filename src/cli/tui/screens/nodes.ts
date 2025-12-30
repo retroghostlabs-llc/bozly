@@ -13,8 +13,8 @@ interface NodeItem {
 }
 
 /**
- * Vaults Screen - Browse and manage BOZLY nodes
- * Shows list of registered nodes with basic info
+ * Vaults Screen - Browse and manage BOZLY vaults
+ * Shows list of registered vaults with basic info
  * Allows viewing vault details and managing vault configuration
  */
 export class NodesScreen extends Screen {
@@ -117,7 +117,7 @@ export class NodesScreen extends Screen {
         this.listBox.clearItems();
 
         if (this.nodes.length === 0) {
-          this.listBox.addItem("No nodes found");
+          this.listBox.addItem("No vaults found");
         } else {
           this.nodes.forEach((vault) => {
             const label = `${vault.name} (${vault.sessions ?? 0} sessions)`;
@@ -131,7 +131,7 @@ export class NodesScreen extends Screen {
       }
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
-      this.showError(`Failed to load nodes: ${msg}`);
+      this.showError(`Failed to load vaults: ${msg}`);
     }
   }
 

@@ -329,7 +329,9 @@ describe("Framework Version Information", () => {
   it("should get framework version info", () => {
     const info = getFrameworkVersion();
 
-    expect(info.bozlyVersion).toBe("0.3.0-rc.1");
+    // Version should be a valid semver format (with optional dev suffix)
+    // Examples: "0.6.0", "0.6.0-beta.1", "0.6.0-dev+abc1234", "0.6.0-dev+abc1234.dirty"
+    expect(info.bozlyVersion).toMatch(/^\d+\.\d+\.\d+/);
     expect(info.nodeVersion).toBeDefined();
     expect(info.platform).toBeDefined();
   });

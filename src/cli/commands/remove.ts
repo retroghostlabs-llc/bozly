@@ -13,16 +13,16 @@ import { removeNode, getRegistry } from "../../core/registry.js";
 import os from "os";
 
 export const removeCommand = new Command("remove")
-  .description("Remove a node from registry (optionally backup files)")
-  .argument("<name-or-path>", "Node name or path to remove")
+  .description("Remove a vault from registry (optionally backup files)")
+  .argument("<name-or-path>", "Vault name or path to remove")
   .option(
     "-b, --backup",
     "Create a timestamped backup before removing (stored in ~/.bozly/backups/)"
   )
   .option("-f, --force", "Skip confirmation prompt")
-  .option("-k, --keep-files", "Keep node files on disk, only remove from registry")
+  .option("-k, --keep-files", "Keep vault files on disk, only remove from registry")
   .action(async (nameOrPath, options) => {
-    const spinner = ora("Removing node...").start();
+    const spinner = ora("Removing vault...").start();
 
     try {
       await logger.debug("bozly remove command started", {
@@ -39,21 +39,21 @@ export const removeCommand = new Command("remove")
       );
 
       if (!node) {
-        spinner.fail("Node not found");
-        await logger.error("Node not found in registry", { nameOrPath });
+        spinner.fail("Vault not found");
+        await logger.error("Vault not found in registry", { nameOrPath });
         console.error(
-          errorBox(`No node found matching: ${nameOrPath}`, {
-            hint: "Run 'bozly list' to see available nodes",
+          errorBox(`No vault found matching: ${nameOrPath}`, {
+            hint: "Run 'bozly list' to see available vaults",
           })
         );
         process.exit(1);
       }
 
-      // Show node info
+      // Show vault info
       spinner.stop();
       console.log();
       console.log(
-        warningBox("Node to remove", {
+        warningBox("Vault to remove", {
           Name: node.name,
           Path: node.path,
           Type: node.type || "unknown",
@@ -64,7 +64,7 @@ export const removeCommand = new Command("remove")
       // Confirmation
       if (!options.force) {
         const answer = await ask(
-          `${errorBox("This will remove the node from BOZLY registry")} Continue? (yes/no): `
+          `${errorBox("This will remove the vault from BOZLY registry")} Continue? (yes/no): `
         );
         if (answer.toLowerCase() !== "yes") {
           console.log(theme.muted("Cancelled"));
@@ -72,15 +72,15 @@ export const removeCommand = new Command("remove")
         }
       }
 
-      spinner.start("Removing node...");
+      spinner.start("Removing vault...");
 
       // Backup if requested
       let backupPath = null;
       if (options.backup && !options.keepFiles) {
         spinner.text = "Creating backup...";
         backupPath = await backupVault(node.path, node.name);
-        await logger.info("Node backed up", {
-          nodePath: node.path,
+        await logger.info("Vault backed up", {
+          vaultPath: node.path,
           backupPath,
         });
       }
@@ -89,12 +89,12 @@ export const removeCommand = new Command("remove")
       if (!options.keepFiles) {
         try {
           await fs.rm(node.path, { recursive: true, force: true });
-          await logger.info("Node files deleted", {
-            nodePath: node.path,
+          await logger.info("Vault files deleted", {
+            vaultPath: node.path,
           });
         } catch (error) {
-          await logger.warn("Failed to delete node files", {
-            nodePath: node.path,
+          await logger.warn("Failed to delete vault files", {
+            vaultPath: node.path,
             error: error instanceof Error ? error.message : String(error),
           });
           // Don't fail if file deletion fails, still remove from registry
@@ -105,7 +105,7 @@ export const removeCommand = new Command("remove")
       spinner.text = "Removing from registry...";
       await removeNode(node.id || node.path);
 
-      spinner.succeed("Node removed successfully");
+      spinner.succeed("Vault removed successfully");
       console.log();
 
       if (backupPath) {
@@ -119,29 +119,29 @@ export const removeCommand = new Command("remove")
 
       if (options.keepFiles) {
         console.log(
-          successBox("Node files preserved at", {
+          successBox("Vault files preserved at", {
             path: node.path,
           })
         );
         console.log();
       }
 
-      await logger.info("Node removed successfully", {
-        nodeName: node.name,
-        nodePath: node.path,
+      await logger.info("Vault removed successfully", {
+        vaultName: node.name,
+        vaultPath: node.path,
         backup: backupPath,
       });
     } catch (error) {
-      spinner.fail("Failed to remove node");
+      spinner.fail("Failed to remove vault");
 
       const errorMsg = error instanceof Error ? error.message : String(error);
-      await logger.error("Node removal failed", {
+      await logger.error("Vault removal failed", {
         nameOrPath,
         error: errorMsg,
       });
 
       console.error(
-        errorBox("Node removal failed", {
+        errorBox("Vault removal failed", {
           error: errorMsg,
         })
       );

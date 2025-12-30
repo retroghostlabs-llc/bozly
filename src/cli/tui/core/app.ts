@@ -5,6 +5,7 @@ import { Screen, IAppReference } from "./screen.js";
 import { Modal } from "./modal.js";
 import { logger } from "../../../core/logger.js";
 import { ConfigManager } from "../../../core/config-manager.js";
+import { FULL_VERSION } from "../../../core/version.js";
 
 export interface BozlyTUIConfig {
   apiUrl?: string;
@@ -236,7 +237,7 @@ export class BozlyTUI implements IAppReference {
   }
 
   /**
-   * Update status bar with current vault info and directory
+   * Update status bar with current vault info, directory, and version
    */
   private updateStatusBar(): void {
     if (!this.statusBar) {
@@ -256,9 +257,15 @@ export class BozlyTUI implements IAppReference {
 
     const cyan = "\x1b[36m";
     const gray = "\x1b[90m";
+    const yellow = "\x1b[33m";
     const reset = "\x1b[0m";
 
-    const status = `${cyan}[${this.currentScreen?.getName().toUpperCase() ?? "APP"}]${reset}  ${gray}Vault:${reset} ${vaultInfo}  ${gray}|${reset}  ${displayPath}`;
+    // Show version with dev indicator if applicable
+    const versionDisplay = FULL_VERSION.includes("-dev")
+      ? `${yellow}v${FULL_VERSION}${reset}`
+      : `${gray}v${FULL_VERSION}${reset}`;
+
+    const status = `${cyan}[${this.currentScreen?.getName().toUpperCase() ?? "APP"}]${reset}  ${gray}Vault:${reset} ${vaultInfo}  ${gray}|${reset}  ${displayPath}  ${gray}|${reset}  ${versionDisplay}`;
     this.statusBar.setContent(status);
   }
 

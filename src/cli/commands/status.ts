@@ -1,5 +1,5 @@
 /**
- * bozly status - Show current node status
+ * bozly status - Show current vault status
  */
 
 import { Command } from "commander";
@@ -20,7 +20,7 @@ import {
 import { formatStatsTable } from "../../cli/ui/index.js";
 
 export const statusCommand = new Command("status")
-  .description("Show current node status")
+  .description("Show current vault status")
   .option("-v, --verbose", "Show detailed information")
   .option("--storage", "Show storage usage information")
   .action(async (options) => {
@@ -33,20 +33,20 @@ export const statusCommand = new Command("status")
       const node = await getCurrentNode();
 
       if (!node) {
-        await logger.warn("Not in a node directory");
-        console.log(infoBox("Not in a node directory", { suggestion: "Try: bozly init" }));
+        await logger.warn("Not in a vault directory");
+        console.log(infoBox("Not in a vault directory", { suggestion: "Try: bozly init" }));
         return;
       }
 
-      await logger.info("Node found", {
+      await logger.info("Vault found", {
         name: node.name,
         path: node.path,
         type: node.type,
       });
 
-      // Display node basic info
+      // Display vault basic info
       console.log(
-        keyValueBox("Node Status", {
+        keyValueBox("Vault Status", {
           Name: node.name,
           Path: node.path,
           Type: node.type,
@@ -57,7 +57,7 @@ export const statusCommand = new Command("status")
       // Show commands
       const commands = await getNodeCommands(node.path);
       if (commands.length > 0) {
-        await logger.debug("Found node commands", {
+        await logger.debug("Found vault commands", {
           commandCount: commands.length,
           commands: commands.map((c) => c.name),
         });
@@ -107,10 +107,10 @@ export const statusCommand = new Command("status")
         console.log(formatSection("Configuration", formatList(configItems)));
       }
 
-      console.log(successBox("Node is ready"));
+      console.log(successBox("Vault is ready"));
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      await logger.error("Failed to get node status", {
+      await logger.error("Failed to get vault status", {
         error: errorMsg,
       });
 

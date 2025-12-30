@@ -1,5 +1,5 @@
 /**
- * bozly list - List all registered nodes
+ * bozly list - List all registered vaults
  */
 
 import { Command } from "commander";
@@ -9,7 +9,7 @@ import { formatNodeTable, infoBox } from "../../cli/ui/index.js";
 
 export const listCommand = new Command("list")
   .alias("ls")
-  .description("List all registered nodes")
+  .description("List all registered vaults")
   .option("-a, --all", "Show all details")
   .action(async (options) => {
     try {
@@ -20,13 +20,13 @@ export const listCommand = new Command("list")
       const registry = await getRegistry();
 
       await logger.info("Registry loaded", {
-        nodeCount: registry.nodes.length,
+        vaultCount: registry.nodes.length,
       });
 
       if (registry.nodes.length === 0) {
         console.log(
-          infoBox("No nodes registered", {
-            hint1: "Try: bozly init (create new node)",
+          infoBox("No vaults registered", {
+            hint1: "Try: bozly init (create new vault)",
             hint2: "Try: bozly add <path> (register existing)",
           })
         );
@@ -37,7 +37,7 @@ export const listCommand = new Command("list")
       console.log();
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      await logger.error("Failed to list nodes", {
+      await logger.error("Failed to list vaults", {
         error: errorMsg,
       });
 

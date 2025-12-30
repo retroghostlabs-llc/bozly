@@ -1,0 +1,12 @@
+# BOZLY Brand Images
+
+Images in this directory:
+
+- logo-text.png       - BOZLY text logo (nav header)
+- logo-pug.png        - Geometric pug face (favicon, icons)
+- logo-full.png       - Full pug + text combo (hero)
+- boz-at-work.png     - Pug with coffee (loading states)
+- boz-hud.png         - Pug with glasses (dashboard)
+- ascii-art.txt       - ASCII art version for TUI
+- ascii-art.png       - ASCII art screenshot
+- ascii-art-2.png     - ASCII art screenshot variant

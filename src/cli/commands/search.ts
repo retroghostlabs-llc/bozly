@@ -6,7 +6,7 @@
  *   bozly search "query" --command music              # Filter by command
  *   bozly search "query" --provider claude            # Filter by provider
  *   bozly search "query" --older-than 7               # Sessions from last 7 days
- *   bozly search "query" --nodes music,journal        # Search specific nodes
+ *   bozly search "query" --vaults music,journal       # Search specific vaults
  *   bozly search "query" --in sessions,memories       # Search specific targets
  *   bozly search "query" --limit 100                  # Max results
  *   bozly search "query" --json                       # JSON output
@@ -27,7 +27,7 @@ export const searchCommand = new Command("search")
   .argument("<query>", "Search query text")
   .option("-c, --command <name>", "Filter by command name")
   .option("-p, --provider <provider>", "Filter by provider (claude, gpt, gemini, ollama)")
-  .option("-n, --nodes <nodes>", "Comma-separated node IDs to search")
+  .option("-n, --vaults <vaults>", "Comma-separated vault IDs to search")
   .option("-s, --status <status>", "Filter by status (completed, failed, dry_run)")
   .option("--older-than <days>", "Sessions older than N days")
   .option("--newer-than <days>", "Sessions newer than N days")

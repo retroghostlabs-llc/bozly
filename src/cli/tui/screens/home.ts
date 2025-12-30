@@ -110,22 +110,22 @@ export class HomeScreen extends Screen {
   }
 
   private renderHeader(): string {
-    // Use ANSI color codes matching BOZLY CLI theme colors
-    // Primary: Indigo (#6366f1 ≈ bright blue), Secondary: Purple (#8b5cf6 ≈ magenta)
+    // Use ANSI color codes matching BOZLY web UI brand colors
+    // Primary: Tan (#D4A574), Accent: Cyan (#00B4D8)
     const bold = "\x1b[1m";
-    const purple = "\x1b[35m"; // Magenta (closest to purple #8b5cf6)
-    const cyan = "\x1b[36m";
+    const tan = "\x1b[38;2;212;165;116m"; // True color tan (#D4A574)
+    const cyan = "\x1b[38;2;0;180;216m"; // True color cyan (#00B4D8)
     const gray = "\x1b[90m";
     const reset = "\x1b[0m";
 
     // BOZLY ASCII art logo (B-O-Z-L-Y, each letter 4-5 chars wide)
     const logo = `
-        ${bold}${purple} ██████╗  ██████╗  ███████╗ ██╗     ██╗   ██╗${reset}
-        ${bold}${purple} ██╔══██╗ ██╔═══██╗ ╚════██║ ██║     ╚██╗ ██╔╝${reset}
-        ${bold}${purple} ██████╔╝ ██║   ██║  ███╔═╝  ██║      ╚████╔╝ ${reset}
-        ${bold}${purple} ██╔══██╗ ██║   ██║ ██╔══╝   ██║       ╚██╔╝  ${reset}
-        ${bold}${purple} ██████╔╝ ╚██████╔╝ ███████╗ ███████╗   ██║   ${reset}
-        ${bold}${purple} ╚═════╝   ╚═════╝  ╚══════╝ ╚══════╝   ╚═╝   ${reset}
+        ${bold}${tan} ██████╗  ██████╗  ███████╗ ██╗     ██╗   ██╗${reset}
+        ${bold}${tan} ██╔══██╗ ██╔═══██╗ ╚════██║ ██║     ╚██╗ ██╔╝${reset}
+        ${bold}${tan} ██████╔╝ ██║   ██║  ███╔═╝  ██║      ╚████╔╝ ${reset}
+        ${bold}${tan} ██╔══██╗ ██║   ██║ ██╔══╝   ██║       ╚██╔╝  ${reset}
+        ${bold}${tan} ██████╔╝ ╚██████╔╝ ███████╗ ███████╗   ██║   ${reset}
+        ${bold}${tan} ╚═════╝   ╚═════╝  ╚══════╝ ╚══════╝   ╚═╝   ${reset}
 
              ${cyan}Build. Organize. Link. Yield.${reset}
              ${gray}v0.6.0-beta.1${reset}
@@ -137,7 +137,8 @@ export class HomeScreen extends Screen {
 
   private renderStats(): string {
     const bold = "\x1b[1m";
-    const cyan = "\x1b[36m";
+    const tan = "\x1b[38;2;212;165;116m"; // True color tan (#D4A574)
+    const cyan = "\x1b[38;2;0;180;216m"; // True color cyan (#00B4D8)
     const gray = "\x1b[90m";
     const green = "\x1b[32m";
     const yellow = "\x1b[33m";
@@ -147,7 +148,7 @@ export class HomeScreen extends Screen {
       return `${yellow}Loading stats...${reset}\n\n`;
     }
 
-    return `${bold}System Overview${reset}
+    return `${bold}${tan}System Overview${reset}
 ${gray}───────────────────────────────────────────────────────────${reset}
   Active Vaults:      ${cyan}${this.stats.totalVaults}${reset}
   Total Sessions:     ${cyan}${this.stats.totalSessions}${reset}
@@ -161,6 +162,7 @@ ${gray}────────────────────────�
 
   private renderRecentSessions(): string {
     const bold = "\x1b[1m";
+    const tan = "\x1b[38;2;212;165;116m"; // True color tan (#D4A574)
     const gray = "\x1b[90m";
     const green = "\x1b[32m";
     const red = "\x1b[31m";
@@ -170,7 +172,7 @@ ${gray}────────────────────────�
       return "";
     }
 
-    let content = `${bold}Recent Sessions${reset}
+    let content = `${bold}${tan}Recent Sessions${reset}
 ${gray}───────────────────────────────────────────────────────────${reset}
 `;
 
@@ -186,14 +188,15 @@ ${gray}────────────────────────�
 
   private renderQuickActions(): string {
     const bold = "\x1b[1m";
-    const cyan = "\x1b[36m";
+    const tan = "\x1b[38;2;212;165;116m"; // True color tan (#D4A574)
+    const cyan = "\x1b[38;2;0;180;216m"; // True color cyan (#00B4D8)
     const gray = "\x1b[90m";
     const reset = "\x1b[0m";
 
-    return `${bold}>> Navigation${reset}
+    return `${bold}${tan}>> Navigation${reset}
 ${gray}───────────────────────────────────────────────────────────${reset}
   ${cyan}[0]${reset} Home             Back to main dashboard
-  ${cyan}[1]${reset} Nodes            Manage your AI workspaces
+  ${cyan}[1]${reset} Vaults           Manage your AI workspaces
   ${cyan}[2]${reset} Sessions         View command history & results
   ${cyan}[3]${reset} Commands         Browse & run commands
   ${cyan}[4]${reset} Memory           Indexed knowledge & context
@@ -202,9 +205,9 @@ ${gray}────────────────────────�
   ${cyan}[7]${reset} Health           System status & diagnostics
   ${cyan}[8]${reset} Help             Documentation & shortcuts
 
-${bold}>> Quick Actions${reset}
+${bold}${tan}>> Quick Actions${reset}
 ${gray}───────────────────────────────────────────────────────────${reset}
-  ${cyan}[N]${reset}ew              Run a command from current node
+  ${cyan}[N]${reset}ew              Run a command from current vault
   ${cyan}[R]${reset}efresh           Update statistics
   ${cyan}[?]${reset}                Show full help
   ${cyan}[Q]${reset}uit              Exit application

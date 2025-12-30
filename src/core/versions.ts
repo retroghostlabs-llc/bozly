@@ -27,6 +27,7 @@ import fs from "fs/promises";
 import path from "path";
 import crypto from "crypto";
 import { logger } from "./logger.js";
+import { FULL_VERSION } from "./version.js";
 import type { SemVer, ISODateTime, ModelChangelogEntry, Model } from "./types.js";
 
 const VERSIONS_FILE = ".versions.json";
@@ -380,7 +381,7 @@ export function isVersionCompatible(currentVersion: SemVer, minimumRequired: Sem
  */
 export function getFrameworkVersion(): FrameworkVersionInfo {
   return {
-    bozlyVersion: "0.3.0-rc.1",
+    bozlyVersion: FULL_VERSION,
     nodeVersion: process.version,
     platform: process.platform,
   };

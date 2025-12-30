@@ -8,7 +8,7 @@
  *   bozly logs --command daily           # Filter by command
  *   bozly logs --provider claude         # Filter by AI provider
  *   bozly logs --status completed        # Filter by status (completed, failed, dry_run)
- *   bozly logs --node music-node       # Filter by node ID
+ *   bozly logs --vault music-vault       # Filter by vault ID
  *   bozly logs --verbose                 # Show detailed information
  *   bozly logs --since 2025-12-20        # Sessions since date (ISO format)
  *   bozly logs --until 2025-12-21        # Sessions until date (ISO format)
@@ -35,7 +35,7 @@ export const logsCommand = new Command("logs")
   .option("-l, --limit <number>", "Maximum number of sessions to show (default: 10)")
   .option("-c, --command <name>", "Filter by command name")
   .option("-p, --provider <name>", "Filter by AI provider (claude, gpt, gemini, ollama)")
-  .option("-v, --node <id>", "Filter by node ID")
+  .option("-v, --vault <id>", "Filter by vault ID")
   .option("-s, --status <status>", "Filter by status (completed, failed, dry_run)")
   .option("--since <date>", "Sessions since date (ISO 8601 format)")
   .option("--until <date>", "Sessions until date (ISO 8601 format)")
@@ -223,9 +223,9 @@ export const logsCommand = new Command("logs")
         const node = await getCurrentNode();
 
         if (!node) {
-          await logger.warn("Not in a node directory");
+          await logger.warn("Not in a vault directory");
           console.error(
-            warningBox("Not in a node directory", {
+            warningBox("Not in a vault directory", {
               hint: "Run 'bozly logs' from within a vault, or use 'bozly logs --global' to view all vaults",
             })
           );

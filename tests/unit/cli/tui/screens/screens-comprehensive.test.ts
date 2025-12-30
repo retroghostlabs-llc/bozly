@@ -120,8 +120,8 @@ describe('Screen Implementations Comprehensive', () => {
       expect(header).toContain('Build. Organize. Link. Yield.');
       // Should contain ASCII art box-drawing characters for logo
       expect(header).toContain('██████');
-      // Should use ANSI color codes for purple (\x1b[35m)
-      expect(header).toContain('\x1b[35m');
+      // Should use ANSI true color codes for tan (#D4A574)
+      expect(header).toContain('\x1b[38;2;212;165;116m');
     });
 
     it('should render stats section with proper formatting', async () => {
@@ -157,8 +157,8 @@ describe('Screen Implementations Comprehensive', () => {
       // Should show [0] Home option (not [1])
       expect(actions).toContain('[0]');
       expect(actions).toContain('Home');
-      // Should show Nodes (not Vaults)
-      expect(actions).toContain('Nodes');
+      // Should show Vaults (previously Nodes - terminology updated for Obsidian users)
+      expect(actions).toContain('Vaults');
       // Should have other menu options
       expect(actions).toContain('Sessions');
       expect(actions).toContain('Commands');
@@ -214,7 +214,7 @@ describe('Screen Implementations Comprehensive', () => {
       expect(screen).toBeDefined();
     });
 
-    it('should use proper terminology: Nodes instead of Vaults', async () => {
+    it('should use proper terminology: Vaults for Obsidian-friendly UX', async () => {
       const { HomeScreen } = await import('../../../../../src/cli/tui/screens/home.js');
       const screen = new HomeScreen(mockScreen, mockAPIClient, {
         id: 'home',
@@ -222,8 +222,8 @@ describe('Screen Implementations Comprehensive', () => {
       });
 
       const actions = (screen as any).renderQuickActions();
-      expect(actions).toContain('Nodes');
-      expect(actions).not.toContain('[1] Vaults');
+      // Updated terminology: "Vaults" is user-facing (Obsidian-friendly), "Nodes" is internal
+      expect(actions).toContain('Vaults');
     });
 
     it('should include [0] Home in navigation menu', async () => {

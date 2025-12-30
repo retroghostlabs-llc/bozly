@@ -374,7 +374,8 @@ version: 1.0.0`;
     });
 
     it("should throw error on write failure", async () => {
-      const nodePath = "/invalid/path/that/does/not/exist";
+      // Use /dev/null as base path - guaranteed to fail since it's a device, not a directory
+      const nodePath = "/dev/null/impossible-vault";
 
       const model: Model = {
         name: "test",

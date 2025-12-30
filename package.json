@@ -27,7 +27,8 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "bozly": "./dist/cli/index.js"
+    "bozly": "./dist/cli/index.js",
+    "bz": "./dist/cli/index.js"
   },
   "files": [
     "dist",

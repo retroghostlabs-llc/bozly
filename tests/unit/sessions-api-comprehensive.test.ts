@@ -176,21 +176,13 @@ describe("Sessions Module - Comprehensive Coverage", () => {
     });
 
     it("should return false on permission error", async () => {
-      // Create read-only directory
-      const tempDir = getTempDir();
-      const readOnlyDir = path.join(tempDir, "readonly");
-      await fs.mkdir(readOnlyDir, { mode: 0o444 });
+      // Use /dev/null as base path - guaranteed to fail since it's a device, not a directory
+      // This is more reliable than permission-based tests which behave differently in containers
+      const sessionPath = "/dev/null/impossible-session-dir";
+      const result = await createSessionDirectory(sessionPath);
 
-      try {
-        const sessionPath = path.join(readOnlyDir, "sessions");
-        const result = await createSessionDirectory(sessionPath);
-
-        // Should fail due to permissions
-        expect(result).toBe(false);
-      } finally {
-        // Restore permissions for cleanup
-        await fs.chmod(readOnlyDir, 0o755);
-      }
+      // Should fail due to path error
+      expect(result).toBe(false);
     });
   });
 

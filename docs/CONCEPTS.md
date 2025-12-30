@@ -47,7 +47,13 @@ BOZLY:      Save results → Done
 
 ## Nodes (Vaults)
 
-A **node** is a domain-specific workspace. You also call it a "vault."
+A **node** is a domain-specific workspace. You can also call it a **vault**.
+
+> **Terminology Note:** "Node" and "vault" are interchangeable terms in BOZLY.
+> - **Vault** is user-friendly (familiar to Obsidian users)
+> - **Node** is the technical term (used internally)
+>
+> Use whichever feels natural — the CLI accepts both!
 
 ### What's a Node?
 

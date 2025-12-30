@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import path from "path";
 import { fileURLToPath } from "url";
 import { readFileSync } from "fs";
-import { VERSION } from "../../core/version.js";
+import { FULL_VERSION } from "../../core/version.js";
 import { logger } from "../../core/logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -15,7 +15,7 @@ function loadTemplate(name: string): string {
 
   // Replace version placeholders with actual version
   // Supports both "v0.x.x" and "0.x.x" formats
-  html = html.replace(/BOZLY v[\d.]+(-[\w.]+)?/g, `BOZLY v${VERSION}`);
+  html = html.replace(/BOZLY v[\d.]+(-[\w.]+)?/g, `BOZLY v${FULL_VERSION}`);
 
   return html;
 }

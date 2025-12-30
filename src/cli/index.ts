@@ -36,9 +36,10 @@ import { historyCommand } from "./commands/history.js";
 import { serveCommand } from "./commands/serve.js";
 import { stopCommand } from "./commands/stop.js";
 import { tuiCommand } from "./commands/tui.js";
+import { vaultCommand } from "./commands/vault.js";
 
 // Import version from single source of truth
-import { VERSION } from "../core/version.js";
+import { FULL_VERSION } from "../core/version.js";
 
 // Import UI utilities
 import { renderBanner } from "./ui/index.js";
@@ -99,7 +100,7 @@ async function main(): Promise<void> {
 
   // Log CLI startup
   await logger.debug("BOZLY CLI starting", {
-    version: VERSION,
+    version: FULL_VERSION,
     args: process.argv.slice(2),
     debugMode: process.env.BOZLY_DEBUG === "true",
   });
@@ -119,7 +120,7 @@ async function main(): Promise<void> {
   // Custom version output with banner
   program.option("-v, --version", "Show version number", () => {
     console.log(renderBanner());
-    console.log(chalk.gray("Version:"), VERSION);
+    console.log(chalk.gray("Version:"), FULL_VERSION);
     process.exit(0);
   });
 
@@ -157,6 +158,7 @@ async function main(): Promise<void> {
   program.addCommand(serveCommand);
   program.addCommand(stopCommand);
   program.addCommand(tuiCommand);
+  program.addCommand(vaultCommand);
 
   // Apply BozlyHelp to all commands and subcommands
   program.commands.forEach((cmd) => applyBozlyHelp(cmd));
@@ -164,16 +166,16 @@ async function main(): Promise<void> {
   // Default action (no command specified)
   program.action(() => {
     console.log(renderBanner());
-    console.log(chalk.gray("Version:"), VERSION);
+    console.log(chalk.gray("Version:"), FULL_VERSION);
     console.log();
     console.log(chalk.yellow("Quick Start:"));
-    console.log("  bozly init              Initialize a node in current directory");
+    console.log("  bozly init              Initialize a vault in current directory");
     console.log("  bozly list              List all registered vaults");
-    console.log("  bozly status            Show current node status");
+    console.log("  bozly status            Show current vault status");
     console.log();
     console.log(chalk.yellow("Context & Execution:"));
     console.log("  bozly context           Generate AI context");
-    console.log("  bozly run <command>     Execute a node command");
+    console.log("  bozly run <command>     Execute a vault command");
     console.log("  bozly logs              View session logs");
     console.log();
     console.log(chalk.yellow("Dashboard & UI:"));

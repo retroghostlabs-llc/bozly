@@ -1,7 +1,7 @@
 /**
- * bozly run - Execute a node command
+ * bozly run - Execute a vault command
  *
- * Runs a command in the current node with optional AI provider integration.
+ * Runs a command in the current vault with optional AI provider integration.
  *
  * Usage:
  *   bozly run <command>                    # Use default provider
@@ -25,12 +25,12 @@ import { errorBox, warningBox, successBox, infoBox, theme } from "../../cli/ui/i
 import { NodeInfo } from "../../core/types.js";
 
 export const runCommand = new Command("run")
-  .description("Execute a node command with optional AI provider integration")
+  .description("Execute a vault command with optional AI provider integration")
   .argument("[command]", "Command to run (e.g., daily, weekly)")
   .argument("[params...]", "Parameters to pass to the command")
   .option("--ai <provider>", "AI provider (claude, gpt, gemini, ollama)")
   .option("--dry", "Show what would be sent without executing")
-  .option("--no-context", "Run without node context")
+  .option("--no-context", "Run without vault context")
   .option("--list-providers", "Show available AI providers and installation status")
   .option("--verbose", "Include full prompt/response in session logs")
   .action(async (commandArg, params, options) => {
@@ -105,10 +105,10 @@ export const runCommand = new Command("run")
       node = await getCurrentNode();
 
       if (!node) {
-        await logger.warn("Not in a node directory");
+        await logger.warn("Not in a vault directory");
         console.error(
-          warningBox("Not in a node directory", {
-            hint: "Run 'bozly init' to initialize a node here",
+          warningBox("Not in a vault directory", {
+            hint: "Run 'bozly init' to initialize a vault here",
           })
         );
         process.exit(1);

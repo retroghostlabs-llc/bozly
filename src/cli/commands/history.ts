@@ -1,9 +1,9 @@
 /**
- * bozly history - Show recent sessions across all or specific nodes
+ * bozly history - Show recent sessions across all or specific vaults
  *
  * Usage:
- *   bozly history                    # Show last 10 sessions across all nodes
- *   bozly history music              # Show history for 'music' node
+ *   bozly history                    # Show last 10 sessions across all vaults
+ *   bozly history music              # Show history for 'music' vault
  *   bozly history --limit 20         # Show last 20
  *   bozly history --provider claude  # Filter by provider
  *   bozly history --command daily    # Filter by command
@@ -19,8 +19,8 @@ import { errorBox, warningBox, theme } from "../../cli/ui/index.js";
 import path from "path";
 
 export const historyCommand = new Command("history")
-  .description("Show recent sessions across all or specific nodes")
-  .argument("[node]", "Optional: specific node ID")
+  .description("Show recent sessions across all or specific vaults")
+  .argument("[vault]", "Optional: specific vault ID")
   .option("-l, --limit <number>", "Max results (default: 10, max: 100)")
   .option("-p, --provider <provider>", "Filter by provider (claude, gpt, gemini, ollama)")
   .option("-c, --command <name>", "Filter by command name")
@@ -78,7 +78,7 @@ export const historyCommand = new Command("history")
       const results = await searcher.getRecentSessions(historyOptions, nodeId);
 
       if (results.length === 0) {
-        console.log(warningBox(`No sessions found${nodeId ? ` for node '${nodeId}'` : ""}`));
+        console.log(warningBox(`No sessions found${nodeId ? ` for vault '${nodeId}'` : ""}`));
         return;
       }
 

@@ -1,14 +1,24 @@
+<p align="center">
+  <img src="src/server/static/images/logo-full.png" alt="BOZLY" width="400">
+</p>
+
+<p align="center">
+  <strong>Build. Organize. Link. Yield.</strong>
+</p>
+
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="#project-status"><img src="https://img.shields.io/badge/Status-Beta-blue.svg" alt="Status: Beta"></a>
+  <a href="https://www.npmjs.com/package/@retroghostlabs/bozly"><img src="https://img.shields.io/npm/v/@retroghostlabs/bozly.svg" alt="npm version"></a>
+  <a href="https://github.com/RetroGhostLabs/bozly/actions"><img src="https://img.shields.io/github/actions/workflow/status/RetroGhostLabs/bozly/test.yml?branch=main" alt="Build Status"></a>
+  <a href="https://codecov.io/gh/RetroGhostLabs/bozly"><img src="https://codecov.io/gh/RetroGhostLabs/bozly/branch/main/graph/badge.svg" alt="Coverage"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0%2B-blue" alt="TypeScript"></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-20%2B-green" alt="Node.js"></a>
+</p>
+
+---
+
 # BOZLY
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Status: Beta](https://img.shields.io/badge/Status-Beta-blue.svg)](#project-status)
-[![npm version](https://img.shields.io/npm/v/@retroghostlabs/bozly.svg)](https://www.npmjs.com/package/@retroghostlabs/bozly)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/RetroGhostLabs/bozly/test.yml?branch=main)](https://github.com/RetroGhostLabs/bozly/actions)
-[![Coverage](https://codecov.io/gh/RetroGhostLabs/bozly/branch/main/graph/badge.svg)](https://codecov.io/gh/RetroGhostLabs/bozly)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-blue)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-20%2B-green)](https://nodejs.org/)
-
-> **Build. OrganiZe. Link. Yield.**
 
 An AI-agnostic framework for deploying domain-specific workspaces. Use the same architecture patterns as Cursor and Cline, but for any life domain — music, content production, journaling, research, anything.
 

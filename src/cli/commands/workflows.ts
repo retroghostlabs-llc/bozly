@@ -3,7 +3,7 @@
  *
  * Usage:
  *   bozly workflows list                    # List all workflows
- *   bozly workflows list --all              # List all (node + global)
+ *   bozly workflows list --all              # List all (vault + global)
  *   bozly workflows show <id>               # Show workflow details
  *   bozly workflows validate <id>           # Validate workflow structure
  */
@@ -26,7 +26,7 @@ export const workflowsCommand = new Command("workflows").description(
 workflowsCommand
   .command("list")
   .description("List all available workflows")
-  .option("-a, --all", "Show all workflows (node + global)")
+  .option("-a, --all", "Show all workflows (vault + global)")
   .action(async (options) => {
     try {
       await logger.debug("bozly workflows list command started", {
@@ -36,7 +36,7 @@ workflowsCommand
       const node = await getCurrentNode();
       if (!node) {
         console.error(
-          errorBox("No node found", {
+          errorBox("No vault found", {
             hint: "Run 'bozly init' first",
           })
         );
@@ -47,7 +47,7 @@ workflowsCommand
 
       if (workflows.length === 0) {
         console.log(
-          warningBox("No workflows found in this node or globally", {
+          warningBox("No workflows found in this vault or globally", {
             hint: `Create a workflow: mkdir -p ${node.path}/.bozly/workflows`,
           })
         );
@@ -95,7 +95,7 @@ workflowsCommand
       const node = await getCurrentNode();
       if (!node) {
         console.error(
-          errorBox("No node found", {
+          errorBox("No vault found", {
             hint: "Run 'bozly init' first",
           })
         );
@@ -136,7 +136,7 @@ workflowsCommand
       const node = await getCurrentNode();
       if (!node) {
         console.error(
-          errorBox("No node found", {
+          errorBox("No vault found", {
             hint: "Run 'bozly init' first",
           })
         );
