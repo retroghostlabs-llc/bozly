@@ -1,6 +1,7 @@
 import blessed from "@unblessed/blessed";
 import { Screen, ScreenConfig } from "../core/screen.js";
 import { APIClient } from "../core/api-client.js";
+import { getColorContext } from "../utils/colors.js";
 
 interface SessionData {
   status: string;
@@ -35,6 +36,7 @@ export class HomeScreen extends Screen {
     this.apiClient = apiClient;
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async init(): Promise<void> {
     this.box = this.createBox({
       scrollable: true,
@@ -42,7 +44,23 @@ export class HomeScreen extends Screen {
     });
 
     this.createFooterBox();
-    await this.loadStats();
+
+    // Initialize with default stats to show immediately
+    this.stats = {
+      totalVaults: 0,
+      totalSessions: 0,
+      totalCommands: 0,
+      uptime: "Loading...",
+      lastUpdate: new Date().toLocaleTimeString(),
+      recentSessions: [],
+      successRate: 0,
+      totalDuration: "0m",
+    };
+
+    // Load actual stats in background to prevent TUI from hanging
+    this.loadStats().catch(() => {
+      // Silent catch - will keep default stats if load fails
+    });
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
@@ -110,22 +128,18 @@ export class HomeScreen extends Screen {
   }
 
   private renderHeader(): string {
-    // Use ANSI color codes matching BOZLY web UI brand colors
-    // Primary: Tan (#D4A574), Accent: Cyan (#00B4D8)
-    const bold = "\x1b[1m";
-    const tan = "\x1b[38;2;212;165;116m"; // True color tan (#D4A574)
-    const cyan = "\x1b[38;2;0;180;216m"; // True color cyan (#00B4D8)
-    const gray = "\x1b[90m";
-    const reset = "\x1b[0m";
+    // Use terminal-respecting colors that honor user's terminal theme
+    // Respects NO_COLOR standard: https://no-color.org/
+    const { bold, cyan, gray, reset } = getColorContext();
 
     // BOZLY ASCII art logo (B-O-Z-L-Y, each letter 4-5 chars wide)
     const logo = `
-        ${bold}${tan} ██████╗  ██████╗  ███████╗ ██╗     ██╗   ██╗${reset}
-        ${bold}${tan} ██╔══██╗ ██╔═══██╗ ╚════██║ ██║     ╚██╗ ██╔╝${reset}
-        ${bold}${tan} ██████╔╝ ██║   ██║  ███╔═╝  ██║      ╚████╔╝ ${reset}
-        ${bold}${tan} ██╔══██╗ ██║   ██║ ██╔══╝   ██║       ╚██╔╝  ${reset}
-        ${bold}${tan} ██████╔╝ ╚██████╔╝ ███████╗ ███████╗   ██║   ${reset}
-        ${bold}${tan} ╚═════╝   ╚═════╝  ╚══════╝ ╚══════╝   ╚═╝   ${reset}
+        ${bold}${cyan} ██████╗  ██████╗  ███████╗ ██╗     ██╗   ██╗${reset}
+        ${bold}${cyan} ██╔══██╗ ██╔═══██╗ ╚════██║ ██║     ╚██╗ ██╔╝${reset}
+        ${bold}${cyan} ██████╔╝ ██║   ██║  ███╔═╝  ██║      ╚████╔╝ ${reset}
+        ${bold}${cyan} ██╔══██╗ ██║   ██║ ██╔══╝   ██║       ╚██╔╝  ${reset}
+        ${bold}${cyan} ██████╔╝ ╚██████╔╝ ███████╗ ███████╗   ██║   ${reset}
+        ${bold}${cyan} ╚═════╝   ╚═════╝  ╚══════╝ ╚══════╝   ╚═╝   ${reset}
 
              ${cyan}Build. Organize. Link. Yield.${reset}
              ${gray}v0.6.0-beta.1${reset}
@@ -136,19 +150,14 @@ export class HomeScreen extends Screen {
   }
 
   private renderStats(): string {
-    const bold = "\x1b[1m";
-    const tan = "\x1b[38;2;212;165;116m"; // True color tan (#D4A574)
-    const cyan = "\x1b[38;2;0;180;216m"; // True color cyan (#00B4D8)
-    const gray = "\x1b[90m";
-    const green = "\x1b[32m";
-    const yellow = "\x1b[33m";
-    const reset = "\x1b[0m";
+    // Use terminal-respecting colors that honor user's terminal theme
+    const { bold, cyan, gray, green, yellow, reset } = getColorContext();
 
     if (!this.stats) {
       return `${yellow}Loading stats...${reset}\n\n`;
     }
 
-    return `${bold}${tan}System Overview${reset}
+    return `${bold}${cyan}System Overview${reset}
 ${gray}───────────────────────────────────────────────────────────${reset}
   Active Vaults:      ${cyan}${this.stats.totalVaults}${reset}
   Total Sessions:     ${cyan}${this.stats.totalSessions}${reset}
@@ -161,18 +170,14 @@ ${gray}────────────────────────�
   }
 
   private renderRecentSessions(): string {
-    const bold = "\x1b[1m";
-    const tan = "\x1b[38;2;212;165;116m"; // True color tan (#D4A574)
-    const gray = "\x1b[90m";
-    const green = "\x1b[32m";
-    const red = "\x1b[31m";
-    const reset = "\x1b[0m";
+    // Use terminal-respecting colors that honor user's terminal theme
+    const { bold, cyan, gray, green, red, reset } = getColorContext();
 
     if (!this.stats || this.stats.recentSessions.length === 0) {
       return "";
     }
 
-    let content = `${bold}${tan}Recent Sessions${reset}
+    let content = `${bold}${cyan}Recent Sessions${reset}
 ${gray}───────────────────────────────────────────────────────────${reset}
 `;
 
@@ -187,13 +192,10 @@ ${gray}────────────────────────�
   }
 
   private renderQuickActions(): string {
-    const bold = "\x1b[1m";
-    const tan = "\x1b[38;2;212;165;116m"; // True color tan (#D4A574)
-    const cyan = "\x1b[38;2;0;180;216m"; // True color cyan (#00B4D8)
-    const gray = "\x1b[90m";
-    const reset = "\x1b[0m";
+    // Use terminal-respecting colors that honor user's terminal theme
+    const { bold, cyan, gray, reset } = getColorContext();
 
-    return `${bold}${tan}>> Navigation${reset}
+    return `${bold}${cyan}>> Navigation${reset}
 ${gray}───────────────────────────────────────────────────────────${reset}
   ${cyan}[0]${reset} Home             Back to main dashboard
   ${cyan}[1]${reset} Vaults           Manage your AI workspaces
@@ -205,7 +207,7 @@ ${gray}────────────────────────�
   ${cyan}[7]${reset} Health           System status & diagnostics
   ${cyan}[8]${reset} Help             Documentation & shortcuts
 
-${bold}${tan}>> Quick Actions${reset}
+${bold}${cyan}>> Quick Actions${reset}
 ${gray}───────────────────────────────────────────────────────────${reset}
   ${cyan}[N]${reset}ew              Run a command from current vault
   ${cyan}[R]${reset}efresh           Update statistics

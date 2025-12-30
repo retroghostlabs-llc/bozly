@@ -199,6 +199,19 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
 
     // Start TUI
     await tui.start();
+
+    // Keep the process alive while the TUI is running
+    // The blessed screen will handle stdin, or if running in test mode, resolve immediately
+    if (process.env.NODE_ENV === "test") {
+      // In test mode, don't block
+      return;
+    }
+
+    // In normal mode, wait indefinitely for the TUI to handle shutdown via keybindings (q, Ctrl+C)
+    await new Promise(() => {
+      // Intentionally never resolve - blessed screen keeps process alive
+      // Shutdown is handled by keybindings that call process.exit(0)
+    });
   } catch (error) {
     if (error instanceof Error) {
       await logger.error("TUI Error", error);

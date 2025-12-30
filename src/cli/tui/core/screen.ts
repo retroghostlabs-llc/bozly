@@ -1,6 +1,7 @@
 import blessed from "@unblessed/blessed";
 import type { Widgets } from "@unblessed/blessed";
 import { homedir } from "os";
+import { FULL_VERSION } from "../../../core/version.js";
 
 export interface ScreenConfig {
   id: string;
@@ -317,13 +318,24 @@ ${gray}${cyan}[${pageName}]${reset}${gray}  │  ${cyan}[0]${reset}${gray} Main 
    */
   protected createFooterBox(): blessed.Widgets.BoxElement | null {
     try {
-      const cyan = "\x1b[36m"; // Bright cyan - visible on dark backgrounds
-      const dimWhite = "\x1b[97m"; // Bright white for better contrast
-      const reset = "\x1b[0m";
-
       const pageName = this.name.charAt(0).toUpperCase() + this.name.slice(1);
-      // Use bright colors that work on both light and dark terminal backgrounds
-      const footerText = `${cyan}[${pageName}]${reset}${dimWhite}  │  ${cyan}[0]${reset}${dimWhite} Main Menu  │  ${cyan}[?]${reset}${dimWhite} Help  │  ${cyan}[Q]${reset}${dimWhite} Quit${reset}`;
+
+      // Extract vault name from current working directory
+      const cwd = process.cwd();
+      let vaultInfo = "none";
+      const bozlyMatch = cwd.match(/\/([^/]+)\/\.bozly/);
+      if (bozlyMatch?.[1]) {
+        vaultInfo = bozlyMatch[1];
+      }
+
+      // Show version with dev indicator if applicable
+      const versionInfo = FULL_VERSION.includes("-dev")
+        ? `v${FULL_VERSION} (dev)`
+        : `v${FULL_VERSION}`;
+
+      // Build simple footer text (no ANSI codes - let blessed handle styling)
+      // Format: [Page]  Vault: name  │  version  │  [0] Menu [?] Help [Q] Quit
+      const footerText = `[${pageName}]  Vault: ${vaultInfo}  │  ${versionInfo}  │  [0] Menu  │  [?] Help  │  [Q] Quit`;
 
       // Create footer as child of parent screen (not main content box)
       // This ensures it stays visible even when content scrolls
@@ -334,8 +346,11 @@ ${gray}${cyan}[${pageName}]${reset}${gray}  │  ${cyan}[0]${reset}${gray} Main 
         right: 0,
         height: 1,
         content: footerText,
-        tags: true,
-        // Don't set bg/fg - let ANSI codes in text handle it (works on any background)
+        // Use blessed's native styling instead of ANSI codes for better compatibility
+        style: {
+          fg: "white",
+          bg: "blue",
+        },
       });
 
       return this.footerBox;

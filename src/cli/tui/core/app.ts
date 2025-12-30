@@ -1,11 +1,9 @@
 import blessed from "@unblessed/blessed";
-import { homedir } from "os";
 import { APIClient } from "./api-client.js";
 import { Screen, IAppReference } from "./screen.js";
 import { Modal } from "./modal.js";
 import { logger } from "../../../core/logger.js";
 import { ConfigManager } from "../../../core/config-manager.js";
-import { FULL_VERSION } from "../../../core/version.js";
 
 export interface BozlyTUIConfig {
   apiUrl?: string;
@@ -26,7 +24,6 @@ export class BozlyTUI implements IAppReference {
   private updatePoller: NodeJS.Timeout | null = null;
   private refreshInterval: number;
   private isRunning: boolean = false;
-  private statusBar: blessed.Widgets.BoxElement | null = null;
 
   constructor(config: BozlyTUIConfig = {}) {
     // Initialize blessed screen with terminal capabilities fallback
@@ -77,11 +74,8 @@ export class BozlyTUI implements IAppReference {
   init(): void {
     try {
       // Note: API health already checked in index.ts before creating this instance
-      // Create status bar showing version and system info
-      this.createStatusBar();
-
-      // Initialize screens (will be created in subclasses)
-      // For now, just setup the structure
+      // Version info is now shown in the footer of each screen
+      // No separate status bar needed
 
       this.isRunning = true;
     } catch (error) {
@@ -134,7 +128,15 @@ export class BozlyTUI implements IAppReference {
     }
 
     this.screen.destroy();
-    process.exit(0);
+
+    // Exit immediately in test mode, with a small delay in production for cleanup
+    if (process.env.NODE_ENV === "test") {
+      process.exit(0);
+    } else {
+      setTimeout(() => {
+        process.exit(0);
+      }, 100);
+    }
   }
 
   /**
@@ -236,67 +238,12 @@ export class BozlyTUI implements IAppReference {
   }
 
   /**
-   * Create and initialize the status bar at the bottom of the screen
-   */
-  private createStatusBar(): void {
-    this.statusBar = this.screen.box({
-      parent: this.screen,
-      top: this.screen.height - 1,
-      left: 0,
-      width: "100%",
-      height: 1,
-      style: {
-        bg: "blue",
-        fg: "white",
-      },
-    });
-
-    this.updateStatusBar();
-  }
-
-  /**
-   * Update status bar with current vault info, directory, and version
-   */
-  private updateStatusBar(): void {
-    if (!this.statusBar) {
-      return;
-    }
-
-    const cwd = process.cwd();
-    const homeDir = homedir();
-    const displayPath = cwd.replace(homeDir, "~");
-
-    // Extract vault name from path (simple heuristic: folder after .bozly)
-    let vaultInfo = "none";
-    const bozlyMatch = cwd.match(/\/([^/]+)\/\.bozly/);
-    if (bozlyMatch?.[1]) {
-      vaultInfo = bozlyMatch[1];
-    }
-
-    // Show version with dev indicator if applicable
-    const versionInfo = FULL_VERSION.includes("-dev")
-      ? `v${FULL_VERSION} (dev)`
-      : `v${FULL_VERSION}`;
-
-    const screenName = this.currentScreen?.getName().toUpperCase() ?? "HOME";
-    const status = `[${screenName}]  Vault: ${vaultInfo}  |  ${displayPath}  |  ${versionInfo}`;
-    this.statusBar.setContent(status);
-  }
-
-  /**
    * Show temporary status message (auto-dismisses after 2 seconds)
+   * Note: Version info is now in the footer, not a separate status bar
    */
-  showStatusMessage(message: string): void {
-    if (!this.statusBar) {
-      return;
-    }
-
-    this.statusBar.setContent(`→ ${message}`);
-
-    // Reset after 2 seconds
-    setTimeout(() => {
-      this.updateStatusBar();
-    }, 2000);
+  showStatusMessage(_message: string): void {
+    // Status messages can be logged or shown in other ways if needed
+    // For now, this is a no-op since footer provides persistent status info
   }
 
   /**

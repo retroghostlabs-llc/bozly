@@ -120,8 +120,9 @@ describe('Screen Implementations Comprehensive', () => {
       expect(header).toContain('Build. Organize. Link. Yield.');
       // Should contain ASCII art box-drawing characters for logo
       expect(header).toContain('██████');
-      // Should use ANSI true color codes for tan (#D4A574)
-      expect(header).toContain('\x1b[38;2;212;165;116m');
+      // Should use terminal-respecting colors (cyan: \x1b[36m) instead of hardcoded RGB
+      // This allows users' terminal color schemes to be applied
+      expect(header).toContain('\x1b[36m');
     });
 
     it('should render stats section with proper formatting', async () => {

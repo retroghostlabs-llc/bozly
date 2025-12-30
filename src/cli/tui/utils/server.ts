@@ -17,8 +17,8 @@ export function spawnAPIServer(): Promise<void> {
       // Unref allows the parent process to exit even if child is still running
       server.unref();
 
-      // Give server a moment to start
-      setTimeout(resolve, 500);
+      // Give server time to fully initialize all endpoints (was 500ms, causing timeouts)
+      setTimeout(resolve, 2000);
     } catch (error) {
       reject(error);
     }
