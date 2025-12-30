@@ -77,9 +77,8 @@ export class BozlyTUI implements IAppReference {
   init(): void {
     try {
       // Note: API health already checked in index.ts before creating this instance
-      // Temporarily skip menu and status bar - focus on keyboard input first
-      // this.createMenu();
-      // this.createStatusBar();
+      // Status bar creation code to be implemented - shows version and system info
+      // For now, version is available via FULL_VERSION and shown in the CLI help
 
       // Initialize screens (will be created in subclasses)
       // For now, just setup the structure

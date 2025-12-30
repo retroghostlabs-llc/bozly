@@ -14,8 +14,8 @@ function loadTemplate(name: string): string {
   let html = readFileSync(templatePath, "utf-8");
 
   // Replace version placeholders with actual version
-  // Supports both "v0.x.x" and "0.x.x" formats
-  html = html.replace(/BOZLY v[\d.]+(-[\w.]+)?/g, `BOZLY v${FULL_VERSION}`);
+  // Supports both "v0.x.x" and "0.x.x" formats, including beta/rc suffixes
+  html = html.replace(/BOZLY v[\d.]+([-.][\w.]+)?/g, `BOZLY v${FULL_VERSION}`);
 
   return html;
 }
