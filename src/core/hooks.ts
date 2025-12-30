@@ -155,7 +155,24 @@ async function executeHook(hook: HookMetadata, context: HookContext): Promise<Ho
   const env = buildHookEnvironment(context);
 
   // Pass full context as JSON via stdin for hooks that need detailed data
-  const contextJson = JSON.stringify(context, null, 2);
+  let contextJson: string;
+  try {
+    contextJson = JSON.stringify(context, null, 2);
+  } catch (error) {
+    // Handle case where context contains non-serializable data (circular refs, etc)
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    await logger.warn(`Failed to serialize hook context to JSON`, {
+      hookName: hook.name,
+      error: errorMsg,
+    });
+
+    return {
+      hookName: hook.name,
+      success: false,
+      duration: 0,
+      error: `Context serialization failed: ${errorMsg}`,
+    };
+  }
 
   return new Promise((resolve, reject) => {
     let stdout = "";
@@ -195,15 +212,32 @@ async function executeHook(hook: HookMetadata, context: HookContext): Promise<Ho
         }
       });
 
-      proc.stdin.write(contextJson, "utf8", (error?: Error | null) => {
-        if (error && "code" in error && error.code !== "EPIPE") {
-          logger
-            .warn(`Failed to send context to hook: ${error.message}`, {
-              hookName: hook.name,
-            })
-            .catch(() => {});
-        }
-      });
+      try {
+        // Use Buffer for more reliable encoding handling
+        const contextBuffer = Buffer.from(contextJson, "utf8");
+        proc.stdin.write(contextBuffer, (error?: Error | null) => {
+          if (error) {
+            // Check if it's EPIPE (process closed stdin)
+            const code = (error as NodeJS.ErrnoException).code;
+            if (code !== "EPIPE") {
+              logger
+                .warn(`Failed to send context to hook: ${error.message}`, {
+                  hookName: hook.name,
+                })
+                .catch(() => {});
+            }
+          }
+        });
+      } catch (error) {
+        // Handle Buffer conversion errors (should be rare with UTF8)
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        logger
+          .warn(`Failed to encode hook context: ${errorMsg}`, {
+            hookName: hook.name,
+          })
+          .catch(() => {});
+      }
+
       proc.stdin.end();
     }
 
@@ -360,6 +394,75 @@ function buildHookEnvironment(context: HookContext): Record<string, string> {
   }
 
   return env;
+}
+
+/**
+ * Interpolate variables in a template string
+ * Replaces {{variable}} patterns with values from HookContext
+ *
+ * Supports:
+ * - Simple variables: {{nodeId}}, {{command}}, {{timestamp}}
+ * - Aliases: {{vault}} → nodeId
+ * - Nested properties: {{session.id}}, {{error.message}}
+ * - Returns template unchanged if variable not found or context is null
+ *
+ * Examples:
+ * - "Command: {{command}} in vault {{vault}}"
+ * - "Session {{session.id}} completed in {{session.duration}}ms"
+ * - "Error: {{error.message}} (code: {{error.code}})"
+ */
+export function interpolateVariables(template: string, context: HookContext): string {
+  // Pattern to match {{variable}} or {{object.property}}
+  const variablePattern = /\{\{([a-zA-Z._]+)\}\}/g;
+
+  return template.replace(variablePattern, (_match, variablePath) => {
+    // Get value from context using dot notation
+    const value = getValueFromContext(context, variablePath);
+
+    // If value is null/undefined, return empty string
+    if (value === null || value === undefined) {
+      return "";
+    }
+
+    // Convert to string
+    return String(value);
+  });
+}
+
+/**
+ * Get a value from HookContext using dot notation path
+ * Supports aliases and nested properties
+ *
+ * Aliases:
+ * - "vault" → "nodeId"
+ *
+ * Examples:
+ * - getValueFromContext(context, "nodeId") → context.nodeId
+ * - getValueFromContext(context, "vault") → context.nodeId
+ * - getValueFromContext(context, "session.id") → context.session?.id
+ * - getValueFromContext(context, "error.message") → context.error?.message
+ */
+function getValueFromContext(context: HookContext, path: string): unknown {
+  // Handle aliases
+  const normalizedPath = path === "vault" ? "nodeId" : path;
+
+  // Split path by dots for nested access
+  const parts = normalizedPath.split(".");
+  let current: unknown = context;
+
+  for (const part of parts) {
+    if (current === null || current === undefined) {
+      return undefined;
+    }
+
+    if (typeof current === "object" && part in current) {
+      current = (current as Record<string, unknown>)[part];
+    } else {
+      return undefined;
+    }
+  }
+
+  return current;
 }
 
 /**

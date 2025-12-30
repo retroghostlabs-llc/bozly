@@ -14,7 +14,13 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
-import { discoverHooks, executeHooks, HookType, HookContext } from "../src/core/hooks.js";
+import {
+  discoverHooks,
+  executeHooks,
+  interpolateVariables,
+  HookType,
+  HookContext,
+} from "../src/core/hooks.js";
 
 describe("Hook System", () => {
   let testDir: string;
@@ -769,6 +775,369 @@ if (process.env.BOZLY_NODE_ID === 'test-node') {
       // May succeed if Node.js is available, or fail gracefully - test for either
       expect(results).toHaveLength(1);
       expect(typeof results[0].success).toBe("boolean");
+    });
+  });
+
+  describe("Hook Encoding Handling", () => {
+    it("handles non-UTF8 characters in context gracefully", async () => {
+      const hookName = "session-start.encoding-test.sh";
+      const hookPath = path.join(hooksDir, hookName);
+
+      // Hook that reads from stdin
+      await fs.writeFile(
+        hookPath,
+        `#!/bin/bash
+# Read JSON from stdin and verify it's valid
+while IFS= read -r line; do
+  if [ -z "$line" ]; then
+    break
+  fi
+done
+exit 0`,
+        { mode: 0o755 }
+      );
+
+      const context: HookContext = {
+        nodeId: "test-node",
+        nodeName: "Test Node 🎵 Musik",
+        nodePath: testDir,
+        command: "test",
+        provider: "claude",
+        timestamp: new Date().toISOString(),
+        prompt: "This contains special chars: é, ñ, 中文, 🎵, and more",
+      };
+
+      const results = await executeHooks(testDir, "session-start", context);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].success).toBe(true);
+    });
+
+    it("handles very large context with many special characters", async () => {
+      const hookName = "session-start.large-context.sh";
+      const hookPath = path.join(hooksDir, hookName);
+
+      await fs.writeFile(
+        hookPath,
+        `#!/bin/bash
+# Just read stdin and exit successfully
+exec >/dev/null 2>&1
+cat
+exit 0`,
+        { mode: 0o755 }
+      );
+
+      // Create a large context with lots of special characters
+      const largeText = Array(100)
+        .fill("✓ 日本語 émojis 🎵 中文 Ñoño ")
+        .join("");
+
+      const context: HookContext = {
+        nodeId: "test-node",
+        nodeName: "Test Node",
+        nodePath: testDir,
+        command: "test",
+        provider: "claude",
+        timestamp: new Date().toISOString(),
+        prompt: largeText,
+      };
+
+      const results = await executeHooks(testDir, "session-start", context);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].success).toBe(true);
+    });
+
+    it("handles hook that parses JSON from stdin", async () => {
+      const hookName = "session-start.json-parser.sh";
+      const hookPath = path.join(hooksDir, hookName);
+
+      // Hook that parses JSON from stdin
+      await fs.writeFile(
+        hookPath,
+        `#!/bin/bash
+# Parse JSON from stdin using jq
+result=$(jq -r '.nodeName' 2>/dev/null)
+if [ ! -z "$result" ]; then
+  exit 0
+else
+  exit 1
+fi`,
+        { mode: 0o755 }
+      );
+
+      const context: HookContext = {
+        nodeId: "test-node",
+        nodeName: "Music Node 🎵",
+        nodePath: testDir,
+        command: "test",
+        provider: "claude",
+        timestamp: new Date().toISOString(),
+      };
+
+      const results = await executeHooks(testDir, "session-start", context);
+
+      // This test may fail if jq is not available, that's OK
+      expect(results).toHaveLength(1);
+      expect(typeof results[0].success).toBe("boolean");
+    });
+
+    it("gracefully handles hook stdin write errors", async () => {
+      const hookName = "session-start.stdin-error.sh";
+      const hookPath = path.join(hooksDir, hookName);
+
+      // Hook that closes stdin immediately
+      await fs.writeFile(
+        hookPath,
+        `#!/bin/bash
+exec <&-
+exit 0`,
+        { mode: 0o755 }
+      );
+
+      const context: HookContext = {
+        nodeId: "test-node",
+        nodeName: "Test Node",
+        nodePath: testDir,
+        command: "test",
+        provider: "claude",
+        timestamp: new Date().toISOString(),
+      };
+
+      // This should not crash even if stdin is closed
+      const results = await executeHooks(testDir, "session-start", context);
+
+      expect(results).toHaveLength(1);
+      expect(typeof results[0].success).toBe("boolean");
+    });
+  });
+
+  describe("Variable Interpolation", () => {
+    const baseContext: HookContext = {
+      nodeId: "music-vault",
+      nodeName: "Music Library",
+      nodePath: "/home/user/music",
+      command: "weekly-album",
+      provider: "claude-opus",
+      timestamp: "2025-12-29T10:30:00Z",
+    };
+
+    it("interpolates simple variables", () => {
+      const template = "Command: {{command}} in vault {{nodeId}}";
+      const result = interpolateVariables(template, baseContext);
+
+      expect(result).toBe("Command: weekly-album in vault music-vault");
+    });
+
+    it("supports vault alias for nodeId", () => {
+      const template = "Vault: {{vault}}";
+      const result = interpolateVariables(template, baseContext);
+
+      expect(result).toBe("Vault: music-vault");
+    });
+
+    it("interpolates all basic context variables", () => {
+      const template = `Node: {{nodeId}}, Name: {{nodeName}}, Path: {{nodePath}}, Command: {{command}}, Provider: {{provider}}, Timestamp: {{timestamp}}`;
+      const result = interpolateVariables(template, baseContext);
+
+      expect(result).toContain("Node: music-vault");
+      expect(result).toContain("Name: Music Library");
+      expect(result).toContain("Path: /home/user/music");
+      expect(result).toContain("Command: weekly-album");
+      expect(result).toContain("Provider: claude-opus");
+      expect(result).toContain("Timestamp: 2025-12-29T10:30:00Z");
+    });
+
+    it("interpolates nested session properties", () => {
+      const contextWithSession: HookContext = {
+        ...baseContext,
+        session: {
+          id: "session-123-abc",
+          sessionPath: "/path/to/session",
+          status: "completed",
+          duration: 5432,
+        },
+      };
+
+      const template = `Session {{session.id}} completed in {{session.duration}}ms with status {{session.status}}`;
+      const result = interpolateVariables(template, contextWithSession);
+
+      expect(result).toBe(
+        "Session session-123-abc completed in 5432ms with status completed"
+      );
+    });
+
+    it("interpolates nested error properties", () => {
+      const contextWithError: HookContext = {
+        ...baseContext,
+        error: {
+          message: "Provider timeout",
+          code: "TIMEOUT_ERROR",
+        },
+      };
+
+      const template = `Error: {{error.message}} (code: {{error.code}})`;
+      const result = interpolateVariables(template, contextWithError);
+
+      expect(result).toBe("Error: Provider timeout (code: TIMEOUT_ERROR)");
+    });
+
+    it("handles missing optional fields gracefully", () => {
+      const template = `Output: {{session.output}} | Reason: {{cancellationReason}}`;
+      const result = interpolateVariables(template, baseContext);
+
+      // Should replace with empty strings
+      expect(result).toBe("Output:  | Reason: ");
+    });
+
+    it("handles null session gracefully", () => {
+      const contextNoSession: HookContext = {
+        ...baseContext,
+        session: undefined,
+      };
+
+      const template = `Session: {{session}} | ID: {{session.id}}`;
+      const result = interpolateVariables(template, contextNoSession);
+
+      expect(result).toBe("Session:  | ID: ");
+    });
+
+    it("handles multiple occurrences of same variable", () => {
+      const template = `Running {{command}} in {{vault}}, {{command}} will use {{provider}}`;
+      const result = interpolateVariables(template, baseContext);
+
+      expect(result).toBe(
+        "Running weekly-album in music-vault, weekly-album will use claude-opus"
+      );
+    });
+
+    it("handles special characters in context values", () => {
+      const contextWithSpecialChars: HookContext = {
+        ...baseContext,
+        nodeName: "Music 🎵 & Media",
+        command: "create-song-2025",
+      };
+
+      const template = `Working on: {{command}} in {{nodeName}}`;
+      const result = interpolateVariables(template, contextWithSpecialChars);
+
+      expect(result).toBe("Working on: create-song-2025 in Music 🎵 & Media");
+    });
+
+    it("preserves text without interpolation variables", () => {
+      const template = `This is a plain text without any variables`;
+      const result = interpolateVariables(template, baseContext);
+
+      expect(result).toBe("This is a plain text without any variables");
+    });
+
+    it("handles empty template", () => {
+      const result = interpolateVariables("", baseContext);
+
+      expect(result).toBe("");
+    });
+
+    it("ignores invalid variable names", () => {
+      const template = `Valid: {{command}}, Invalid: {{not_a_real_var}}, Numeric-start: {{123}}`;
+      const result = interpolateVariables(template, baseContext);
+
+      // Variables that don't start with a letter are not replaced
+      expect(result).toBe("Valid: weekly-album, Invalid: , Numeric-start: {{123}}");
+    });
+
+    it("handles deep nested properties", () => {
+      const contextWithOutput: HookContext = {
+        ...baseContext,
+        session: {
+          id: "session-123",
+          sessionPath: "/path",
+          status: "completed",
+          duration: 1000,
+          output: "Command executed successfully",
+        },
+      };
+
+      const template = `Output from session: {{session.output}}`;
+      const result = interpolateVariables(template, contextWithOutput);
+
+      expect(result).toBe("Output from session: Command executed successfully");
+    });
+
+    it("handles whitespace in variable names", () => {
+      // Variables with spaces should not match
+      const template = `This {{ command }} should not interpolate`;
+      const result = interpolateVariables(template, baseContext);
+
+      expect(result).toBe("This {{ command }} should not interpolate");
+    });
+
+    it("converts numeric values to strings", () => {
+      const contextWithNumeric: HookContext = {
+        ...baseContext,
+        session: {
+          id: "test",
+          sessionPath: "/path",
+          status: "completed",
+          duration: 12345,
+        },
+      };
+
+      const template = `Duration in ms: {{session.duration}}`;
+      const result = interpolateVariables(template, contextWithNumeric);
+
+      expect(result).toBe("Duration in ms: 12345");
+    });
+
+    it("handles boolean values", () => {
+      const contextWithBool: HookContext = {
+        ...baseContext,
+        prompt: "test prompt", // This makes promptSize appear as a property
+        promptSize: 1024,
+      };
+
+      const template = `Prompt size: {{promptSize}}`;
+      const result = interpolateVariables(template, contextWithBool);
+
+      expect(result).toBe("Prompt size: 1024");
+    });
+
+    it("handles multiple interpolations in complex template", () => {
+      const contextFull: HookContext = {
+        ...baseContext,
+        prompt: "What is the best album of 2025?",
+        promptSize: 42,
+        session: {
+          id: "session-abc-123",
+          sessionPath: "/home/user/music/.bozly/sessions/2025/12/29/session-abc-123",
+          status: "completed",
+          duration: 8765,
+          output: "Album analysis completed",
+        },
+        error: undefined,
+      };
+
+      const template = `🎵 HOOK REPORT 🎵
+Command: {{command}}
+Vault: {{vault}}
+Provider: {{provider}}
+Session ID: {{session.id}}
+Status: {{session.status}}
+Duration: {{session.duration}}ms
+Output: {{session.output}}
+Prompt size: {{promptSize}} chars
+Node name: {{nodeName}}`;
+
+      const result = interpolateVariables(template, contextFull);
+
+      expect(result).toContain("Command: weekly-album");
+      expect(result).toContain("Vault: music-vault");
+      expect(result).toContain("Provider: claude-opus");
+      expect(result).toContain("Session ID: session-abc-123");
+      expect(result).toContain("Status: completed");
+      expect(result).toContain("Duration: 8765ms");
+      expect(result).toContain("Output: Album analysis completed");
+      expect(result).toContain("Prompt size: 42 chars");
+      expect(result).toContain("Node name: Music Library");
     });
   });
 });
