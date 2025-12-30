@@ -77,8 +77,8 @@ export class BozlyTUI implements IAppReference {
   init(): void {
     try {
       // Note: API health already checked in index.ts before creating this instance
-      // Status bar creation code to be implemented - shows version and system info
-      // For now, version is available via FULL_VERSION and shown in the CLI help
+      // Create status bar showing version and system info
+      this.createStatusBar();
 
       // Initialize screens (will be created in subclasses)
       // For now, just setup the structure
@@ -236,6 +236,25 @@ export class BozlyTUI implements IAppReference {
   }
 
   /**
+   * Create and initialize the status bar at the bottom of the screen
+   */
+  private createStatusBar(): void {
+    this.statusBar = this.screen.box({
+      parent: this.screen,
+      top: this.screen.height - 1,
+      left: 0,
+      width: "100%",
+      height: 1,
+      style: {
+        bg: "blue",
+        fg: "white",
+      },
+    });
+
+    this.updateStatusBar();
+  }
+
+  /**
    * Update status bar with current vault info, directory, and version
    */
   private updateStatusBar(): void {
@@ -254,17 +273,13 @@ export class BozlyTUI implements IAppReference {
       vaultInfo = bozlyMatch[1];
     }
 
-    const cyan = "\x1b[36m";
-    const gray = "\x1b[90m";
-    const yellow = "\x1b[33m";
-    const reset = "\x1b[0m";
-
     // Show version with dev indicator if applicable
-    const versionDisplay = FULL_VERSION.includes("-dev")
-      ? `${yellow}v${FULL_VERSION}${reset}`
-      : `${gray}v${FULL_VERSION}${reset}`;
+    const versionInfo = FULL_VERSION.includes("-dev")
+      ? `v${FULL_VERSION} (dev)`
+      : `v${FULL_VERSION}`;
 
-    const status = `${cyan}[${this.currentScreen?.getName().toUpperCase() ?? "APP"}]${reset}  ${gray}Vault:${reset} ${vaultInfo}  ${gray}|${reset}  ${displayPath}  ${gray}|${reset}  ${versionDisplay}`;
+    const screenName = this.currentScreen?.getName().toUpperCase() ?? "HOME";
+    const status = `[${screenName}]  Vault: ${vaultInfo}  |  ${displayPath}  |  ${versionInfo}`;
     this.statusBar.setContent(status);
   }
 
@@ -276,10 +291,7 @@ export class BozlyTUI implements IAppReference {
       return;
     }
 
-    const cyan = "\x1b[36m";
-    const reset = "\x1b[0m";
-
-    this.statusBar.setContent(`${cyan}→${reset} ${message}`);
+    this.statusBar.setContent(`→ ${message}`);
 
     // Reset after 2 seconds
     setTimeout(() => {
