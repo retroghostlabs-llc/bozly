@@ -43,22 +43,6 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
       enableFile: loggingConfig.enableFile,
     });
 
-    // Suppress stdout/stderr for TUI mode to prevent any accidental output
-    // from corrupting the blessed UI
-    process.stdout.write = ((chunk: string | Buffer): boolean => {
-      // Log to file instead of stdout
-      const msg = typeof chunk === "string" ? chunk : chunk.toString();
-      void logger.debug("Suppressed stdout", { chunk: msg.substring(0, 100) });
-      return true;
-    }) as any;
-
-    process.stderr.write = ((chunk: string | Buffer): boolean => {
-      // Log to file instead of stderr
-      const msg = typeof chunk === "string" ? chunk : chunk.toString();
-      void logger.debug("Suppressed stderr", { chunk: msg.substring(0, 100) });
-      return true;
-    }) as any;
-
     // Get API URL from config or options
     const port = options?.port as number | undefined;
     const host = options?.host as string | undefined;
