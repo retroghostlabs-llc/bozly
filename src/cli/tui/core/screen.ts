@@ -306,7 +306,7 @@ ${bgDark}${cyan}└────────────────────�
 
     const pageName = this.name.charAt(0).toUpperCase() + this.name.slice(1);
     const footer = `
-${gray}${cyan}[${pageName}]${reset}${gray}  │  ${cyan}[0]${reset}${gray} Main Menu  │  ${cyan}[?]${reset}${gray} Help  │  ${cyan}[Q]${reset}${gray} Quit${reset}`;
+${gray}${cyan}[${pageName}]${reset}${gray}  │  ${cyan}[B]${reset}${gray} Back  │  ${cyan}[0]${reset}${gray} Main Menu  │  ${cyan}[?]${reset}${gray} Help  │  ${cyan}[Q]${reset}${gray} Quit${reset}`;
 
     return footer;
   }
@@ -334,8 +334,8 @@ ${gray}${cyan}[${pageName}]${reset}${gray}  │  ${cyan}[0]${reset}${gray} Main 
         : `v${FULL_VERSION}`;
 
       // Build simple footer text (no ANSI codes - let blessed handle styling)
-      // Format: [Page]  Vault: name  │  version  │  [0] Menu [?] Help [Q] Quit
-      const footerText = `[${pageName}]  Vault: ${vaultInfo}  │  ${versionInfo}  │  [0] Menu  │  [?] Help  │  [Q] Quit`;
+      // Format: [Page]  Vault: name  │  version  │  [B] Back [0] Menu [?] Help [Q] Quit
+      const footerText = `[${pageName}]  Vault: ${vaultInfo}  │  ${versionInfo}  │  [B] Back  │  [0] Menu  │  [?] Help  │  [Q] Quit`;
 
       // Create footer as child of parent screen (not main content box)
       // This ensures it stays visible even when content scrolls

@@ -24,6 +24,7 @@ export class BozlyTUI implements IAppReference {
   private updatePoller: NodeJS.Timeout | null = null;
   private refreshInterval: number;
   private isRunning: boolean = false;
+  private navigationHistory: string[] = []; // Stack of screen IDs for back navigation
 
   constructor(config: BozlyTUIConfig = {}) {
     // Initialize blessed screen with terminal capabilities fallback
@@ -160,7 +161,7 @@ export class BozlyTUI implements IAppReference {
   /**
    * Switch to a different screen
    */
-  async switchScreen(screenId: string): Promise<void> {
+  async switchScreen(screenId: string, isBackNavigation: boolean = false): Promise<void> {
     const screen = this.screens.get(screenId);
     if (!screen) {
       await logger.error("Screen not found", { screenId });
@@ -169,6 +170,11 @@ export class BozlyTUI implements IAppReference {
 
     // Deactivate current screen
     if (this.currentScreen && this.currentScreen.getId() !== screenId) {
+      // Add current screen to history (unless going back)
+      if (!isBackNavigation && this.currentScreen.getId() !== "home") {
+        this.navigationHistory.push(this.currentScreen.getId());
+      }
+
       this.currentScreen.deactivate();
       this.currentScreen.destroy();
     }
@@ -213,6 +219,21 @@ export class BozlyTUI implements IAppReference {
     if (this.currentScreen) {
       await this.currentScreen.refresh();
       this.screen.render();
+    }
+  }
+
+  /**
+   * Go back to previous screen in navigation history
+   */
+  async goBack(): Promise<void> {
+    if (this.navigationHistory.length === 0) {
+      // If no history, go home
+      await this.switchScreen("home", true);
+    } else {
+      const previousScreenId = this.navigationHistory.pop();
+      if (previousScreenId) {
+        await this.switchScreen(previousScreenId, true);
+      }
     }
   }
 
@@ -317,6 +338,14 @@ export class BozlyTUI implements IAppReference {
     // This ensures navigation keys (arrows, j/k, etc.) are handled properly
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.screen.on("keypress", (ch: string, key: any) => {
+      // Check for back navigation (B key)
+      if (!this.currentModal && (ch === "b" || ch === "B")) {
+        this.goBack().catch((err) => {
+          this.logAsyncError("Screen switch to back", err);
+        });
+        return;
+      }
+
       // Check for global menu shortcuts (1-8) and home (0) - these take priority
       if (!this.currentModal && ch && ch.match(/^[0-8]$/)) {
         const menuNum = parseInt(ch, 10);
@@ -378,6 +407,7 @@ export class BozlyTUI implements IAppReference {
       const helpText = `
 Global Keybindings:
   [0]        Go to Home
+  [B]        Go Back (to previous screen)
   [1-8]      Jump to menu item
   [?]        This help screen
   [Q]        Quit application

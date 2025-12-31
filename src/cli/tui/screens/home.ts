@@ -211,10 +211,10 @@ ${gray}────────────────────────�
 
 ${bold}${cyan}>> Quick Actions${reset}
 ${gray}───────────────────────────────────────────────────────────${reset}
-  ${cyan}[N]${reset}ew              Run a command from current vault
-  ${cyan}[R]${reset}efresh           Update statistics
-  ${cyan}[?]${reset}                Show full help
-  ${cyan}[Q]${reset}uit              Exit application
+  ${cyan}[N]${reset} ew               Run a command from current vault
+  ${cyan}[R]${reset} efresh           Update statistics
+  ${cyan}[?]${reset}                  Show full help
+  ${cyan}[Q]${reset} uit              Exit application
 
 ${gray}═══════════════════════════════════════════════════════════${reset}
 `;
