@@ -99,18 +99,19 @@ export class HealthScreen extends Screen {
         ),
       ]);
 
-      if (health?.data) {
+      // APIClient already unwraps the data, so health is the data object directly
+      if (health) {
         this.healthData = {
-          status: health.data.status || "ok",
-          version: health.data.version,
-          uptime: health.data.uptime,
-          startedAt: health.data.startedAt,
-          responseTime: health.data.responseTime,
-          requestCount: health.data.requestCount,
-          errorCount: health.data.errorCount,
-          memory: health.data.memory,
-          apiEndpoints: health.data.apiEndpoints,
-          timestamp: health.data.timestamp,
+          status: health.status || "ok",
+          version: health.version,
+          uptime: health.uptime,
+          startedAt: health.startedAt,
+          responseTime: health.responseTime,
+          requestCount: health.requestCount,
+          errorCount: health.errorCount,
+          memory: health.memory,
+          apiEndpoints: health.apiEndpoints,
+          timestamp: health.timestamp,
         };
       } else {
         this.healthData.status = "error";
@@ -154,6 +155,11 @@ export class HealthScreen extends Screen {
     const reset = "\x1b[0m";
     const cyan = "\x1b[36m";
     const yellow = "\x1b[33m";
+    const dim = "\x1b[2m";
+
+    // Show API URL for debugging
+    const apiUrl = `http://${ConfigManager.getInstance().getServer().host}:${ConfigManager.getInstance().getServer().port}/api`;
+    content += `  ${dim}API: ${apiUrl}${reset}\n\n`;
 
     content += `  ${statusColor}Status: ${statusIcon} ${this.healthData.status.toUpperCase()}${reset}\n`;
     content += `  ${cyan}Version:${reset} ${this.healthData.version ?? "unknown"}\n`;
