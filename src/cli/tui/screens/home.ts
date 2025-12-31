@@ -131,14 +131,38 @@ export class HomeScreen extends Screen {
   private renderHeader(): string {
     // Use terminal-respecting colors that honor user's terminal theme
     // Respects NO_COLOR standard: https://no-color.org/
-    const { bold, cyan, gray, reset } = getColorContext();
+    const { bold, gray, reset } = getColorContext();
+
+    // ANSI color codes for gradient effect (tan/orange to blue)
+    const tanColor = "\x1b[33m"; // Yellow (tan approximation)
+    const orangeColor = "\x1b[38;5;208m"; // Orange
+    const blueColor = "\x1b[34m"; // Blue
 
     // Load BOZLY ASCII art logo from static files, with fallback to hardcoded version
     const asciiArt = getBozlyAsciiArt();
-    const coloredArt = asciiArt
-      .split("\n")
-      .map((line) => `${bold}${cyan}${line}${reset}`)
+    const lines = asciiArt.split("\n");
+
+    // Apply gradient colors from tan to blue across lines
+    const coloredArt = lines
+      .map((line, index) => {
+        // Gradient effect: tan -> orange -> blue
+        const gradientProgress = index / Math.max(lines.length - 1, 1);
+        let color;
+
+        if (gradientProgress < 0.5) {
+          // First half: tan to orange
+          color = gradientProgress < 0.25 ? tanColor : orangeColor;
+        } else {
+          // Second half: orange to blue
+          color = blueColor;
+        }
+
+        return `${bold}${color}${line}${reset}`;
+      })
       .join("\n");
+
+    // Tagline in cyan for contrast
+    const cyan = "\x1b[36m";
 
     const logo = `
 ${coloredArt}
@@ -160,7 +184,7 @@ ${coloredArt}
     }
 
     return `${bold}${cyan}System Overview${reset}
-${gray}───────────────────────────────────────────────────────────${reset}
+${cyan}───────────────────────────────────────────────────────────${reset}
   Active Vaults:      ${cyan}${this.stats.totalVaults}${reset}
   Total Sessions:     ${cyan}${this.stats.totalSessions}${reset}
   Total Commands:     ${cyan}${this.stats.totalCommands}${reset}
@@ -173,14 +197,14 @@ ${gray}────────────────────────�
 
   private renderRecentSessions(): string {
     // Use terminal-respecting colors that honor user's terminal theme
-    const { bold, cyan, gray, green, red, reset } = getColorContext();
+    const { bold, cyan, green, red, reset } = getColorContext();
 
     if (!this.stats || this.stats.recentSessions.length === 0) {
       return "";
     }
 
     let content = `${bold}${cyan}Recent Sessions${reset}
-${gray}───────────────────────────────────────────────────────────${reset}
+${cyan}───────────────────────────────────────────────────────────${reset}
 `;
 
     for (const session of this.stats.recentSessions.slice(0, 5)) {
@@ -195,10 +219,10 @@ ${gray}────────────────────────�
 
   private renderQuickActions(): string {
     // Use terminal-respecting colors that honor user's terminal theme
-    const { bold, cyan, gray, reset } = getColorContext();
+    const { bold, cyan, reset } = getColorContext();
 
     return `${bold}${cyan}>> Navigation${reset}
-${gray}───────────────────────────────────────────────────────────${reset}
+${cyan}───────────────────────────────────────────────────────────${reset}
   ${cyan}[0]${reset} Home             Back to main dashboard
   ${cyan}[1]${reset} Vaults           Manage your AI workspaces
   ${cyan}[2]${reset} Sessions         View command history & results
@@ -210,13 +234,13 @@ ${gray}────────────────────────�
   ${cyan}[8]${reset} Help             Documentation & shortcuts
 
 ${bold}${cyan}>> Quick Actions${reset}
-${gray}───────────────────────────────────────────────────────────${reset}
+${cyan}───────────────────────────────────────────────────────────${reset}
   ${cyan}[N]${reset} ew               Run a command from current vault
   ${cyan}[R]${reset} efresh           Update statistics
   ${cyan}[?]${reset}                  Show full help
   ${cyan}[Q]${reset} uit              Exit application
 
-${gray}═══════════════════════════════════════════════════════════${reset}
+${cyan}═══════════════════════════════════════════════════════════${reset}
 `;
   }
 

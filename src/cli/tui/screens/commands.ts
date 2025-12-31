@@ -61,7 +61,7 @@ export class CommandsScreen extends Screen {
       height: 1,
       content: " Commands ",
       style: {
-        fg: "white",
+        fg: "cyan",
         bold: true,
       },
     });
@@ -98,7 +98,7 @@ export class CommandsScreen extends Screen {
       keys: false,
       style: {
         border: {
-          fg: "green",
+          fg: "cyan",
         },
       },
     });

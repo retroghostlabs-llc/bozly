@@ -54,7 +54,7 @@ export class WorkflowsScreen extends Screen {
       height: 1,
       content: " Workflows ",
       style: {
-        fg: "white",
+        fg: "cyan",
         bold: true,
       },
     });
@@ -89,7 +89,7 @@ export class WorkflowsScreen extends Screen {
       keys: false,
       style: {
         border: {
-          fg: "green",
+          fg: "cyan",
         },
       },
     });

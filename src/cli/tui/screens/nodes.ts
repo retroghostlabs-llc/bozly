@@ -59,7 +59,7 @@ export class NodesScreen extends Screen {
       height: 1,
       content: " Vaults ",
       style: {
-        fg: "white",
+        fg: "cyan",
         bold: true,
       },
     });
@@ -96,7 +96,7 @@ export class NodesScreen extends Screen {
       bottom: 1,
       style: {
         border: {
-          fg: "green",
+          fg: "cyan",
         },
       },
       scrollable: true,

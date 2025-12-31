@@ -62,7 +62,7 @@ export class HealthScreen extends Screen {
       height: 1,
       content: " API Health Status ",
       style: {
-        fg: "white",
+        fg: "cyan",
         bold: true,
       },
     });
@@ -79,7 +79,7 @@ export class HealthScreen extends Screen {
       keys: true,
       style: {
         border: {
-          fg: "green",
+          fg: "cyan",
         },
       },
     });

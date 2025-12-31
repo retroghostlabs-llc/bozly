@@ -55,7 +55,7 @@ export class MemoryScreen extends Screen {
       height: 1,
       content: " Memory & Knowledge ",
       style: {
-        fg: "white",
+        fg: "cyan",
         bold: true,
       },
     });
@@ -91,7 +91,7 @@ export class MemoryScreen extends Screen {
       tags: true,
       style: {
         border: {
-          fg: "green",
+          fg: "cyan",
         },
       },
     });

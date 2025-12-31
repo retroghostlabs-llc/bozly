@@ -47,7 +47,7 @@ export class ConfigScreen extends Screen {
       height: 1,
       content: " Configuration ",
       style: {
-        fg: "white",
+        fg: "cyan",
         bold: true,
       },
     });
@@ -64,7 +64,7 @@ export class ConfigScreen extends Screen {
       keys: true,
       style: {
         border: {
-          fg: "green",
+          fg: "cyan",
         },
       },
     });

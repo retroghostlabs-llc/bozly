@@ -56,7 +56,7 @@ export class SessionsScreen extends Screen {
       height: 1,
       content: " Sessions ",
       style: {
-        fg: "white",
+        fg: "cyan",
         bold: true,
       },
     });
@@ -106,7 +106,7 @@ export class SessionsScreen extends Screen {
       keys: true,
       style: {
         border: {
-          fg: "green",
+          fg: "cyan",
         },
       },
     });
