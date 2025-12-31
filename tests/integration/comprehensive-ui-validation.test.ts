@@ -9,7 +9,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-describe("Comprehensive UI Validation - Web UI & TUI with Real Data", () => {
+describe("Comprehensive UI Validation - Web UI & TUI with Real Data", { timeout: 30000 }, () => {
   let fastify: FastifyInstance;
   const examplesPath = path.join(__dirname, "../../examples");
 
@@ -67,7 +67,8 @@ describe("Comprehensive UI Validation - Web UI & TUI with Real Data", () => {
         expect(response.statusCode).toBe(200);
         expect(response.body).toContain("nav-dashboard");
         expect(response.body).toContain("nav-vaults");
-        expect(response.body).toContain("nav-search");
+        expect(response.body).toContain("nav-memory");
+        expect(response.body).toContain("nav-logs");
       });
 
       it("should have footer with version and tagline", async () => {

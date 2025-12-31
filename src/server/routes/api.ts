@@ -397,7 +397,9 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
 
   // Health check
   fastify.get("/api/health", async () => {
+    console.error("[HEALTH] Endpoint called");
     try {
+      console.error("[HEALTH] Reading package.json");
       // Get version from package.json
       let version = "unknown";
       try {
@@ -411,18 +413,14 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
       } catch {
         // If we can't read package.json, continue with "unknown"
       }
+      console.error("[HEALTH] Got version:", version);
 
-      // Get metrics
+      // Get metrics (don't load vaults - expensive operation for health check)
+      console.error("[HEALTH] Getting metrics");
       const metrics = getMetrics();
-
-      // Calculate and set API endpoint count if not already set
-      if (metrics.getApiEndpoints() === 0) {
-        const vaults = await listNodes();
-        const endpointCount = vaults.length * 5 + 15; // Rough estimate of endpoints per vault + global
-        metrics.setApiEndpoints(endpointCount);
-      }
-
+      console.error("[HEALTH] Getting health metrics");
       const healthMetrics = metrics.getHealthMetrics(version);
+      console.error("[HEALTH] Got health metrics, returning response");
 
       return {
         success: true,

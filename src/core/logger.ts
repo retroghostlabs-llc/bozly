@@ -125,10 +125,9 @@ class Logger {
     // Create log directory if it doesn't exist
     await fs.mkdir(logDir, { recursive: true });
 
-    // Set log file path with timestamp
-    const timestamp = new Date().toISOString().split("T")[0];
-    const time = new Date().toISOString().split("T")[1].split(".")[0].replace(/:/g, "-");
-    this.logFilePath = path.join(logDir, `bozly-${timestamp}-${time}.log`);
+    // Set log file path with date only (one file per day)
+    const dateOnly = new Date().toISOString().split("T")[0];
+    this.logFilePath = path.join(logDir, `bozly-${dateOnly}.log`);
 
     // Write header to log file
     const header = `

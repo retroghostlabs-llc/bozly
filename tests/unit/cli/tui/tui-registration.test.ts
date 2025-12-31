@@ -21,50 +21,50 @@ vi.mock('@unblessed/blessed', () => ({
 }));
 
 // Mock APIClient
-vi.mock('../../../src/cli/tui/core/api-client.js', () => ({
+vi.mock('@/cli/tui/core/api-client.js', () => ({
   APIClient: vi.fn(function (this: any) {
     this.isHealthy = vi.fn().mockResolvedValue(true);
   }),
 }));
 
 // Mock all screen imports
-vi.mock('../../../src/cli/tui/screens/home.js', () => ({
+vi.mock('@/cli/tui/screens/home.js', () => ({
   HomeScreen: vi.fn(),
 }));
 
-vi.mock('../../../src/cli/tui/screens/nodes.js', () => ({
+vi.mock('@/cli/tui/screens/nodes.js', () => ({
   NodesScreen: vi.fn(),
 }));
 
-vi.mock('../../../src/cli/tui/screens/sessions.js', () => ({
+vi.mock('@/cli/tui/screens/sessions.js', () => ({
   SessionsScreen: vi.fn(),
 }));
 
-vi.mock('../../../src/cli/tui/screens/memory.js', () => ({
+vi.mock('@/cli/tui/screens/memory.js', () => ({
   MemoryScreen: vi.fn(),
 }));
 
-vi.mock('../../../src/cli/tui/screens/commands.js', () => ({
+vi.mock('@/cli/tui/screens/commands.js', () => ({
   CommandsScreen: vi.fn(),
 }));
 
-vi.mock('../../../src/cli/tui/screens/workflows.js', () => ({
+vi.mock('@/cli/tui/screens/workflows.js', () => ({
   WorkflowsScreen: vi.fn(),
 }));
 
-vi.mock('../../../src/cli/tui/screens/config.js', () => ({
+vi.mock('@/cli/tui/screens/config.js', () => ({
   ConfigScreen: vi.fn(),
 }));
 
-vi.mock('../../../src/cli/tui/screens/health.js', () => ({
+vi.mock('@/cli/tui/screens/health.js', () => ({
   HealthScreen: vi.fn(),
 }));
 
-vi.mock('../../../src/cli/tui/screens/logs.js', () => ({
+vi.mock('@/cli/tui/screens/logs.js', () => ({
   LogsScreen: vi.fn(),
 }));
 
-vi.mock('../../../src/cli/tui/screens/help.js', () => ({
+vi.mock('@/cli/tui/screens/help.js', () => ({
   HelpScreen: vi.fn(),
 }));
 
@@ -75,24 +75,24 @@ describe('TUI Screen Registration', () => {
 
   it('should have LogsScreen importable in TUI index', async () => {
     // Get all imports from the actual index.ts file
-    const indexContent = await import('../../../src/cli/tui/index.js');
+    const indexContent = await import('@/cli/tui/index.js');
     // The module itself should be importable
     expect(indexContent).toBeDefined();
   });
 
   it('should import LogsScreen from screens', async () => {
-    const module = await import('../../../src/cli/tui/screens/logs.js');
+    const module = await import('@/cli/tui/screens/logs.js');
     expect(module.LogsScreen).toBeDefined();
   });
 
   it('should have LogsScreen class defined', async () => {
-    const { LogsScreen } = await import('../../../src/cli/tui/screens/logs.js');
+    const { LogsScreen } = await import('@/cli/tui/screens/logs.js');
     expect(LogsScreen).toBeDefined();
     expect(typeof LogsScreen).toBe('function');
   });
 
   it('should be able to instantiate LogsScreen', async () => {
-    const { LogsScreen } = await import('../../../src/cli/tui/screens/logs.js');
+    const { LogsScreen } = await import('@/cli/tui/screens/logs.js');
     const mockScreen = {
       box: vi.fn(() => ({})),
       render: vi.fn(),
@@ -106,20 +106,20 @@ describe('TUI Screen Registration', () => {
 
   it('should register all screens including Logs (0-9 menu items)', async () => {
     // Verify that the TUI index can be imported
-    const module = await import('../../../src/cli/tui/index.js');
+    const module = await import('@/cli/tui/index.js');
     expect(module.BozlyTUI).toBeDefined();
 
     // Verify all screen classes are importable
-    const { HomeScreen } = await import('../../../src/cli/tui/screens/home.js');
-    const { NodesScreen } = await import('../../../src/cli/tui/screens/nodes.js');
-    const { SessionsScreen } = await import('../../../src/cli/tui/screens/sessions.js');
-    const { MemoryScreen } = await import('../../../src/cli/tui/screens/memory.js');
-    const { CommandsScreen } = await import('../../../src/cli/tui/screens/commands.js');
-    const { WorkflowsScreen } = await import('../../../src/cli/tui/screens/workflows.js');
-    const { ConfigScreen } = await import('../../../src/cli/tui/screens/config.js');
-    const { HealthScreen } = await import('../../../src/cli/tui/screens/health.js');
-    const { LogsScreen } = await import('../../../src/cli/tui/screens/logs.js');
-    const { HelpScreen } = await import('../../../src/cli/tui/screens/help.js');
+    const { HomeScreen } = await import('@/cli/tui/screens/home.js');
+    const { NodesScreen } = await import('@/cli/tui/screens/nodes.js');
+    const { SessionsScreen } = await import('@/cli/tui/screens/sessions.js');
+    const { MemoryScreen } = await import('@/cli/tui/screens/memory.js');
+    const { CommandsScreen } = await import('@/cli/tui/screens/commands.js');
+    const { WorkflowsScreen } = await import('@/cli/tui/screens/workflows.js');
+    const { ConfigScreen } = await import('@/cli/tui/screens/config.js');
+    const { HealthScreen } = await import('@/cli/tui/screens/health.js');
+    const { LogsScreen } = await import('@/cli/tui/screens/logs.js');
+    const { HelpScreen } = await import('@/cli/tui/screens/help.js');
 
     // All screens should be defined
     expect(HomeScreen).toBeDefined();

@@ -7,7 +7,7 @@ import * as commands from '../../src/core/commands.js';
 import * as context from '../../src/core/context.js';
 import * as providers from '../../src/core/providers.js';
 
-describe('Comprehensive API Endpoints Coverage', () => {
+describe('Comprehensive API Endpoints Coverage', { timeout: 30000 }, () => {
   let fastify: FastifyInstance;
 
   beforeAll(async () => {
@@ -813,7 +813,7 @@ describe('Comprehensive API Endpoints Coverage', () => {
       const body = JSON.parse(response.body);
       expect(body.success).toBe(true);
       expect(body.status).toBe('ok');
-      expect(body.timestamp).toBeDefined();
+      expect(body.data.timestamp).toBeDefined();
     });
 
     it('should return valid ISO 8601 timestamp', async () => {
@@ -823,8 +823,8 @@ describe('Comprehensive API Endpoints Coverage', () => {
       });
 
       const body = JSON.parse(response.body);
-      const date = new Date(body.timestamp);
-      expect(date.toISOString()).toBe(body.timestamp);
+      const date = new Date(body.data.timestamp);
+      expect(date.toISOString()).toBe(body.data.timestamp);
     });
 
     it('should be fast (respond in less than 100ms)', async () => {

@@ -77,20 +77,26 @@ export const serveCommand = new Command()
       });
 
       // Show success message with URL
+      console.error("[SERVE] Showing success box");
       successBox(`BOZLY Server is running!`);
+      console.error("[SERVE] Logging URLs");
       console.log(`\n  Web Dashboard: http://${host}:${port}/`);
       console.log(`  API Health:    http://${host}:${port}/api/health\n`);
+      console.error("[SERVE] Server is ready and waiting for requests");
 
       // Graceful shutdown
+      console.error("[SERVE] Setting up signal handlers");
       const signals = ["SIGINT", "SIGTERM"];
       signals.forEach((signal) => {
         process.on(signal, () => {
+          console.error(`[SERVE] Got ${signal} signal`);
           void fastify.close().then(() => {
             successBox("Shutting down BOZLY Server...");
             process.exit(0);
           });
         });
       });
+      console.error("[SERVE] Signal handlers setup complete");
     } catch (error) {
       errorBox(`Failed to start server: ${error instanceof Error ? error.message : String(error)}`);
       process.exit(1);

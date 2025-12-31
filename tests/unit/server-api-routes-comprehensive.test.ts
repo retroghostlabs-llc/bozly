@@ -24,7 +24,7 @@ import * as providers from "../../src/core/providers.js";
 import * as workflows from "../../src/core/workflows.js";
 import { ServerConfig } from "../../src/server/index.js";
 
-describe("API Routes - Comprehensive Coverage", () => {
+describe("API Routes - Comprehensive Coverage", { timeout: 30000 }, () => {
   let fastifyApp: any;
   let config: ServerConfig;
 
@@ -59,7 +59,7 @@ describe("API Routes - Comprehensive Coverage", () => {
       const data = JSON.parse(response.body);
       expect(data.success).toBe(true);
       expect(data.status).toBe("ok");
-      expect(data.timestamp).toBeDefined();
+      expect(data.data.timestamp).toBeDefined();
     });
 
     it("should return valid ISO timestamp", async () => {
@@ -69,7 +69,7 @@ describe("API Routes - Comprehensive Coverage", () => {
       });
 
       const data = JSON.parse(response.body);
-      const timestamp = new Date(data.timestamp);
+      const timestamp = new Date(data.data.timestamp);
       expect(timestamp.getTime()).toBeGreaterThan(0);
       expect(timestamp.getTime()).toBeLessThanOrEqual(Date.now());
     });

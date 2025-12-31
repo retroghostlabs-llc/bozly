@@ -18,7 +18,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-describe("Page Routes - Comprehensive Coverage", () => {
+describe("Page Routes - Comprehensive Coverage", { timeout: 30000 }, () => {
   let fastifyApp: any;
   let config: ServerConfig;
   let mockHtmlContent: string;

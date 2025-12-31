@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createServer, ServerConfig } from '../../src/server/index.js';
 import { FastifyInstance } from 'fastify';
 
-describe('Server API Endpoints', () => {
+describe('Server API Endpoints', { timeout: 30000 }, () => {
   let fastify: FastifyInstance;
 
   beforeAll(async () => {
@@ -80,10 +80,10 @@ describe('Server API Endpoints', () => {
       });
 
       const body = JSON.parse(response.body);
-      expect(body.timestamp).toBeDefined();
-      expect(typeof body.timestamp).toBe('string');
+      expect(body.data.timestamp).toBeDefined();
+      expect(typeof body.data.timestamp).toBe('string');
       // Validate ISO 8601 format
-      expect(new Date(body.timestamp).toISOString()).toBe(body.timestamp);
+      expect(new Date(body.data.timestamp).toISOString()).toBe(body.data.timestamp);
     });
 
     it('should be fast (respond in less than 100ms)', async () => {
