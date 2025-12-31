@@ -243,6 +243,48 @@ describe('Screen Implementations Comprehensive', () => {
       const oneIndex = actions.indexOf('[1]');
       expect(zeroIndex).toBeLessThan(oneIndex);
     });
+
+    it('should include [8] Logs in navigation menu', async () => {
+      const { HomeScreen } = await import('../../../../../src/cli/tui/screens/home.js');
+      const screen = new HomeScreen(mockScreen, mockAPIClient, {
+        id: 'home',
+        name: 'Home',
+      });
+
+      const actions = (screen as any).renderQuickActions();
+      expect(actions).toContain('[8]');
+      expect(actions).toContain('Logs');
+      expect(actions).toContain('View system logs with filtering');
+    });
+
+    it('should include [9] Help in navigation menu after Logs', async () => {
+      const { HomeScreen } = await import('../../../../../src/cli/tui/screens/home.js');
+      const screen = new HomeScreen(mockScreen, mockAPIClient, {
+        id: 'home',
+        name: 'Home',
+      });
+
+      const actions = (screen as any).renderQuickActions();
+      expect(actions).toContain('[9]');
+      expect(actions).toContain('Help');
+      // [8] Logs should come before [9] Help
+      const eightIndex = actions.indexOf('[8]');
+      const nineIndex = actions.indexOf('[9]');
+      expect(eightIndex).toBeLessThan(nineIndex);
+    });
+
+    it('should include all menu options 0-9', async () => {
+      const { HomeScreen } = await import('../../../../../src/cli/tui/screens/home.js');
+      const screen = new HomeScreen(mockScreen, mockAPIClient, {
+        id: 'home',
+        name: 'Home',
+      });
+
+      const actions = (screen as any).renderQuickActions();
+      for (let i = 0; i <= 9; i++) {
+        expect(actions).toContain(`[${i}]`);
+      }
+    });
   });
 
   describe('NodesScreen', () => {

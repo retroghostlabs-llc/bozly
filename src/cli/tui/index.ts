@@ -18,6 +18,7 @@ import { WorkflowsScreen } from "./screens/workflows.js";
 import { ConfigScreen } from "./screens/config.js";
 import { HealthScreen } from "./screens/health.js";
 import { HelpScreen } from "./screens/help.js";
+import { LogsScreen } from "./screens/logs.js";
 
 /**
  * TUI entry point
@@ -187,6 +188,7 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
     );
     const configScreen = new ConfigScreen(screen, { id: "config", name: "Config" }, apiClient);
     const healthScreen = new HealthScreen(screen, { id: "health", name: "Health" }, apiClient);
+    const logsScreen = new LogsScreen(screen, { id: "logs", name: "Logs" });
     const helpScreen = new HelpScreen(screen, { id: "help", name: "Help" });
 
     tui.registerScreen(homeScreen); // Home is default/starting screen (no menu number)
@@ -197,7 +199,8 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
     tui.registerScreen(workflowsScreen, 5);
     tui.registerScreen(configScreen, 6);
     tui.registerScreen(healthScreen, 7);
-    tui.registerScreen(helpScreen, 8); // Help is menu option 8 and also triggered by "?" key
+    tui.registerScreen(logsScreen, 8);
+    tui.registerScreen(helpScreen, 9); // Help is menu option 9 and also triggered by "?" key
 
     // Start TUI
     await tui.start();

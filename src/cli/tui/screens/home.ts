@@ -231,7 +231,8 @@ ${cyan}────────────────────────�
   ${cyan}[5]${reset} Workflows        Multi-step automation chains
   ${cyan}[6]${reset} Config           Settings & configuration
   ${cyan}[7]${reset} Health           System status & diagnostics
-  ${cyan}[8]${reset} Help             Documentation & shortcuts
+  ${cyan}[8]${reset} Logs             View system logs with filtering
+  ${cyan}[9]${reset} Help             Documentation & shortcuts
 
 ${bold}${cyan}>> Quick Actions${reset}
 ${cyan}───────────────────────────────────────────────────────────${reset}
