@@ -398,21 +398,30 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
   fastify.get("/api/health", async () => {
     try {
       // Get version from package.json
-      const __filename = fileURLToPath(import.meta.url);
-      const projectRoot = path.resolve(__filename, "../../../..");
-      const packageJsonPath = path.join(projectRoot, "package.json");
-      const packageData = JSON.parse(await readFile(packageJsonPath, "utf-8")) as {
-        version: string;
-      };
-      const version = packageData.version || "unknown";
+      let version = "unknown";
+      try {
+        const __filename = fileURLToPath(import.meta.url);
+        const projectRoot = path.resolve(__filename, "../../../..");
+        const packageJsonPath = path.join(projectRoot, "package.json");
+        const packageData = JSON.parse(await readFile(packageJsonPath, "utf-8")) as {
+          version?: string;
+        };
+        version = packageData.version ?? "unknown";
+      } catch {
+        // If we can't read package.json, continue with "unknown"
+      }
 
       // Get metrics
       const metrics = getMetrics();
-      const healthMetrics = metrics.getHealthMetrics(version);
 
-      // Count API endpoints
-      const vaults = await listNodes();
-      const endpointCount = vaults.length * 5 + 15; // Rough estimate of endpoints per vault + global
+      // Calculate and set API endpoint count if not already set
+      if (metrics.getApiEndpoints() === 0) {
+        const vaults = await listNodes();
+        const endpointCount = vaults.length * 5 + 15; // Rough estimate of endpoints per vault + global
+        metrics.setApiEndpoints(endpointCount);
+      }
+
+      const healthMetrics = metrics.getHealthMetrics(version);
 
       return {
         success: true,
@@ -430,7 +439,7 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
             total: healthMetrics.memoryUsage.total,
             percentage: healthMetrics.memoryUsage.percentage,
           },
-          apiEndpoints: endpointCount,
+          apiEndpoints: healthMetrics.apiEndpoints,
           timestamp: healthMetrics.timestamp,
         },
       };

@@ -197,7 +197,7 @@ export async function runTUI(options?: Record<string, unknown>): Promise<void> {
     tui.registerScreen(workflowsScreen, 5);
     tui.registerScreen(configScreen, 6);
     tui.registerScreen(healthScreen, 7);
-    tui.registerScreen(helpScreen); // Help is triggered by "?" key, not menu number
+    tui.registerScreen(helpScreen, 8); // Help is menu option 8 and also triggered by "?" key
 
     // Start TUI
     await tui.start();

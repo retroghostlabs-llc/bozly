@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import { logger } from "../core/logger.js";
 import { registerApiRoutes } from "./routes/api.js";
 import { registerPageRoutes } from "./routes/pages.js";
+import { initializeMetrics, getMetrics } from "../core/metrics.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,8 +17,30 @@ export interface ServerConfig {
 }
 
 export async function createServer(config: ServerConfig) {
+  // Initialize metrics at server startup
+  initializeMetrics();
+
   const fastify = Fastify({
     logger: false,
+  });
+
+  // Add request tracking middleware
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  fastify.addHook("onRequest", (request) => {
+    // Store request start time for response time calculation
+    (request as any).startTime = Date.now();
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  fastify.addHook("onResponse", (request, reply) => {
+    // Calculate response time and record request
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const startTime = (request as any).startTime ?? Date.now();
+    const responseTime = Date.now() - startTime;
+    const isError = reply.statusCode >= 400;
+
+    const metrics = getMetrics();
+    metrics.recordRequest(responseTime, isError);
   });
 
   // Register static file serving (CSS, JS, favicon, etc.)
