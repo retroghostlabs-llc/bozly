@@ -4,6 +4,7 @@ import { loadSession, getNodeSessions } from "../../core/sessions.js";
 import { getNodeCommands } from "../../core/commands.js";
 import { generateContext } from "../../core/context.js";
 import { listProviders } from "../../core/providers.js";
+import { discoverWorkflows } from "../../core/workflows.js";
 import { ConfigManager } from "../../core/config-manager.js";
 import { logger } from "../../core/logger.js";
 import { MemoryManager } from "../../core/memory-manager.js";
@@ -658,6 +659,82 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
       return {
         success: false,
         error: error instanceof Error ? error.message : "Failed to get memory stats",
+      };
+    }
+  });
+
+  // GET /api/workflows - List all workflows from all nodes
+  fastify.get("/api/workflows", async () => {
+    try {
+      const nodes = await listNodes();
+      const allWorkflows = [];
+
+      for (const node of nodes) {
+        try {
+          const workflows = await discoverWorkflows(node.path);
+          allWorkflows.push(
+            ...workflows.map((w) => ({
+              ...w,
+              nodeId: node.id,
+              nodeName: node.name || "Unnamed",
+            }))
+          );
+        } catch (error) {
+          void logger.warn("Failed to load workflows for node", {
+            nodeId: node.id,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+
+      return {
+        success: true,
+        data: allWorkflows,
+      };
+    } catch (error) {
+      void logger.error("Failed to list workflows from API", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to list workflows",
+      };
+    }
+  });
+
+  // GET /api/vaults/:id/workflows - List workflows for a specific vault
+  fastify.get<{ Params: { id: string } }>("/api/vaults/:id/workflows", async (request) => {
+    try {
+      const node = await getNode(request.params.id);
+
+      if (!node) {
+        void logger.warn("Vault not found when listing workflows in API", {
+          vaultId: request.params.id,
+        });
+        return {
+          success: false,
+          error: "Vault not found",
+        };
+      }
+
+      const workflows = await discoverWorkflows(node.path);
+
+      return {
+        success: true,
+        data: workflows.map((w) => ({
+          ...w,
+          nodeId: node.id,
+          nodeName: node.name || "Unnamed",
+        })),
+      };
+    } catch (error) {
+      void logger.error("Failed to list workflows for vault from API", {
+        error: error instanceof Error ? error.message : String(error),
+        vaultId: request.params.id,
+      });
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to list workflows",
       };
     }
   });
