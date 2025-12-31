@@ -116,7 +116,8 @@ export class CommandsScreen extends Screen {
           });
         }
 
-        this.updateInfoBox(0);
+        // Preserve selected index during refresh (don't reset to 0)
+        this.updateInfoBox(this.selectedIndex);
         this.parent.render();
       }
     } catch (error) {
@@ -171,10 +172,25 @@ export class CommandsScreen extends Screen {
     content += `  ${"=".repeat(40)}\n\n`;
     content += `  Type: ${cmd.type ?? "unknown"}\n`;
     content += `  Node: ${cmd.nodeId ?? "global"}\n`;
-    content += `\n  Description:\n  ${cmd.description || "(none)"}\n`;
+    content += `\n  Description:\n`;
+
+    // Wrap long descriptions to prevent layout issues
+    const description = cmd.description || "(none)";
+    const wrappedDesc = this.wrapText(description, 60);
+    content += wrappedDesc
+      .split("\n")
+      .map((line) => `  ${line}`)
+      .join("\n");
+    content += "\n";
 
     if (cmd.usage) {
-      content += `\n  Usage:\n  ${cmd.usage}\n`;
+      content += `\n  Usage:\n`;
+      const wrappedUsage = this.wrapText(cmd.usage, 60);
+      content += wrappedUsage
+        .split("\n")
+        .map((line) => `  ${line}`)
+        .join("\n");
+      content += "\n";
     }
 
     content += `\n  Keys: ↑/↓ or j/k (navigate), / (search)\n`;
@@ -188,6 +204,29 @@ export class CommandsScreen extends Screen {
     }
 
     this.parent.render();
+  }
+
+  private wrapText(text: string, width: number): string {
+    const words = text.split(" ");
+    const lines: string[] = [];
+    let currentLine = "";
+
+    for (const word of words) {
+      if ((currentLine + word).length > width) {
+        if (currentLine) {
+          lines.push(currentLine.trim());
+        }
+        currentLine = word;
+      } else {
+        currentLine += (currentLine ? " " : "") + word;
+      }
+    }
+
+    if (currentLine) {
+      lines.push(currentLine.trim());
+    }
+
+    return lines.join("\n");
   }
 
   private setupKeybindings(): void {
