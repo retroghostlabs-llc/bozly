@@ -1,6 +1,7 @@
 import blessed from "@unblessed/blessed";
 import { Screen, ScreenConfig } from "../core/screen.js";
 import { APIClient } from "../core/api-client.js";
+import { logger } from "../../../core/logger.js";
 
 interface SessionItem {
   id: string;
@@ -221,37 +222,49 @@ export class SessionsScreen extends Screen {
   private async showSessionDetail(session: SessionItem): Promise<void> {
     const content = `\n  Session Output: ${session.id}\n\n  Command: ${session.command}\n  Status: ${session.status}\n  Duration: ${session.duration}ms\n  Provider: ${session.provider}\n\n  [Press any key to close]\n`;
 
-    const modalParent = this.parent as unknown as {
-      box: (opts: Record<string, unknown>) => blessed.Widgets.BoxElement;
-    };
-    const modal = modalParent.box({
-      parent: this.parent,
-      top: "center",
-      left: "center",
-      width: "70%",
-      height: "60%",
-      content: content,
-      style: {
-        border: {
-          fg: "blue",
+    try {
+      const modal = blessed.box({
+        parent: this.parent,
+        top: "center",
+        left: "center",
+        width: "70%",
+        height: "60%",
+        content: content,
+        border: "line",
+        style: {
+          border: {
+            fg: "blue",
+          },
         },
-      },
-      keys: true,
-      mouse: true,
-      scrollable: true,
-    });
-
-    modal.focus();
-    await new Promise<void>((resolve) => {
-      modal.on("keypress", () => {
-        modal.destroy();
-        this.parent.render();
-        if (this.listBox) {
-          this.listBox.focus();
-        }
-        resolve();
+        keys: true,
+        mouse: true,
+        scrollable: true,
       });
-    });
+
+      modal.focus();
+      await new Promise<void>((resolve) => {
+        modal.on("keypress", () => {
+          try {
+            modal.destroy();
+          } catch {
+            // Ignore destroy errors
+          }
+          this.parent.render();
+          if (this.listBox) {
+            this.listBox.focus();
+          }
+          resolve();
+        });
+      });
+    } catch (error) {
+      // Log error to file but don't display it to avoid corrupting TUI
+      await logger.error(
+        "Failed to show session detail modal",
+        error instanceof Error ? error : new Error(String(error))
+      );
+      // Show a simple error notification that won't corrupt the screen
+      this.showError("Could not display session details");
+    }
   }
 
   private setupKeybindings(): void {

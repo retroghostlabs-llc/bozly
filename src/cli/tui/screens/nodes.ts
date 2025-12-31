@@ -1,6 +1,7 @@
 import blessed from "@unblessed/blessed";
 import { Screen, ScreenConfig } from "../core/screen.js";
 import { APIClient } from "../core/api-client.js";
+import { logger } from "../../../core/logger.js";
 
 interface NodeItem {
   id: string;
@@ -201,79 +202,107 @@ export class NodesScreen extends Screen {
   private async showVaultDetail(vault: NodeItem): Promise<void> {
     const content = `\n  Vault Details: ${vault.name}\n\n  ID: ${vault.id}\n  Path: ${vault.path}\n  Status: ${vault.status ?? "active"}\n  Sessions: ${vault.sessions ?? 0}\n  Commands: ${vault.commands ?? 0}\n  Created: ${vault.created ?? "N/A"}\n\n  [Press any key to close]\n`;
 
-    const modalParent = this.parent as unknown as {
-      box: (opts: Record<string, unknown>) => blessed.Widgets.BoxElement;
-    };
-    const modal = modalParent.box({
-      parent: this.parent,
-      top: "center",
-      left: "center",
-      width: "60%",
-      height: "50%",
-      content: content,
-      style: {
-        border: {
-          fg: "blue",
+    try {
+      const modal = blessed.box({
+        parent: this.parent,
+        top: "center",
+        left: "center",
+        width: "60%",
+        height: "50%",
+        content: content,
+        border: "line",
+        style: {
+          border: {
+            fg: "blue",
+          },
         },
-      },
-      keys: false,
-      mouse: true,
-    });
-
-    modal.focus();
-    await new Promise<void>((resolve) => {
-      modal.on("keypress", () => {
-        modal.destroy();
-        this.parent.render();
-        if (this.listBox) {
-          this.listBox.focus();
-        }
-        resolve();
+        keys: false,
+        mouse: true,
       });
-    });
+
+      modal.focus();
+      await new Promise<void>((resolve) => {
+        modal.on("keypress", () => {
+          try {
+            modal.destroy();
+          } catch {
+            // Ignore destroy errors
+          }
+          this.parent.render();
+          if (this.listBox) {
+            this.listBox.focus();
+          }
+          resolve();
+        });
+      });
+    } catch (error) {
+      // Log error to file but don't display it to avoid corrupting TUI
+      await logger.error(
+        "Failed to show vault detail modal",
+        error instanceof Error ? error : new Error(String(error))
+      );
+      // Show a simple error notification that won't corrupt the screen
+      this.showError("Could not display vault details");
+    }
   }
 
   private async showConfirmDialog(title: string, message: string): Promise<boolean> {
     return new Promise((resolve) => {
-      const parentCast = this.parent as unknown as {
-        box: (opts: Record<string, unknown>) => blessed.Widgets.BoxElement;
-      };
-      const modal = parentCast.box({
-        parent: this.parent,
-        top: "center",
-        left: "center",
-        width: "50%",
-        height: "40%",
-        style: {
-          border: {
-            fg: "red",
+      try {
+        const modal = blessed.box({
+          parent: this.parent,
+          top: "center",
+          left: "center",
+          width: "50%",
+          height: "40%",
+          border: "line",
+          style: {
+            border: {
+              fg: "red",
+            },
           },
-        },
-        keys: false,
-      });
+          keys: false,
+        });
 
-      parentCast.box({
-        parent: modal,
-        top: 1,
-        left: 2,
-        right: 2,
-        height: "shrink",
-        content: `${title}\n${message}\n\ny/n ?`,
-      });
+        blessed.box({
+          parent: modal,
+          top: 1,
+          left: 2,
+          right: 2,
+          height: "shrink",
+          content: `${title}\n${message}\n\ny/n ?`,
+        });
 
-      modal.key(["y"], () => {
-        modal.destroy();
-        this.parent.render();
-        resolve(true);
-      });
+        modal.key(["y"], () => {
+          try {
+            modal.destroy();
+          } catch {
+            // Ignore destroy errors
+          }
+          this.parent.render();
+          resolve(true);
+        });
 
-      modal.key(["n", "escape"], () => {
-        modal.destroy();
-        this.parent.render();
+        modal.key(["n", "escape"], () => {
+          try {
+            modal.destroy();
+          } catch {
+            // Ignore destroy errors
+          }
+          this.parent.render();
+          resolve(false);
+        });
+
+        modal.focus();
+      } catch (error) {
+        // Log error to file but don't corrupt TUI
+        void logger.error(
+          "Failed to show confirm dialog",
+          error instanceof Error ? error : new Error(String(error))
+        );
+        // Default to cancel on error
         resolve(false);
-      });
-
-      modal.focus();
+      }
     });
   }
 
