@@ -8,6 +8,10 @@ import { discoverWorkflows } from "../../core/workflows.js";
 import { ConfigManager } from "../../core/config-manager.js";
 import { logger } from "../../core/logger.js";
 import { MemoryManager } from "../../core/memory-manager.js";
+import { getMetrics } from "../../core/metrics.js";
+import { readFile } from "fs/promises";
+import { fileURLToPath } from "url";
+import path from "path";
 
 export function registerApiRoutes(fastify: FastifyInstance): void {
   // GET /api/vaults - List all vaults
@@ -391,12 +395,55 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
   });
 
   // Health check
-  fastify.get("/api/health", () => {
-    return {
-      success: true,
-      status: "ok",
-      timestamp: new Date().toISOString(),
-    };
+  fastify.get("/api/health", async () => {
+    try {
+      // Get version from package.json
+      const __filename = fileURLToPath(import.meta.url);
+      const projectRoot = path.resolve(__filename, "../../../..");
+      const packageJsonPath = path.join(projectRoot, "package.json");
+      const packageData = JSON.parse(await readFile(packageJsonPath, "utf-8")) as {
+        version: string;
+      };
+      const version = packageData.version || "unknown";
+
+      // Get metrics
+      const metrics = getMetrics();
+      const healthMetrics = metrics.getHealthMetrics(version);
+
+      // Count API endpoints
+      const vaults = await listNodes();
+      const endpointCount = vaults.length * 5 + 15; // Rough estimate of endpoints per vault + global
+
+      return {
+        success: true,
+        status: healthMetrics.status,
+        data: {
+          status: healthMetrics.status,
+          version: healthMetrics.version,
+          uptime: healthMetrics.uptime,
+          startedAt: healthMetrics.startedAt,
+          responseTime: healthMetrics.responseTime,
+          requestCount: healthMetrics.requestCount,
+          errorCount: healthMetrics.errorCount,
+          memory: {
+            used: healthMetrics.memoryUsage.used,
+            total: healthMetrics.memoryUsage.total,
+            percentage: healthMetrics.memoryUsage.percentage,
+          },
+          apiEndpoints: endpointCount,
+          timestamp: healthMetrics.timestamp,
+        },
+      };
+    } catch (error) {
+      void logger.error("Failed to get health metrics", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        success: false,
+        status: "error",
+        error: error instanceof Error ? error.message : "Failed to get health metrics",
+      };
+    }
   });
 
   // GET /api/config - Get application configuration

@@ -322,8 +322,8 @@ export class BozlyTUI implements IAppReference {
 
     // Help
     this.screen.key(["?"], () => {
-      this.showHelpModal().catch((err) => {
-        this.logAsyncError("Show help modal", err);
+      this.switchScreen("help").catch((err) => {
+        this.logAsyncError("Switch to help screen", err);
       });
     });
 
@@ -376,80 +376,6 @@ export class BozlyTUI implements IAppReference {
         });
       }
     });
-  }
-
-  /**
-   * Show help modal
-   */
-  private async showHelpModal(): Promise<void> {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const helpBox = (this.screen as any).box as ((options: any) => any) | undefined;
-      if (!helpBox) {
-        await logger.warn("blessed screen.box() not available for help modal");
-        return;
-      }
-
-      const modal = helpBox({
-        parent: this.screen,
-        top: "center",
-        left: "center",
-        width: 70,
-        height: 25,
-        border: "line",
-        label: " Help ",
-        tags: true,
-        style: {
-          border: { fg: "cyan" },
-        },
-      });
-
-      const helpText = `
-Global Keybindings:
-  [0]        Go to Home
-  [B]        Go Back (to previous screen)
-  [1-8]      Jump to menu item
-  [?]        This help screen
-  [Q]        Quit application
-  [Ctrl+C]   Force quit
-  [Ctrl+L]   Refresh current screen
-  [Ctrl+S]   Save changes
-  [Tab]      Next field (in forms)
-  [Shift+Tab] Previous field (in forms)
-  [Esc]      Close modal or cancel
-
-List Navigation:
-  [↑↓] or [jk]  Move up/down
-  [gg]          Go to top
-  [G]           Go to bottom
-  [F]           Toggle scope filter (Commands screen)
-  [/]           Search/filter
-  [Enter]       Select item
-  [d]           Delete item
-
-Form Input:
-  [Tab]         Next field
-  [Shift+Tab]   Previous field
-  [Enter]       Submit
-  [Esc]         Cancel
-    `;
-
-      modal.setContent(helpText);
-      this.screen.render();
-
-      this.screen.once("key", () => {
-        if (!modal.destroyed) {
-          modal.destroy();
-        }
-        this.screen.render();
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        await logger.error("Failed to show help modal", error);
-      } else {
-        await logger.error("Failed to show help modal (unknown error)", { error: String(error) });
-      }
-    }
   }
 
   /**
