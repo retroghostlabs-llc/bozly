@@ -56,7 +56,9 @@ export class MemoryIndex {
     try {
       const content = await fs.readFile(this.indexPath, "utf-8");
       this.index = JSON.parse(content);
-      logger.debug(`Loaded memory index from ${this.indexPath}`);
+      logger.debug(
+        `Loaded memory index from ${this.indexPath} with ${this.index?.entries?.length ?? 0} entries`
+      );
     } catch (err) {
       if ((err as NodeJS.ErrnoException).code === "ENOENT") {
         // Index doesn't exist yet, create empty one
@@ -290,5 +292,17 @@ export class MemoryIndex {
       newestEntry:
         this.index && this.index.entries.length > 0 ? this.index.entries[0].sessionId : undefined,
     };
+  }
+
+  /**
+   * Get all entries from index
+   */
+  async getAllEntries(limit?: number): Promise<MemoryIndexEntry[]> {
+    if (!this.index) {
+      await this.load();
+    }
+
+    const entries = this.index!.entries;
+    return limit ? entries.slice(0, limit) : entries;
   }
 }

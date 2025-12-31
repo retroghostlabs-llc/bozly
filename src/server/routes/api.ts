@@ -6,6 +6,7 @@ import { generateContext } from "../../core/context.js";
 import { listProviders } from "../../core/providers.js";
 import { ConfigManager } from "../../core/config-manager.js";
 import { logger } from "../../core/logger.js";
+import { MemoryManager } from "../../core/memory-manager.js";
 
 export function registerApiRoutes(fastify: FastifyInstance): void {
   // GET /api/vaults - List all vaults
@@ -493,6 +494,170 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
       return {
         success: false,
         error: error instanceof Error ? error.message : "Failed to update config",
+      };
+    }
+  });
+
+  // ============================================================================
+  // MEMORY ENDPOINTS
+  // ============================================================================
+
+  // GET /api/memory - List all memories with optional filters
+  fastify.get<{
+    Querystring: { vaultId?: string; limit?: string; search?: string; tags?: string };
+  }>("/api/memory", async (request) => {
+    try {
+      const memoryManager = MemoryManager.getInstance();
+      const limit = Math.min(parseInt(request.query.limit ?? "50", 10), 100);
+      const vaultId = request.query.vaultId;
+      const search = request.query.search;
+      const tags = request.query.tags?.split(",").filter(Boolean) ?? [];
+
+      let memories;
+
+      if (search) {
+        // Full-text search
+        memories = await memoryManager.searchMemories(search, limit);
+      } else if (tags.length > 0) {
+        // Filter by tags
+        memories = await memoryManager.getMemoriesByTags(tags, limit);
+      } else if (vaultId) {
+        // Filter by vault/node
+        memories = await memoryManager.listMemories(vaultId, limit);
+      } else {
+        // Get all memories
+        memories = await memoryManager.listMemories(undefined, limit);
+      }
+
+      void logger.debug(`Retrieved ${memories.length} memories from index`, {
+        vaultId,
+        search,
+        tags,
+        limit,
+      });
+
+      return {
+        success: true,
+        data: memories,
+        count: memories.length,
+      };
+    } catch (error) {
+      void logger.error("Failed to list memories from API", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to list memories",
+      };
+    }
+  });
+
+  // GET /api/memory/:sessionId - Get specific memory details
+  fastify.get<{
+    Params: { sessionId: string };
+    Querystring: { nodeId?: string };
+  }>("/api/memory/:sessionId", async (request) => {
+    try {
+      const memoryManager = MemoryManager.getInstance();
+      const { sessionId } = request.params;
+      const nodeId = request.query.nodeId;
+
+      if (!nodeId) {
+        return {
+          success: false,
+          error: "nodeId query parameter is required",
+        };
+      }
+
+      const memory = await memoryManager.loadMemory(sessionId, nodeId);
+
+      if (!memory) {
+        return {
+          success: false,
+          error: "Memory not found",
+        };
+      }
+
+      return {
+        success: true,
+        data: memory,
+      };
+    } catch (error) {
+      void logger.error("Failed to get memory from API", {
+        error: error instanceof Error ? error.message : String(error),
+        sessionId: request.params.sessionId,
+      });
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to get memory",
+      };
+    }
+  });
+
+  // DELETE /api/memory/:sessionId - Delete a memory
+  fastify.delete<{
+    Params: { sessionId: string };
+    Querystring: { nodeId?: string };
+  }>("/api/memory/:sessionId", async (request) => {
+    try {
+      const memoryManager = MemoryManager.getInstance();
+      const { sessionId } = request.params;
+      const nodeId = request.query.nodeId;
+
+      if (!nodeId) {
+        return {
+          success: false,
+          error: "nodeId query parameter is required",
+        };
+      }
+
+      const success = await memoryManager.deleteMemory(sessionId, nodeId);
+
+      if (!success) {
+        return {
+          success: false,
+          error: "Failed to delete memory",
+        };
+      }
+
+      return {
+        success: true,
+        message: `Memory ${sessionId} deleted`,
+      };
+    } catch (error) {
+      void logger.error("Failed to delete memory from API", {
+        error: error instanceof Error ? error.message : String(error),
+        sessionId: request.params.sessionId,
+      });
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to delete memory",
+      };
+    }
+  });
+
+  // GET /api/memory/stats - Get memory statistics
+  fastify.get<{
+    Querystring: { nodeId?: string };
+  }>("/api/memory/stats", async (request) => {
+    try {
+      const memoryManager = MemoryManager.getInstance();
+      const nodeId = request.query.nodeId;
+
+      const stats = await memoryManager.getMemoryStats(nodeId);
+
+      return {
+        success: true,
+        data: stats,
+      };
+    } catch (error) {
+      void logger.error("Failed to get memory stats from API", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to get memory stats",
       };
     }
   });

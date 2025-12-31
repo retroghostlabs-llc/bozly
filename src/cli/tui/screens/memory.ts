@@ -3,12 +3,14 @@ import { Screen, ScreenConfig } from "../core/screen.js";
 import { APIClient } from "../core/api-client.js";
 
 interface MemoryEntry {
-  id: string;
-  category: string;
-  content: string;
-  timestamp?: string;
-  nodeId?: string;
-  source?: string;
+  sessionId: string;
+  nodeId: string;
+  nodeName: string;
+  timestamp: string;
+  command: string;
+  summary: string;
+  tags: string[];
+  filePath: string;
 }
 
 /**
@@ -86,6 +88,7 @@ export class MemoryScreen extends Screen {
       scrollable: true,
       mouse: true,
       keys: false,
+      tags: true,
       style: {
         border: {
           fg: "green",
@@ -111,7 +114,8 @@ export class MemoryScreen extends Screen {
           this.listBox.addItem("No memory entries");
         } else {
           this.memories.forEach((mem) => {
-            const label = `[${mem.category}] ${mem.content.substring(0, 40)}...`;
+            const summary = mem.summary?.substring(0, 35) ?? "No summary";
+            const label = `[${mem.command}] ${summary}...`;
             this.listBox?.addItem(label);
           });
         }
@@ -154,12 +158,16 @@ export class MemoryScreen extends Screen {
     const mem = this.memories[index];
     let content = "";
 
-    content += `\n  ${mem.category}\n`;
-    content += `  ${"=".repeat(40)}\n\n`;
-    content += `  ${mem.content}\n`;
-    content += `\n  Source: ${mem.source ?? "N/A"}\n`;
-    content += `  Node: ${mem.nodeId ?? "N/A"}\n`;
-    content += `  Time: ${mem.timestamp ?? "N/A"}\n`;
+    content += `\n  {cyan-fg}${mem.summary}{/}\n`;
+    content += `  ${"=".repeat(60)}\n\n`;
+    content += `  Command:      ${mem.command}\n`;
+    content += `  Session ID:   ${mem.sessionId}\n`;
+    content += `  Node:         ${mem.nodeName} (${mem.nodeId})\n`;
+    content += `  Time:         ${new Date(mem.timestamp).toLocaleString()}\n`;
+    if (mem.tags.length > 0) {
+      content += `  Tags:         ${mem.tags.join(", ")}\n`;
+    }
+    content += `\n  File Path:\n  ${mem.filePath}\n`;
 
     this.contentBox.setContent(content);
 
