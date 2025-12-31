@@ -422,6 +422,7 @@ List Navigation:
   [↑↓] or [jk]  Move up/down
   [gg]          Go to top
   [G]           Go to bottom
+  [F]           Toggle scope filter (Commands screen)
   [/]           Search/filter
   [Enter]       Select item
   [d]           Delete item

@@ -99,7 +99,10 @@ export class MemoryScreen extends Screen {
 
   async render(): Promise<void> {
     try {
-      this.memories = await this.apiClient.getMemories();
+      const result = await this.apiClient.getMemories();
+
+      // Ensure result is an array
+      this.memories = Array.isArray(result) ? result : [];
 
       if (this.listBox) {
         this.listBox.clearItems();

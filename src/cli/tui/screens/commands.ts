@@ -25,6 +25,10 @@ export class CommandsScreen extends Screen {
   private selectedIndex = 0;
   private searchQuery = "";
   private searchMode = false;
+  private lastKeyTime = 0;
+  private keyDebounceMs = 50;
+  private scopeFilter: "all" | "global" | "local" = "all";
+  private scopeFilterOptions: Array<"all" | "global" | "local"> = ["all", "global", "local"];
 
   constructor(
     parent: blessed.Widgets.Screen,
@@ -152,12 +156,32 @@ export class CommandsScreen extends Screen {
     }
     const keyRecord = key;
 
+    // Debounce navigation keys to prevent duplicate key repeat events
+    const now = Date.now();
+    const isNavKey =
+      keyRecord.name === "up" || ch === "k" || keyRecord.name === "down" || ch === "j";
+
+    if (isNavKey && now - this.lastKeyTime < this.keyDebounceMs) {
+      return; // Ignore rapid repeated keys
+    }
+
+    if (isNavKey) {
+      this.lastKeyTime = now;
+    }
+
     if (keyRecord.name === "up" || ch === "k") {
       this.selectedIndex = Math.max(0, this.selectedIndex - 1);
       this.updateInfoBox(this.selectedIndex);
     } else if (keyRecord.name === "down" || ch === "j") {
       this.selectedIndex = Math.min(this.filteredCommands.length - 1, this.selectedIndex + 1);
       this.updateInfoBox(this.selectedIndex);
+    } else if (ch === "f" || ch === "F") {
+      // Cycle through scope filters
+      const currentIndex = this.scopeFilterOptions.indexOf(this.scopeFilter);
+      const nextIndex = (currentIndex + 1) % this.scopeFilterOptions.length;
+      this.scopeFilter = this.scopeFilterOptions[nextIndex];
+      this.selectedIndex = 0;
+      await this.render();
     } else if (ch === "/" && !this.searchMode) {
       // Start search mode - "/" initiates search, subsequent characters filter
       this.searchMode = true;
@@ -213,6 +237,17 @@ export class CommandsScreen extends Screen {
     }
   }
 
+  private getFilterLabel(): string {
+    switch (this.scopeFilter) {
+      case "global":
+        return "Global";
+      case "local":
+        return "Local";
+      default:
+        return "All";
+    }
+  }
+
   private updateInfoBox(index: number): void {
     if (!this.infoBox) {
       return;
@@ -259,9 +294,9 @@ export class CommandsScreen extends Screen {
     }
 
     const searchInfo = this.searchQuery
-      ? ` — filtered: "${this.searchQuery}" (${this.filteredCommands.length}/${this.commands.length})`
-      : "";
-    content += `\n  Keys: ↑/↓ or j/k (navigate), / (search), ESC (clear)${searchInfo}\n`;
+      ? `search: "${this.searchQuery}" (${this.filteredCommands.length}/${this.commands.length})`
+      : `scope: ${this.getFilterLabel()}`;
+    content += `\n  Keys: ↑/↓ or j/k (navigate)\n  F (filter), / (search), ESC (clear) — ${searchInfo}\n`;
 
     this.infoBox.setContent(content);
 
@@ -303,15 +338,25 @@ export class CommandsScreen extends Screen {
   }
 
   private filterCommands(): void {
-    if (!this.searchQuery) {
-      this.filteredCommands = [...this.commands];
-    } else {
+    let results = this.commands;
+
+    // Apply scope filter
+    if (this.scopeFilter === "global") {
+      results = results.filter((cmd) => cmd.type === "global");
+    } else if (this.scopeFilter === "local") {
+      results = results.filter((cmd) => cmd.type === "local");
+    }
+
+    // Apply search filter
+    if (this.searchQuery) {
       const query = this.searchQuery.toLowerCase();
-      this.filteredCommands = this.commands.filter(
+      results = results.filter(
         (cmd) =>
           cmd.name.toLowerCase().includes(query) || cmd.description?.toLowerCase().includes(query)
       );
     }
+
+    this.filteredCommands = results;
   }
 
   activate(): void {
