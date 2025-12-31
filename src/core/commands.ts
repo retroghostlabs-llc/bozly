@@ -44,6 +44,7 @@ export async function getNodeCommands(vaultPath: string): Promise<NodeCommand[]>
           description,
           file: filePath,
           content,
+          source: "vault",
           provider,
           model,
         });

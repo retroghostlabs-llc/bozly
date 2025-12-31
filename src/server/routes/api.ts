@@ -206,7 +206,8 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
         description: string;
         source: string;
         nodeId: string;
-        type: string;
+        type: "global" | "local";
+        vaultName?: string;
         usage?: unknown;
       }> = [];
 
@@ -215,18 +216,13 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
           const commands = await getNodeCommands(vault.path);
           allCommands.push(
             ...commands.map(
-              (c: {
-                name: string;
-                description?: string;
-                source?: string;
-                type?: string;
-                usage?: unknown;
-              }) => ({
+              (c: { name: string; description?: string; source?: string; usage?: unknown }) => ({
                 name: c.name,
                 description: c.description ?? "No description",
-                source: c.source ?? "Unknown",
+                source: c.source ?? "vault",
                 nodeId: vault.id,
-                type: c.type ?? "unknown",
+                type: "local" as const,
+                vaultName: vault.name,
                 usage: c.usage,
               })
             )

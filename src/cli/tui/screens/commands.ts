@@ -8,6 +8,7 @@ interface CommandItem {
   description: string;
   nodeId?: string;
   type?: "global" | "local" | "builtin";
+  vaultName?: string;
   usage?: string;
 }
 
@@ -18,9 +19,12 @@ interface CommandItem {
  */
 export class CommandsScreen extends Screen {
   private commands: CommandItem[] = [];
+  private filteredCommands: CommandItem[] = [];
   private listBox?: blessed.Widgets.ListElement;
   private infoBox?: blessed.Widgets.BoxElement;
   private selectedIndex = 0;
+  private searchQuery = "";
+  private searchMode = false;
 
   constructor(
     parent: blessed.Widgets.Screen,
@@ -101,15 +105,21 @@ export class CommandsScreen extends Screen {
 
   async render(): Promise<void> {
     try {
+      // Clear cache to get fresh data from API
+      this.apiClient.clearCache("/commands");
+
       this.commands = await this.apiClient.getCommands();
+      this.filterCommands();
 
       if (this.listBox) {
         this.listBox.clearItems();
 
-        if (this.commands.length === 0) {
-          this.listBox.addItem("No commands available");
+        if (this.filteredCommands.length === 0) {
+          this.listBox.addItem(
+            this.searchQuery ? "No commands match your search" : "No commands available"
+          );
         } else {
-          this.commands.forEach((cmd) => {
+          this.filteredCommands.forEach((cmd) => {
             const typeLabel = this.getTypeLabel(cmd.type);
             const label = `${typeLabel} ${cmd.name}`;
             this.listBox?.addItem(label);
@@ -117,6 +127,10 @@ export class CommandsScreen extends Screen {
         }
 
         // Preserve selected index during refresh (don't reset to 0)
+        this.selectedIndex = Math.min(
+          this.selectedIndex,
+          Math.max(0, this.filteredCommands.length - 1)
+        );
         this.updateInfoBox(this.selectedIndex);
         this.parent.render();
       }
@@ -142,8 +156,34 @@ export class CommandsScreen extends Screen {
       this.selectedIndex = Math.max(0, this.selectedIndex - 1);
       this.updateInfoBox(this.selectedIndex);
     } else if (keyRecord.name === "down" || ch === "j") {
-      this.selectedIndex = Math.min(this.commands.length - 1, this.selectedIndex + 1);
+      this.selectedIndex = Math.min(this.filteredCommands.length - 1, this.selectedIndex + 1);
       this.updateInfoBox(this.selectedIndex);
+    } else if (ch === "/" && !this.searchMode) {
+      // Start search mode - "/" initiates search, subsequent characters filter
+      this.searchMode = true;
+      this.searchQuery = "";
+      this.updateInfoBox(this.selectedIndex);
+    } else if (keyRecord.name === "escape") {
+      // Escape to exit search mode or clear search
+      if (this.searchMode) {
+        this.searchQuery = "";
+        this.searchMode = false;
+        this.selectedIndex = 0;
+        await this.render();
+      }
+    } else if (this.searchMode) {
+      // In search mode: accept characters
+      if (keyRecord.name === "backspace") {
+        this.searchQuery = this.searchQuery.slice(0, -1);
+      } else if (keyRecord.name === "return" || keyRecord.name === "enter") {
+        // Exit search mode on enter
+        this.searchMode = false;
+      } else if (ch && ch.length === 1 && /[a-zA-Z0-9\-_\s]/.test(ch)) {
+        // Accept alphanumeric, dash, underscore, space
+        this.searchQuery += ch;
+      }
+      this.selectedIndex = 0;
+      await this.render();
     }
   }
 
@@ -152,7 +192,7 @@ export class CommandsScreen extends Screen {
       case "global":
         return "[G]";
       case "local":
-        return "[L]";
+        return "[V]";
       case "builtin":
         return "[B]";
       default:
@@ -160,18 +200,43 @@ export class CommandsScreen extends Screen {
     }
   }
 
+  private getScopeDisplay(type?: string, vaultName?: string): string {
+    switch (type) {
+      case "global":
+        return "Global";
+      case "local":
+        return vaultName ? `${vaultName} (local)` : "Local";
+      case "builtin":
+        return "Built-in";
+      default:
+        return "Unknown";
+    }
+  }
+
   private updateInfoBox(index: number): void {
-    if (!this.infoBox || !this.commands[index]) {
+    if (!this.infoBox) {
       return;
     }
 
-    const cmd = this.commands[index];
+    // If in search mode, show search input
+    if (this.searchMode) {
+      const content = `\n  Search: ${this.searchQuery}_\n\n  Type characters to search by name or description.\n  Press Enter or Escape to exit search.\n`;
+      this.infoBox.setContent(content);
+      this.parent.render();
+      return;
+    }
+
+    // Otherwise show command details
+    if (!this.filteredCommands[index]) {
+      return;
+    }
+
+    const cmd = this.filteredCommands[index];
     let content = "";
 
     content += `\n  ${cmd.name}\n`;
     content += `  ${"=".repeat(40)}\n\n`;
-    content += `  Type: ${cmd.type ?? "unknown"}\n`;
-    content += `  Node: ${cmd.nodeId ?? "global"}\n`;
+    content += `  Scope: ${this.getScopeDisplay(cmd.type, cmd.vaultName)}\n`;
     content += `\n  Description:\n`;
 
     // Wrap long descriptions to prevent layout issues
@@ -193,7 +258,10 @@ export class CommandsScreen extends Screen {
       content += "\n";
     }
 
-    content += `\n  Keys: ↑/↓ or j/k (navigate), / (search)\n`;
+    const searchInfo = this.searchQuery
+      ? ` — filtered: "${this.searchQuery}" (${this.filteredCommands.length}/${this.commands.length})`
+      : "";
+    content += `\n  Keys: ↑/↓ or j/k (navigate), / (search), ESC (clear)${searchInfo}\n`;
 
     this.infoBox.setContent(content);
 
@@ -232,6 +300,18 @@ export class CommandsScreen extends Screen {
   private setupKeybindings(): void {
     // Keys are handled via the app's global keypress event -> handleKey()
     // No need to set up bindings here
+  }
+
+  private filterCommands(): void {
+    if (!this.searchQuery) {
+      this.filteredCommands = [...this.commands];
+    } else {
+      const query = this.searchQuery.toLowerCase();
+      this.filteredCommands = this.commands.filter(
+        (cmd) =>
+          cmd.name.toLowerCase().includes(query) || cmd.description?.toLowerCase().includes(query)
+      );
+    }
   }
 
   activate(): void {

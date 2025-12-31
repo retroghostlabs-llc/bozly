@@ -1,4 +1,4 @@
-.PHONY: help build dev test test-watch test-ui test-coverage test-isolated test-with-prefix test-docker lint lint-fix format format-check validate clean start serve serve-dev install uninstall setup verify test-all
+.PHONY: help build dev test test-watch test-ui test-coverage test-isolated test-with-prefix test-docker lint lint-fix format format-check validate clean start serve serve-dev install uninstall setup verify test-all rebuild-serve
 
 help:
 	@echo "BOZLY - Development Commands"
@@ -46,6 +46,7 @@ help:
 	@echo "  make start           Run the bozly CLI"
 	@echo "  make serve           Start BOZLY dashboard server (port 3847)"
 	@echo "  make serve-dev       Start server in development (watch mode)"
+	@echo "  make rebuild-serve   Clean build + clear cache + start server (testing)"
 	@echo ""
 	@echo "💻 Development Loop:"
 	@echo "  Terminal 1:  make dev           (watch mode compilation)"
@@ -171,3 +172,11 @@ test-all: test
 	@echo "Running additional test suites..."
 	@echo "  make test-isolated"
 	make test-isolated
+
+rebuild-serve: clean build
+	@echo "🧹 Clearing caches..."
+	@rm -rf ~/.bozly/cache 2>/dev/null || true
+	@rm -rf /tmp/.bozly-cache* 2>/dev/null || true
+	@echo "✅ Clean rebuild complete! Starting server..."
+	@echo ""
+	npm start -- serve
