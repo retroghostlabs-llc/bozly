@@ -2,6 +2,7 @@ import blessed from "@unblessed/blessed";
 import { Screen, ScreenConfig } from "../core/screen.js";
 import { APIClient } from "../core/api-client.js";
 import { getColorContext } from "../utils/colors.js";
+import { getBozlyAsciiArt } from "../utils/ascii-art.js";
 
 interface SessionData {
   status: string;
@@ -132,14 +133,15 @@ export class HomeScreen extends Screen {
     // Respects NO_COLOR standard: https://no-color.org/
     const { bold, cyan, gray, reset } = getColorContext();
 
-    // BOZLY ASCII art logo (B-O-Z-L-Y, each letter 4-5 chars wide)
+    // Load BOZLY ASCII art logo from static files, with fallback to hardcoded version
+    const asciiArt = getBozlyAsciiArt();
+    const coloredArt = asciiArt
+      .split("\n")
+      .map((line) => `${bold}${cyan}${line}${reset}`)
+      .join("\n");
+
     const logo = `
-        ${bold}${cyan} ██████╗  ██████╗  ███████╗ ██╗     ██╗   ██╗${reset}
-        ${bold}${cyan} ██╔══██╗ ██╔═══██╗ ╚════██║ ██║     ╚██╗ ██╔╝${reset}
-        ${bold}${cyan} ██████╔╝ ██║   ██║  ███╔═╝  ██║      ╚████╔╝ ${reset}
-        ${bold}${cyan} ██╔══██╗ ██║   ██║ ██╔══╝   ██║       ╚██╔╝  ${reset}
-        ${bold}${cyan} ██████╔╝ ╚██████╔╝ ███████╗ ███████╗   ██║   ${reset}
-        ${bold}${cyan} ╚═════╝   ╚═════╝  ╚══════╝ ╚══════╝   ╚═╝   ${reset}
+${coloredArt}
 
              ${cyan}Build. Organize. Link. Yield.${reset}
              ${gray}v0.6.0-beta.1${reset}

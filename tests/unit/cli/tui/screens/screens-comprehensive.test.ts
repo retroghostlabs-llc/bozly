@@ -118,8 +118,9 @@ describe('Screen Implementations Comprehensive', () => {
       expect(typeof header).toBe('string');
       // Should contain the tagline
       expect(header).toContain('Build. Organize. Link. Yield.');
-      // Should contain ASCII art box-drawing characters for logo
-      expect(header).toContain('██████');
+      // Should contain ASCII art (loaded from static files or fallback)
+      // The art uses # characters
+      expect(header).toContain('#');
       // Should use terminal-respecting colors (cyan: \x1b[36m) instead of hardcoded RGB
       // This allows users' terminal color schemes to be applied
       expect(header).toContain('\x1b[36m');
