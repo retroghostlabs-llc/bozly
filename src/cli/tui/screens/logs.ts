@@ -14,6 +14,7 @@ interface LogEntry {
   file?: string;
   function?: string;
   line?: number;
+  source?: string; // Location of the log (e.g., "Global" or vault name)
 }
 
 type FilterLevel = "ALL" | "INFO" | "DEBUG" | "ERROR";
@@ -170,63 +171,115 @@ export class LogsScreen extends Screen {
 
   private async loadLogs(): Promise<void> {
     try {
-      // Check if log directory exists
-      try {
-        await fs.access(this.logDir);
-      } catch {
-        this.logs = [];
-        this.applyFilter();
-        return;
-      }
-
-      // Get all log files
-      const files = await fs.readdir(this.logDir);
-      const logFiles = files
-        .filter((f) => f.startsWith("bozly-") && f.endsWith(".log"))
-        .sort()
-        .reverse(); // Most recent first
-
-      // Load logs from the most recent file (if available)
       this.logs = [];
 
-      if (logFiles.length > 0) {
-        const mostRecentFile = logFiles[0];
-        const filePath = path.join(this.logDir, mostRecentFile);
+      // Load global logs
+      await this.loadLogsFromDirectory(this.logDir, "Global");
 
-        try {
-          const content = await fs.readFile(filePath, "utf-8");
-          const lines = content.split("\n");
+      // Load logs from all vaults
+      await this.loadVaultLogs();
 
-          // Parse JSON log entries
-          for (const line of lines) {
-            if (
-              !line.trim() ||
-              line.includes("BOZLY Session Log") ||
-              line.includes("Started:") ||
-              line.includes("═══════")
-            ) {
-              continue;
-            }
+      // Sort by timestamp descending (most recent first)
+      this.logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-            try {
-              const entry = JSON.parse(line) as LogEntry;
-              this.logs.push(entry);
-            } catch {
-              // Skip non-JSON lines
-            }
-          }
-
-          // Keep only last ~100 lines
-          this.logs = this.logs.slice(-this.maxLines);
-        } catch {
-          this.logs = [];
-        }
-      }
+      // Keep only last ~500 entries (more than before to account for multiple sources)
+      this.logs = this.logs.slice(0, this.maxLines * 5);
 
       this.applyFilter();
     } catch (error) {
       this.logs = [];
       this.applyFilter();
+    }
+  }
+
+  private async loadLogsFromDirectory(dir: string, source: string): Promise<void> {
+    try {
+      // Check if directory exists
+      try {
+        await fs.access(dir);
+      } catch {
+        return;
+      }
+
+      // Get all log files
+      const files = await fs.readdir(dir);
+      const logFiles = files
+        .filter((f) => f.startsWith("bozly-") && f.endsWith(".log"))
+        .sort()
+        .reverse(); // Most recent first
+
+      // Load logs from ALL files
+      for (const file of logFiles) {
+        const filePath = path.join(dir, file);
+
+        try {
+          const content = await fs.readFile(filePath, "utf-8");
+          this.parseLogsFromFile(content, source);
+        } catch {
+          // Skip files that can't be read
+        }
+      }
+    } catch {
+      // Ignore errors for this directory
+    }
+  }
+
+  private parseLogsFromFile(content: string, source: string): void {
+    // Split by lines and reconstruct multi-line JSON objects
+    const lines = content.split("\n");
+    let currentObject = "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+
+      // Skip headers and empty lines
+      if (
+        !trimmed ||
+        trimmed.includes("BOZLY Session Log") ||
+        trimmed.includes("Started:") ||
+        trimmed.includes("═══════")
+      ) {
+        continue;
+      }
+
+      // Accumulate lines for JSON object
+      if (trimmed.startsWith("{")) {
+        currentObject = trimmed;
+      } else if (currentObject && trimmed.endsWith("}")) {
+        currentObject += trimmed;
+
+        // Try to parse the complete JSON object
+        try {
+          const entry = JSON.parse(currentObject) as LogEntry;
+          entry.source = source;
+          this.logs.push(entry);
+        } catch {
+          // Skip invalid JSON
+        }
+
+        currentObject = "";
+      } else if (currentObject) {
+        currentObject += trimmed;
+      }
+    }
+  }
+
+  private async loadVaultLogs(): Promise<void> {
+    try {
+      const registryPath = path.join(homedir(), ".bozly", "bozly-registry.json");
+      const registryContent = await fs.readFile(registryPath, "utf-8");
+      const registry = JSON.parse(registryContent) as {
+        nodes?: Array<{ name: string; path: string }>;
+      };
+
+      if (registry.nodes && Array.isArray(registry.nodes)) {
+        for (const node of registry.nodes) {
+          const vaultLogDir = path.join(node.path, ".bozly", "logs");
+          await this.loadLogsFromDirectory(vaultLogDir, node.name);
+        }
+      }
+    } catch {
+      // Silently fail if registry doesn't exist or vaults have no logs
     }
   }
 
@@ -240,10 +293,27 @@ export class LogsScreen extends Screen {
 
   private renderHeader(): string {
     const { bold, cyan, gray, reset } = getColorContext();
+
+    // Count logs by source
+    const sourceCount: Record<string, number> = {};
+    for (const log of this.logs) {
+      const source = log.source || "Unknown";
+      sourceCount[source] = (sourceCount[source] || 0) + 1;
+    }
+
+    let sourceSummary = "";
+    for (const [source, count] of Object.entries(sourceCount)) {
+      sourceSummary += `${source}: ${count} | `;
+    }
+    if (sourceSummary) {
+      sourceSummary = sourceSummary.slice(0, -3); // Remove trailing " | "
+    }
+
     return `
-${bold}${cyan}Recent Logs${reset}
+${bold}${cyan}Aggregated Logs${reset}
 ${cyan}───────────────────────────────────────────────────────────${reset}
-${gray}Location: ${this.logDir}${reset}
+${gray}Global: ${this.logDir}${reset}
+${gray}Sources: ${sourceSummary}${reset}
 ${gray}Total Logs: ${this.logs.length} | Filtered: ${this.filteredLogs.length}${reset}
 
 `;
@@ -294,9 +364,10 @@ ${cyan}────────────────────────�
 
       // Format timestamp
       const timestamp = new Date(log.timestamp).toLocaleTimeString();
+      const source = log.source ? ` [${log.source}]` : "";
 
-      // Format log entry
-      content += `${levelColor}[${log.level}]${reset} ${gray}${timestamp}${reset} ${log.message}\n`;
+      // Format log entry with source
+      content += `${levelColor}[${log.level}]${reset} ${gray}${timestamp}${source}${reset} ${log.message}\n`;
 
       // Add file/line info if available
       if (log.file ?? log.function) {

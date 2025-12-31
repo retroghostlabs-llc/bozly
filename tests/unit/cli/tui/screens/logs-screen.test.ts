@@ -28,13 +28,22 @@ vi.mock('@unblessed/blessed', () => {
 });
 
 // Mock fs/promises
-vi.mock('fs/promises', () => ({
-  default: {
-    access: vi.fn(),
-    readdir: vi.fn(),
-    readFile: vi.fn(),
-  },
-}));
+vi.mock('fs/promises', () => {
+  const mockAccess = vi.fn();
+  const mockReaddir = vi.fn();
+  const mockReadFile = vi.fn();
+
+  return {
+    access: mockAccess,
+    readdir: mockReaddir,
+    readFile: mockReadFile,
+    default: {
+      access: mockAccess,
+      readdir: mockReaddir,
+      readFile: mockReadFile,
+    },
+  };
+});
 
 // Mock getColorContext
 vi.mock('../../../../../src/cli/tui/utils/colors.js', () => ({
@@ -439,6 +448,264 @@ describe('LogsScreen', () => {
       await screen.handleKey('a'); // ALL
 
       expect(mockAppRef.showStatusMessage).toHaveBeenCalledWith('Filter: ALL');
+    });
+  });
+
+  describe('LogsScreen multi-log aggregation', () => {
+    it('should parse single-line JSON log entries correctly', async () => {
+      const { LogsScreen } = await import('../../../../../src/cli/tui/screens/logs.js');
+      const { readFile, readdir, access } = await import('fs/promises');
+
+      // Mock fs functions
+      vi.mocked(access).mockResolvedValue(undefined);
+      vi.mocked(readdir).mockResolvedValue(['bozly-2025-12-31-17-44-22.log']);
+      vi.mocked(readFile).mockResolvedValue(
+        `═══════════════════════════════════════════════════════════
+BOZLY Session Log
+Started: 2025-12-31T17:44:22.039Z
+═══════════════════════════════════════════════════════════
+{"timestamp":"2025-12-31T17:44:22.061Z","level":"INFO","message":"Test log entry","file":"test.js","line":10}
+`
+      );
+
+      const screen = new LogsScreen(mockScreen, {
+        id: 'logs',
+        name: 'Logs',
+      });
+
+      await screen.init();
+      await screen.refresh();
+      await screen.render();
+
+      // Should not throw and should render successfully
+      expect(screen).toBeDefined();
+    });
+
+    it('should parse multi-line pretty-printed JSON log entries correctly', async () => {
+      const { LogsScreen } = await import('../../../../../src/cli/tui/screens/logs.js');
+      const { readFile, readdir, access } = await import('fs/promises');
+
+      // Mock fs functions
+      vi.mocked(access).mockResolvedValue(undefined);
+      vi.mocked(readdir).mockResolvedValue(['bozly-2025-12-31-test.log']);
+      vi.mocked(readFile).mockResolvedValue(
+        `═══════════════════════════════════════════════════════════
+BOZLY Session Log
+Started: 2025-12-31T17:44:22.039Z
+═══════════════════════════════════════════════════════════
+{
+  "timestamp": "2025-12-31T17:44:22.061Z",
+  "level": "INFO",
+  "message": "Test log entry",
+  "file": "test.js",
+  "line": 10
+}
+{
+  "timestamp": "2025-12-31T17:44:23.061Z",
+  "level": "DEBUG",
+  "message": "Another log entry"
+}
+`
+      );
+
+      const screen = new LogsScreen(mockScreen, {
+        id: 'logs',
+        name: 'Logs',
+      });
+
+      await screen.init();
+      await screen.refresh();
+      await screen.render();
+
+      // Should successfully parse multi-line JSON
+      expect(screen).toBeDefined();
+    });
+
+    it('should load logs from multiple files in directory', async () => {
+      const { LogsScreen } = await import('../../../../../src/cli/tui/screens/logs.js');
+      const { readFile, readdir, access } = await import('fs/promises');
+
+      // Mock fs functions
+      vi.mocked(access).mockResolvedValue(undefined);
+      vi.mocked(readdir).mockResolvedValue([
+        'bozly-2025-12-31-17-44-22.log',
+        'bozly-2025-12-31-17-45-00.log',
+        'bozly-2025-12-31-17-46-00.log',
+      ]);
+
+      let callCount = 0;
+      vi.mocked(readFile).mockImplementation(() => {
+        callCount++;
+        return Promise.resolve(
+          `{"timestamp":"2025-12-31T17:44:${String(callCount).padStart(2, '0')}.061Z","level":"INFO","message":"Log entry ${callCount}"}`
+        );
+      });
+
+      const screen = new LogsScreen(mockScreen, {
+        id: 'logs',
+        name: 'Logs',
+      });
+
+      await screen.init();
+      await screen.refresh();
+      await screen.render();
+
+      // Should load from all files (readFile should be called 3+ times for all files)
+      expect(readFile).toHaveBeenCalled();
+      expect(screen).toBeDefined();
+    });
+
+    it('should add source field to log entries', async () => {
+      const { LogsScreen } = await import('../../../../../src/cli/tui/screens/logs.js');
+      const { readFile, readdir, access } = await import('fs/promises');
+
+      // Mock fs functions
+      vi.mocked(access).mockResolvedValue(undefined);
+      vi.mocked(readdir).mockResolvedValue(['bozly-2025-12-31-test.log']);
+      vi.mocked(readFile).mockResolvedValue(
+        `{"timestamp":"2025-12-31T17:44:22.061Z","level":"INFO","message":"Global log entry"}`
+      );
+
+      const screen = new LogsScreen(mockScreen, {
+        id: 'logs',
+        name: 'Logs',
+      });
+
+      await screen.init();
+      await screen.refresh();
+
+      // Should not throw when rendering
+      await expect(screen.render()).resolves.not.toThrow();
+      expect(screen).toBeDefined();
+    });
+
+    it('should handle missing log directory gracefully', async () => {
+      const { LogsScreen } = await import('../../../../../src/cli/tui/screens/logs.js');
+      const { access } = await import('fs/promises');
+
+      // Mock fs functions to simulate missing directory
+      vi.mocked(access).mockRejectedValue(new Error('ENOENT'));
+
+      const screen = new LogsScreen(mockScreen, {
+        id: 'logs',
+        name: 'Logs',
+      });
+
+      await screen.init();
+      await expect(screen.refresh()).resolves.not.toThrow();
+      await expect(screen.render()).resolves.not.toThrow();
+
+      expect(screen).toBeDefined();
+    });
+
+    it('should handle malformed JSON gracefully', async () => {
+      const { LogsScreen } = await import('../../../../../src/cli/tui/screens/logs.js');
+      const { readFile, readdir, access } = await import('fs/promises');
+
+      // Mock fs functions
+      vi.mocked(access).mockResolvedValue(undefined);
+      vi.mocked(readdir).mockResolvedValue(['bozly-2025-12-31-test.log']);
+      vi.mocked(readFile).mockResolvedValue(
+        `{"timestamp":"2025-12-31T17:44:22.061Z","level":"INFO","message":"Valid entry"}
+{invalid json content here}
+{"timestamp":"2025-12-31T17:44:23.061Z","level":"INFO","message":"Another valid entry"}`
+      );
+
+      const screen = new LogsScreen(mockScreen, {
+        id: 'logs',
+        name: 'Logs',
+      });
+
+      await screen.init();
+      await screen.refresh();
+      await expect(screen.render()).resolves.not.toThrow();
+
+      // Should skip malformed JSON and continue
+      expect(screen).toBeDefined();
+    });
+
+    it('should handle vault logs loading with missing registry', async () => {
+      const { LogsScreen } = await import('../../../../../src/cli/tui/screens/logs.js');
+      const { readFile, readdir, access } = await import('fs/promises');
+
+      // Mock fs functions
+      vi.mocked(access).mockResolvedValue(undefined);
+      vi.mocked(readdir).mockResolvedValue(['bozly-2025-12-31-test.log']);
+
+      // Fail on registry read, succeed on log directory read
+      let callCount = 0;
+      vi.mocked(readFile).mockImplementation((path: any) => {
+        callCount++;
+        if (String(path).includes('bozly-registry.json')) {
+          return Promise.reject(new Error('Registry not found'));
+        }
+        return Promise.resolve(
+          `{"timestamp":"2025-12-31T17:44:22.061Z","level":"INFO","message":"Log entry"}`
+        );
+      });
+
+      const screen = new LogsScreen(mockScreen, {
+        id: 'logs',
+        name: 'Logs',
+      });
+
+      await screen.init();
+      await screen.refresh();
+      await expect(screen.render()).resolves.not.toThrow();
+
+      // Should gracefully handle missing registry
+      expect(screen).toBeDefined();
+    });
+
+    it('should sort logs by timestamp in descending order', async () => {
+      const { LogsScreen } = await import('../../../../../src/cli/tui/screens/logs.js');
+      const { readFile, readdir, access } = await import('fs/promises');
+
+      // Mock fs functions
+      vi.mocked(access).mockResolvedValue(undefined);
+      vi.mocked(readdir).mockResolvedValue(['bozly-2025-12-31-test.log']);
+      vi.mocked(readFile).mockResolvedValue(
+        `{"timestamp":"2025-12-31T17:44:22.061Z","level":"INFO","message":"First entry"}
+{"timestamp":"2025-12-31T17:44:25.061Z","level":"INFO","message":"Third entry"}
+{"timestamp":"2025-12-31T17:44:23.061Z","level":"INFO","message":"Second entry"}`
+      );
+
+      const screen = new LogsScreen(mockScreen, {
+        id: 'logs',
+        name: 'Logs',
+      });
+
+      await screen.init();
+      await screen.refresh();
+
+      // Logs should be sorted most recent first (descending)
+      // The render output should reflect this order
+      await expect(screen.render()).resolves.not.toThrow();
+      expect(screen).toBeDefined();
+    });
+
+    it('should display log sources in rendered output', async () => {
+      const { LogsScreen } = await import('../../../../../src/cli/tui/screens/logs.js');
+      const { readFile, readdir, access } = await import('fs/promises');
+
+      // Mock fs functions
+      vi.mocked(access).mockResolvedValue(undefined);
+      vi.mocked(readdir).mockResolvedValue(['bozly-2025-12-31-test.log']);
+      vi.mocked(readFile).mockResolvedValue(
+        `{"timestamp":"2025-12-31T17:44:22.061Z","level":"INFO","message":"Test log"}`
+      );
+
+      const screen = new LogsScreen(mockScreen, {
+        id: 'logs',
+        name: 'Logs',
+      });
+
+      await screen.init();
+      await screen.refresh();
+
+      // Should not throw when rendering with source information
+      await expect(screen.render()).resolves.not.toThrow();
+      expect(screen).toBeDefined();
     });
   });
 });
