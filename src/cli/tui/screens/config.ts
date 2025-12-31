@@ -69,6 +69,87 @@ export class ConfigScreen extends Screen {
       },
     });
 
+    // Set up key handlers for edit mode navigation
+    this.contentBox.key(["up"], () => {
+      if (this.editMode) {
+        let newIndex = this.selectedIndex - 1;
+        // Skip over object entries - only allow selecting primitive values
+        while (newIndex >= 0) {
+          const [, value] = this.configEntries[newIndex];
+          if (typeof value !== "object" || value === null) {
+            break;
+          }
+          newIndex--;
+        }
+        if (newIndex >= 0) {
+          this.selectedIndex = newIndex;
+          void this.render();
+        }
+      }
+    });
+
+    this.contentBox.key(["down"], () => {
+      if (this.editMode) {
+        let newIndex = this.selectedIndex + 1;
+        // Skip over object entries - only allow selecting primitive values
+        while (newIndex < this.configEntries.length) {
+          const [, value] = this.configEntries[newIndex];
+          if (typeof value !== "object" || value === null) {
+            break;
+          }
+          newIndex++;
+        }
+        if (newIndex < this.configEntries.length) {
+          this.selectedIndex = newIndex;
+          void this.render();
+        }
+      }
+    });
+
+    this.contentBox.key(["return"], () => {
+      if (this.editMode && this.configEntries.length > 0) {
+        void this.editConfigValue();
+      }
+    });
+
+    this.contentBox.key(["s", "S"], () => {
+      if (this.editMode) {
+        void this.saveConfig();
+      }
+    });
+
+    this.contentBox.key(["escape"], () => {
+      if (this.editMode) {
+        this.editMode = false;
+        this.pendingChanges = {};
+        this.selectedIndex = 0;
+        void this.render();
+      }
+    });
+
+    this.contentBox.key(["e", "E"], () => {
+      if (!this.editMode) {
+        this.editMode = true;
+        this.pendingChanges = {};
+        // Find first primitive value to select (or 0 if all are objects)
+        const editableIndex = this.configEntries.findIndex(
+          ([, value]) => typeof value !== "object" || value === null
+        );
+        this.selectedIndex = editableIndex >= 0 ? editableIndex : 0;
+        void this.render();
+      }
+    });
+
+    // B key - exit edit mode if in edit mode, otherwise do nothing (don't navigate away)
+    this.contentBox.key(["b", "B"], () => {
+      if (this.editMode) {
+        this.editMode = false;
+        this.pendingChanges = {};
+        this.selectedIndex = 0;
+        void this.render();
+      }
+    });
+
     this.createFooterBox();
   }
 
@@ -88,28 +169,36 @@ export class ConfigScreen extends Screen {
           const blue = "\x1b[34m";
           const bold = "\x1b[1m";
           const gray = "\x1b[90m";
+          const cyan = "\x1b[36m";
           const reset = "\x1b[0m";
 
           content += `  ${yellow}EDIT MODE${reset}\n`;
           content += "  ↑/↓ to select, Enter to edit, 's' to save, Esc to cancel\n\n";
 
           // Display all config entries (objects grayed out, primitives editable)
+          let hasEditableValues = false;
           this.configEntries.forEach(([key, value], index) => {
-            const isSelected = index === this.selectedIndex;
-            const displayValue = this.pendingChanges[key] ?? value;
             const isObject = typeof value === "object" && value !== null;
 
             if (isObject) {
               // Show objects grayed out - not editable
               content += `  ${gray}  ${key}: [object]${reset}\n`;
             } else {
-              // Show primitive values - editable
+              // Show primitive values - editable and selectable
+              hasEditableValues = true;
+              const isSelected = index === this.selectedIndex;
+              const displayValue = this.pendingChanges[key] ?? value;
               const marker = isSelected ? `${red}→${reset}` : " ";
               const highlight = isSelected ? `${blue}${bold}` : "";
               const formatted = this.formatValue(displayValue);
               content += `  ${marker} ${highlight}${key}:${reset} ${formatted}\n`;
             }
           });
+
+          // Show message about nested object editing
+          if (!hasEditableValues) {
+            content += `\n  ${cyan}Nested object editing coming soon (not implemented yet)${reset}\n`;
+          }
         } else {
           content += "  Press 'e' to edit, Ctrl+L to refresh\n\n";
 
@@ -199,85 +288,16 @@ export class ConfigScreen extends Screen {
     await this.render();
   }
 
-  async handleKey(ch: string, key?: Record<string, unknown>): Promise<void> {
+  async handleKey(ch: string): Promise<void> {
+    // This method is kept for compatibility but key handling is done in init()
+    // via contentBox.key() bindings
     if (!this.editMode) {
-      // Non-edit mode commands
       if (ch === "e" || ch === "E") {
         this.editMode = true;
         this.selectedIndex = 0;
         this.pendingChanges = {};
         await this.render();
       }
-      return;
-    }
-
-    // Edit mode - exit edit mode on escape, B, or back key
-    const isBackKey =
-      key?.name === "escape" ||
-      ch === "b" ||
-      ch === "B" ||
-      key?.name === "left" ||
-      key?.name === "backspace" ||
-      (key as unknown as { sequence?: string })?.sequence === "\x1b[D"; // Arrow left escape sequence
-
-    if (isBackKey) {
-      this.editMode = false;
-      this.pendingChanges = {};
-      this.selectedIndex = 0;
-      await this.render();
-      return;
-    }
-
-    if (key?.name === "up") {
-      let newIndex = this.selectedIndex - 1;
-      // Skip over object entries - only allow editing primitive values
-      while (newIndex >= 0) {
-        const [, value] = this.configEntries[newIndex];
-        if (typeof value !== "object" || value === null) {
-          break;
-        }
-        newIndex--;
-      }
-      if (newIndex >= 0) {
-        this.selectedIndex = newIndex;
-        await this.render();
-      }
-      return;
-    }
-
-    if (key?.name === "down") {
-      let newIndex = this.selectedIndex + 1;
-      // Skip over object entries - only allow editing primitive values
-      while (newIndex < this.configEntries.length) {
-        const [, value] = this.configEntries[newIndex];
-        if (typeof value !== "object" || value === null) {
-          break;
-        }
-        newIndex++;
-      }
-      if (newIndex < this.configEntries.length) {
-        this.selectedIndex = newIndex;
-        await this.render();
-      }
-      return;
-    }
-
-    if (key?.name === "return") {
-      // Only allow editing primitive values, not objects
-      const [, value] = this.configEntries[this.selectedIndex];
-      if (typeof value === "object" && value !== null) {
-        this.showError("Cannot edit objects directly. Edit individual values instead.");
-        return;
-      }
-      // Edit the selected value
-      await this.editConfigValue();
-      return;
-    }
-
-    if (ch === "s" || ch === "S") {
-      // Save all pending changes
-      await this.saveConfig();
-      return;
     }
   }
 
