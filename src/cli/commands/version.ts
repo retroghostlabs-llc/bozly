@@ -20,6 +20,7 @@ import {
 } from "../../core/versions.js";
 import { getCurrentNode } from "../../core/node.js";
 import { loadModel } from "../../core/models.js";
+import { getBozlyAsciiArt } from "../../cli/tui/utils/ascii-art.js";
 import os from "os";
 import path from "path";
 
@@ -89,13 +90,29 @@ export const versionCommand = new Command("version")
   });
 
 /**
- * Show framework version information
+ * Show framework version information with matching TUI logo branding
  */
 async function showFrameworkVersion(): Promise<void> {
   const framework = getFrameworkVersion();
 
+  // Display BOZLY ASCII logo with same color scheme as TUI (bold + cyan)
+  const bold = "\x1b[1m";
+  const cyan = "\x1b[36m";
+  const gray = "\x1b[90m";
+  const reset = "\x1b[0m";
+
+  const asciiArt = getBozlyAsciiArt();
+  const coloredLogo = asciiArt
+    .split("\n")
+    .map((line) => `${bold}${cyan}${line}${reset}`)
+    .join("\n");
+
+  console.log(coloredLogo);
+  console.log(`\n             ${cyan}Build. Organize. Link. Yield.${reset}`);
+  console.log(`             ${gray}v${framework.bozlyVersion}${reset}\n`);
+
   console.log(
-    infoBox("BOZLY Framework Version", {
+    infoBox("Framework Details", {
       Version: `v${framework.bozlyVersion}`,
       "Node.js": framework.nodeVersion,
       Platform: framework.platform,
