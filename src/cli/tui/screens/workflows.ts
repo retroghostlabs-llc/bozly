@@ -100,7 +100,8 @@ export class WorkflowsScreen extends Screen {
 
   async render(): Promise<void> {
     try {
-      this.workflows = await this.apiClient.getWorkflows();
+      const result = await this.apiClient.getWorkflows();
+      this.workflows = Array.isArray(result) ? result : [];
 
       if (this.listBox) {
         this.listBox.clearItems();
