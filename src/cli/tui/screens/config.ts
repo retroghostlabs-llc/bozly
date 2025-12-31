@@ -83,24 +83,39 @@ export class ConfigScreen extends Screen {
         content += "  " + "=".repeat(50) + "\n\n";
 
         if (this.editMode) {
-          content += "  {yellow-fg}EDIT MODE{/yellow-fg}\n";
+          const yellow = "\x1b[33m";
+          const red = "\x1b[31m";
+          const blue = "\x1b[34m";
+          const bold = "\x1b[1m";
+          const gray = "\x1b[90m";
+          const reset = "\x1b[0m";
+
+          content += `  ${yellow}EDIT MODE${reset}\n`;
           content += "  ↑/↓ to select, Enter to edit, 's' to save, Esc to cancel\n\n";
 
-          // Display editable config entries
+          // Display all config entries (objects grayed out, primitives editable)
           this.configEntries.forEach(([key, value], index) => {
             const isSelected = index === this.selectedIndex;
             const displayValue = this.pendingChanges[key] ?? value;
-            const marker = isSelected ? "{red-fg}→{/red-fg}" : " ";
-            const highlight = isSelected ? "{blue-fg,bold}" : "";
+            const isObject = typeof value === "object" && value !== null;
 
-            content += `  ${marker} ${highlight}${key}:{/} ${JSON.stringify(displayValue)}\n`;
+            if (isObject) {
+              // Show objects grayed out - not editable
+              content += `  ${gray}  ${key}: [object]${reset}\n`;
+            } else {
+              // Show primitive values - editable
+              const marker = isSelected ? `${red}→${reset}` : " ";
+              const highlight = isSelected ? `${blue}${bold}` : "";
+              const formatted = this.formatValue(displayValue);
+              content += `  ${marker} ${highlight}${key}:${reset} ${formatted}\n`;
+            }
           });
         } else {
           content += "  Press 'e' to edit, Ctrl+L to refresh\n\n";
 
           // Format configuration data (read-only)
           Object.entries(this.configData).forEach(([key, value]) => {
-            content += `  {cyan-fg}${key}:{/} ${JSON.stringify(value)}\n`;
+            content += this.formatConfigEntry(key, value);
           });
         }
 
@@ -112,6 +127,72 @@ export class ConfigScreen extends Screen {
         `Failed to load configuration: ${error instanceof Error ? error.message : String(error)}`
       );
     }
+  }
+
+  private formatConfigEntry(key: string, value: unknown, indent = 0): string {
+    const cyan = "\x1b[36m";
+    const green = "\x1b[32m";
+    const reset = "\x1b[0m";
+    const baseIndent = "  ";
+    const currentIndent = baseIndent.repeat(indent);
+    const nextIndent = baseIndent.repeat(indent + 1);
+
+    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      let result = `${currentIndent}${cyan}${key}:${reset}\n`;
+      const obj = value as Record<string, unknown>;
+      const entries = Object.entries(obj);
+
+      entries.forEach(([subKey, subValue], index) => {
+        const isLast = index === entries.length - 1;
+        const prefix = isLast ? "└─ " : "├─ ";
+        const formatted = this.formatValue(subValue);
+
+        result += `${nextIndent}${prefix}${green}${subKey}:${reset} ${formatted}\n`;
+      });
+
+      return result;
+    }
+
+    const formatted = this.formatValue(value);
+    return `${currentIndent}${cyan}${key}:${reset} ${formatted}\n`;
+  }
+
+  private formatValue(value: unknown): string {
+    const yellow = "\x1b[33m";
+    const green = "\x1b[32m";
+    const red = "\x1b[31m";
+    const gray = "\x1b[90m";
+    const reset = "\x1b[0m";
+
+    if (value === null) {
+      return `${gray}null${reset}`;
+    }
+
+    if (typeof value === "boolean") {
+      return value ? `${green}true${reset}` : `${red}false${reset}`;
+    }
+
+    if (typeof value === "number") {
+      return `${yellow}${value.toString()}${reset}`;
+    }
+
+    if (typeof value === "string") {
+      // Truncate long strings for readability
+      if (value.length > 80) {
+        return `"${value.substring(0, 77)}...${gray}"${reset}`;
+      }
+      return `"${value}"`;
+    }
+
+    if (Array.isArray(value)) {
+      return `${gray}[${value.length} items]${reset}`;
+    }
+
+    if (typeof value === "object") {
+      return `${gray}[object]${reset}`;
+    }
+
+    return JSON.stringify(value);
   }
 
   async refresh(): Promise<void> {
@@ -130,8 +211,16 @@ export class ConfigScreen extends Screen {
       return;
     }
 
-    // Edit mode commands
-    if (key?.name === "escape") {
+    // Edit mode - exit edit mode on escape, B, or back key
+    const isBackKey =
+      key?.name === "escape" ||
+      ch === "b" ||
+      ch === "B" ||
+      key?.name === "left" ||
+      key?.name === "backspace" ||
+      (key as unknown as { sequence?: string })?.sequence === "\x1b[D"; // Arrow left escape sequence
+
+    if (isBackKey) {
       this.editMode = false;
       this.pendingChanges = {};
       this.selectedIndex = 0;
@@ -140,18 +229,46 @@ export class ConfigScreen extends Screen {
     }
 
     if (key?.name === "up") {
-      this.selectedIndex = Math.max(0, this.selectedIndex - 1);
-      await this.render();
+      let newIndex = this.selectedIndex - 1;
+      // Skip over object entries - only allow editing primitive values
+      while (newIndex >= 0) {
+        const [, value] = this.configEntries[newIndex];
+        if (typeof value !== "object" || value === null) {
+          break;
+        }
+        newIndex--;
+      }
+      if (newIndex >= 0) {
+        this.selectedIndex = newIndex;
+        await this.render();
+      }
       return;
     }
 
     if (key?.name === "down") {
-      this.selectedIndex = Math.min(this.configEntries.length - 1, this.selectedIndex + 1);
-      await this.render();
+      let newIndex = this.selectedIndex + 1;
+      // Skip over object entries - only allow editing primitive values
+      while (newIndex < this.configEntries.length) {
+        const [, value] = this.configEntries[newIndex];
+        if (typeof value !== "object" || value === null) {
+          break;
+        }
+        newIndex++;
+      }
+      if (newIndex < this.configEntries.length) {
+        this.selectedIndex = newIndex;
+        await this.render();
+      }
       return;
     }
 
     if (key?.name === "return") {
+      // Only allow editing primitive values, not objects
+      const [, value] = this.configEntries[this.selectedIndex];
+      if (typeof value === "object" && value !== null) {
+        this.showError("Cannot edit objects directly. Edit individual values instead.");
+        return;
+      }
       // Edit the selected value
       await this.editConfigValue();
       return;

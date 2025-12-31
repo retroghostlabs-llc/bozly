@@ -143,7 +143,7 @@ export abstract class Screen {
         right: 0,
         bottom: 3,
         border: "line",
-        tags: true,
+        markup: true,
         style: {
           border: { fg: "cyan" },
         },
@@ -167,7 +167,7 @@ export abstract class Screen {
       width: 60,
       height: 10,
       border: "line",
-      tags: true,
+      markup: true,
       style: {
         border: { fg: "red" },
         fg: "red",
@@ -198,7 +198,7 @@ export abstract class Screen {
       width: 60,
       height: 10,
       border: "line",
-      tags: true,
+      markup: true,
       style: {
         border: { fg: "green" },
         fg: "green",
@@ -229,7 +229,7 @@ export abstract class Screen {
       width: 60,
       height: 10,
       border: "line",
-      tags: true,
+      markup: true,
       style: {
         border: { fg: "blue" },
         fg: "blue",
