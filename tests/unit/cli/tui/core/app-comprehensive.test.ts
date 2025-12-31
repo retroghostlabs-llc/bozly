@@ -641,10 +641,15 @@ describe('BozlyTUI Application Comprehensive', () => {
       );
 
       const helpHandler = helpKeyCall?.[1] as () => void;
+      expect(helpHandler).toBeDefined();
+
+      // Verify the help handler is properly registered
       if (helpHandler) {
+        const switchScreenSpy = vi.spyOn(tui, 'switchScreen');
         helpHandler();
-        // Verify screen.once was called for help modal
-        expect(mockBlessedScreen.once).toHaveBeenCalled();
+        // Help handler should attempt to switch to help screen
+        expect(switchScreenSpy).toHaveBeenCalledWith('help');
+        switchScreenSpy.mockRestore();
       }
     });
 
@@ -802,14 +807,15 @@ describe('BozlyTUI Application Comprehensive', () => {
       );
 
       const helpHandler = helpKeyCall?.[1] as () => void;
+      expect(helpHandler).toBeDefined();
+
       if (helpHandler) {
-        // This will trigger showHelpModal
+        // Help handler should be properly registered as a function
+        const switchScreenSpy = vi.spyOn(tui, 'switchScreen');
         helpHandler();
-        // Verify once was called to close help on any key
-        expect(mockBlessedScreen.once).toHaveBeenCalledWith(
-          'key',
-          expect.any(Function)
-        );
+        // Verify switchScreen was called to show help screen
+        expect(switchScreenSpy).toHaveBeenCalledWith('help');
+        switchScreenSpy.mockRestore();
       }
     });
 
@@ -824,13 +830,15 @@ describe('BozlyTUI Application Comprehensive', () => {
       );
 
       const helpHandler = helpKeyCall?.[1] as () => void;
+      expect(helpHandler).toBeDefined();
+
       if (helpHandler) {
+        // Help handler switches to help screen instead of showing a modal
+        const switchScreenSpy = vi.spyOn(tui, 'switchScreen');
         helpHandler();
-        // The help modal will setup a one-time keypress listener
-        const onceCall = (mockBlessedScreen.once as any).mock.calls.find(
-          (call: any) => call[0] === 'key'
-        );
-        expect(onceCall).toBeDefined();
+        // Verify help screen is switched to
+        expect(switchScreenSpy).toHaveBeenCalledWith('help');
+        switchScreenSpy.mockRestore();
       }
     });
   });
