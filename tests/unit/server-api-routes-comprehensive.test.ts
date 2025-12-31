@@ -21,6 +21,7 @@ import * as sessions from "../../src/core/sessions.js";
 import * as commands from "../../src/core/commands.js";
 import * as context from "../../src/core/context.js";
 import * as providers from "../../src/core/providers.js";
+import * as workflows from "../../src/core/workflows.js";
 import { ServerConfig } from "../../src/server/index.js";
 
 describe("API Routes - Comprehensive Coverage", () => {
@@ -695,6 +696,182 @@ describe("API Routes - Comprehensive Coverage", () => {
       const data = JSON.parse(response.body);
       expect(data.success).toBe(false);
       expect(data.error).toBe("Provider listing failed");
+    });
+  });
+
+  // ============================================================================
+  // GET /api/workflows - List All Workflows
+  // ============================================================================
+
+  describe("GET /api/workflows", () => {
+    it("should return empty list when no workflows exist", async () => {
+      vi.spyOn(registry, "listNodes").mockResolvedValueOnce([]);
+
+      const response = await fastifyApp.inject({
+        method: "GET",
+        url: "/api/workflows",
+      });
+
+      expect(response.statusCode).toBe(200);
+      const data = JSON.parse(response.body);
+      expect(data.success).toBe(true);
+      expect(data.data).toEqual([]);
+    });
+
+    it("should return workflows from all nodes", async () => {
+      const mockVaults = [
+        { id: "vault1", path: "/path/to/vault1", name: "Vault 1" },
+        { id: "vault2", path: "/path/to/vault2", name: "Vault 2" },
+      ];
+
+      const mockWorkflows1 = [
+        {
+          id: "wf1",
+          name: "Workflow 1",
+          steps: 3,
+          status: "active" as const,
+        },
+      ];
+
+      const mockWorkflows2 = [
+        {
+          id: "wf2",
+          name: "Workflow 2",
+          steps: 2,
+          status: "disabled" as const,
+        },
+      ];
+
+      vi.spyOn(registry, "listNodes").mockResolvedValueOnce(mockVaults);
+      vi.spyOn(workflows, "discoverWorkflows")
+        .mockResolvedValueOnce(mockWorkflows1)
+        .mockResolvedValueOnce(mockWorkflows2);
+
+      const response = await fastifyApp.inject({
+        method: "GET",
+        url: "/api/workflows",
+      });
+
+      expect(response.statusCode).toBe(200);
+      const data = JSON.parse(response.body);
+      expect(data.success).toBe(true);
+      expect(data.data).toHaveLength(2);
+      expect(data.data[0]).toHaveProperty("nodeId");
+      expect(data.data[0]).toHaveProperty("nodeName");
+    });
+
+    it("should handle errors gracefully", async () => {
+      vi.spyOn(registry, "listNodes").mockRejectedValueOnce(
+        new Error("Registry error")
+      );
+
+      const response = await fastifyApp.inject({
+        method: "GET",
+        url: "/api/workflows",
+      });
+
+      expect(response.statusCode).toBe(200);
+      const data = JSON.parse(response.body);
+      expect(data.success).toBe(false);
+      expect(data.error).toBeDefined();
+    });
+  });
+
+  // ============================================================================
+  // GET /api/vaults/:id/workflows - List Workflows for Specific Vault
+  // ============================================================================
+
+  describe("GET /api/vaults/:id/workflows", () => {
+    it("should return workflows for a specific vault", async () => {
+      const mockVault = {
+        id: "vault1",
+        path: "/path/to/vault1",
+        name: "Vault 1",
+      };
+
+      const mockWorkflows = [
+        {
+          id: "wf1",
+          name: "Workflow 1",
+          steps: 3,
+          status: "active" as const,
+        },
+      ];
+
+      vi.spyOn(registry, "getNode").mockResolvedValueOnce(mockVault);
+      vi.spyOn(workflows, "discoverWorkflows").mockResolvedValueOnce(
+        mockWorkflows
+      );
+
+      const response = await fastifyApp.inject({
+        method: "GET",
+        url: "/api/vaults/vault1/workflows",
+      });
+
+      expect(response.statusCode).toBe(200);
+      const data = JSON.parse(response.body);
+      expect(data.success).toBe(true);
+      expect(data.data).toHaveLength(1);
+      expect(data.data[0].nodeId).toBe("vault1");
+      expect(data.data[0].nodeName).toBe("Vault 1");
+    });
+
+    it("should return error when vault not found", async () => {
+      vi.spyOn(registry, "getNode").mockResolvedValueOnce(null);
+
+      const response = await fastifyApp.inject({
+        method: "GET",
+        url: "/api/vaults/nonexistent/workflows",
+      });
+
+      expect(response.statusCode).toBe(200);
+      const data = JSON.parse(response.body);
+      expect(data.success).toBe(false);
+      expect(data.error).toBe("Vault not found");
+    });
+
+    it("should return empty list when vault has no workflows", async () => {
+      const mockVault = {
+        id: "vault1",
+        path: "/path/to/vault1",
+        name: "Vault 1",
+      };
+
+      vi.spyOn(registry, "getNode").mockResolvedValueOnce(mockVault);
+      vi.spyOn(workflows, "discoverWorkflows").mockResolvedValueOnce([]);
+
+      const response = await fastifyApp.inject({
+        method: "GET",
+        url: "/api/vaults/vault1/workflows",
+      });
+
+      expect(response.statusCode).toBe(200);
+      const data = JSON.parse(response.body);
+      expect(data.success).toBe(true);
+      expect(data.data).toEqual([]);
+    });
+
+    it("should handle errors gracefully", async () => {
+      const mockVault = {
+        id: "vault1",
+        path: "/path/to/vault1",
+        name: "Vault 1",
+      };
+
+      vi.spyOn(registry, "getNode").mockResolvedValueOnce(mockVault);
+      vi.spyOn(workflows, "discoverWorkflows").mockRejectedValueOnce(
+        new Error("Workflow discovery error")
+      );
+
+      const response = await fastifyApp.inject({
+        method: "GET",
+        url: "/api/vaults/vault1/workflows",
+      });
+
+      expect(response.statusCode).toBe(200);
+      const data = JSON.parse(response.body);
+      expect(data.success).toBe(false);
+      expect(data.error).toBeDefined();
     });
   });
 
