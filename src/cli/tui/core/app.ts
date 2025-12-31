@@ -338,8 +338,8 @@ export class BozlyTUI implements IAppReference {
     // This ensures navigation keys (arrows, j/k, etc.) are handled properly
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.screen.on("keypress", (ch: string, key: any) => {
-      // Check for back navigation (B key)
-      if (!this.currentModal && (ch === "b" || ch === "B")) {
+      // Check for back navigation (B key or left arrow)
+      if (!this.currentModal && (ch === "b" || ch === "B" || key?.name === "left")) {
         this.goBack().catch((err) => {
           this.logAsyncError("Screen switch to back", err);
         });

@@ -160,10 +160,7 @@ export class NodesScreen extends Screen {
     } else if (ch === "d") {
       const vault = this.nodes[this.selectedIndex];
       if (vault) {
-        const confirmed = await this.showConfirmDialog(
-          `Delete vault "${vault.name}"?`,
-          "This action cannot be undone."
-        );
+        const confirmed = await this.showDeleteConfirmDialog(vault.name);
         if (confirmed) {
           await this.deleteVault(vault.id);
         }
@@ -200,7 +197,7 @@ export class NodesScreen extends Screen {
   }
 
   private async showVaultDetail(vault: NodeItem): Promise<void> {
-    const content = `\n  Vault Details: ${vault.name}\n\n  ID: ${vault.id}\n  Path: ${vault.path}\n  Status: ${vault.status ?? "active"}\n  Sessions: ${vault.sessions ?? 0}\n  Commands: ${vault.commands ?? 0}\n  Created: ${vault.created ?? "N/A"}\n\n  [Press any key to close]\n`;
+    const content = `\n  Vault: ${vault.name}\n\n  ID: ${vault.id}\n  Path: ${vault.path}\n  Status: ${vault.status ?? "active"}\n  Sessions: ${vault.sessions ?? 0}\n  Commands: ${vault.commands ?? 0}\n  Created: ${vault.created ?? "N/A"}\n\n  Keys: s (sessions), ESC (close)\n`;
 
     try {
       const modal = blessed.box({
@@ -215,14 +212,35 @@ export class NodesScreen extends Screen {
           border: {
             fg: "blue",
           },
+          focus: {
+            border: {
+              fg: "cyan",
+            },
+          },
         },
         keys: false,
-        mouse: true,
+        mouse: false,
       });
 
       modal.focus();
+      this.parent.render();
+
       await new Promise<void>((resolve) => {
-        modal.on("keypress", () => {
+        const handleKey = (ch: string, key?: Record<string, unknown>) => {
+          const keyName = key ? (key as { name: string }).name : "";
+          if (keyName === "escape") {
+            cleanup();
+            resolve();
+          } else if (ch === "s") {
+            cleanup();
+            // TODO: Navigate to sessions screen for this vault
+            this.showError("Session navigation not yet implemented");
+            resolve();
+          }
+        };
+
+        const cleanup = () => {
+          modal.removeAllListeners();
           try {
             modal.destroy();
           } catch {
@@ -232,8 +250,13 @@ export class NodesScreen extends Screen {
           if (this.listBox) {
             this.listBox.focus();
           }
-          resolve();
-        });
+        };
+
+        // Set up proper key handling with parent's key events
+        this.parent.on("keypress", handleKey);
+
+        // Also handle direct key events
+        modal.on("keypress", handleKey);
       });
     } catch (error) {
       // Log error to file but don't display it to avoid corrupting TUI
@@ -246,19 +269,26 @@ export class NodesScreen extends Screen {
     }
   }
 
-  private async showConfirmDialog(title: string, message: string): Promise<boolean> {
+  private async showDeleteConfirmDialog(vaultName: string): Promise<boolean> {
     return new Promise((resolve) => {
       try {
+        let input = "";
+
         const modal = blessed.box({
           parent: this.parent,
           top: "center",
           left: "center",
-          width: "50%",
-          height: "40%",
+          width: "60%",
+          height: "45%",
           border: "line",
           style: {
             border: {
               fg: "red",
+            },
+            focus: {
+              border: {
+                fg: "yellow",
+              },
             },
           },
           keys: false,
@@ -266,41 +296,94 @@ export class NodesScreen extends Screen {
 
         blessed.box({
           parent: modal,
-          top: 1,
+          top: 0,
+          left: 2,
+          right: 2,
+          height: 1,
+          content: `Delete vault "${vaultName}"?`,
+          style: {
+            fg: "red",
+            bold: true,
+          },
+        });
+
+        blessed.box({
+          parent: modal,
+          top: 2,
           left: 2,
           right: 2,
           height: "shrink",
-          content: `${title}\n${message}\n\ny/n ?`,
+          content: `This action cannot be undone.\n\nType the vault name to confirm: ${vaultName}`,
         });
 
-        modal.key(["y"], () => {
+        const inputBox = blessed.textbox({
+          parent: modal,
+          top: 7,
+          left: 2,
+          right: 2,
+          height: 1,
+          border: "line",
+          style: {
+            border: {
+              fg: "green",
+            },
+            focus: {
+              border: {
+                fg: "cyan",
+              },
+            },
+          },
+          inputOnFocus: true,
+        });
+
+        blessed.box({
+          parent: modal,
+          top: 9,
+          left: 2,
+          right: 2,
+          height: "shrink",
+          content: "Press ENTER to confirm or ESC to cancel",
+          style: {
+            fg: "gray",
+          },
+        });
+
+        const cleanup = () => {
           try {
             modal.destroy();
           } catch {
             // Ignore destroy errors
           }
           this.parent.render();
-          resolve(true);
+          if (this.listBox) {
+            this.listBox.focus();
+          }
+        };
+
+        inputBox.on("submit", () => {
+          input = (inputBox.getValue() || "").trim();
+          cleanup();
+
+          if (input === vaultName) {
+            resolve(true);
+          } else {
+            this.showError("Vault name did not match. Deletion cancelled.");
+            resolve(false);
+          }
         });
 
-        modal.key(["n", "escape"], () => {
-          try {
-            modal.destroy();
-          } catch {
-            // Ignore destroy errors
-          }
-          this.parent.render();
+        inputBox.key(["escape"], () => {
+          cleanup();
           resolve(false);
         });
 
-        modal.focus();
+        inputBox.focus();
+        this.parent.render();
       } catch (error) {
-        // Log error to file but don't corrupt TUI
         void logger.error(
-          "Failed to show confirm dialog",
+          "Failed to show delete confirm dialog",
           error instanceof Error ? error : new Error(String(error))
         );
-        // Default to cancel on error
         resolve(false);
       }
     });
