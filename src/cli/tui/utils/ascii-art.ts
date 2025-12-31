@@ -24,7 +24,7 @@ export function loadAsciiArt(filename: string): string | null {
     for (const path of possiblePaths) {
       try {
         const content = readFileSync(path, "utf-8");
-        return content.trim();
+        return content.trimEnd();
       } catch {
         // Continue to next path
       }
