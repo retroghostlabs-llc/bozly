@@ -12,6 +12,13 @@ class BozlyApp {
     this.currentSession = null;
     this.sessionPage = 1;
     this.sessionPageSize = 20;
+    // New pages data
+    this.memories = [];
+    this.workflows = [];
+    this.config = {};
+    this.health = {};
+    this.logs = [];
+    this.logsFilter = 'ALL'; // ALL, INFO, DEBUG, ERROR
   }
 
   async init() {
@@ -73,6 +80,75 @@ class BozlyApp {
     }
   }
 
+  async loadMemories() {
+    try {
+      const response = await fetch('/api/memory');
+      const result = await response.json();
+      if (result.success) {
+        this.memories = result.data || [];
+      }
+    } catch (error) {
+      console.error('Failed to load memories:', error);
+      this.memories = [];
+    }
+  }
+
+  async loadWorkflows() {
+    try {
+      const response = await fetch('/api/workflows');
+      const result = await response.json();
+      if (result.success) {
+        this.workflows = result.data || [];
+      }
+    } catch (error) {
+      console.error('Failed to load workflows:', error);
+      this.workflows = [];
+    }
+  }
+
+  async loadConfig() {
+    try {
+      const response = await fetch('/api/config');
+      const result = await response.json();
+      if (result.success) {
+        this.config = result.data || {};
+      }
+    } catch (error) {
+      console.error('Failed to load config:', error);
+      this.config = {};
+    }
+  }
+
+  async loadHealth() {
+    try {
+      const response = await fetch('/api/health');
+      const result = await response.json();
+      if (result.success) {
+        this.health = result.data || {};
+      }
+    } catch (error) {
+      console.error('Failed to load health:', error);
+      this.health = {};
+    }
+  }
+
+  async loadLogs() {
+    try {
+      const params = new URLSearchParams({
+        level: this.logsFilter,
+        limit: '100',
+      });
+      const response = await fetch(`/api/logs?${params}`);
+      const result = await response.json();
+      if (result.success) {
+        this.logs = result.data || [];
+      }
+    } catch (error) {
+      console.error('Failed to load logs:', error);
+      this.logs = [];
+    }
+  }
+
   setupRouting() {
     window.addEventListener('popstate', () => {
       this.handleNavigation();
@@ -104,6 +180,25 @@ class BozlyApp {
     } else if (hash.startsWith('#/commands/')) {
       this.currentVault = hash.replace('#/commands/', '');
       this.currentPage = 'commands';
+    } else if (hash === '#/memory') {
+      this.currentPage = 'memory';
+      this.loadMemories();
+    } else if (hash === '#/workflows') {
+      this.currentPage = 'workflows';
+      this.loadWorkflows();
+    } else if (hash === '#/config') {
+      this.currentPage = 'config';
+      this.loadConfig();
+    } else if (hash === '#/health') {
+      this.currentPage = 'health';
+      this.loadHealth();
+    } else if (hash === '#/logs') {
+      this.currentPage = 'logs';
+      this.loadLogs();
+    } else if (hash === '#/help') {
+      this.currentPage = 'help';
+    } else if (hash === '#/vaults') {
+      this.currentPage = 'vaults';
     }
     this.render();
   }
@@ -115,6 +210,9 @@ class BozlyApp {
     if (this.currentPage === 'dashboard') {
       root.innerHTML = this.renderDashboard();
       await this.renderDashboardContent();
+    } else if (this.currentPage === 'vaults') {
+      root.innerHTML = this.renderVaults();
+      await this.renderVaultsContent();
     } else if (this.currentPage === 'sessions') {
       root.innerHTML = this.renderSessions();
       await this.renderSessionsContent();
@@ -124,36 +222,37 @@ class BozlyApp {
     } else if (this.currentPage === 'commands') {
       root.innerHTML = this.renderCommands();
       await this.renderCommandsContent();
+    } else if (this.currentPage === 'memory') {
+      root.innerHTML = this.renderMemory();
+      await this.renderMemoryContent();
+    } else if (this.currentPage === 'workflows') {
+      root.innerHTML = this.renderWorkflows();
+      await this.renderWorkflowsContent();
+    } else if (this.currentPage === 'config') {
+      root.innerHTML = this.renderConfig();
+      await this.renderConfigContent();
+    } else if (this.currentPage === 'health') {
+      root.innerHTML = this.renderHealth();
+      await this.renderHealthContent();
+    } else if (this.currentPage === 'logs') {
+      root.innerHTML = this.renderLogs();
+      await this.renderLogsContent();
+    } else if (this.currentPage === 'help') {
+      root.innerHTML = this.renderHelp();
     }
   }
 
   renderDashboard() {
     return `
       <div class="dashboard-container">
-        <h1>Dashboard</h1>
-        <section id="vaults-stats">
-          <h2>Vaults</h2>
-          <div id="vaults-grid" class="grid">
-            ${this.vaults
-              .map(
-                (v) => `
-              <div class="vault-card" onclick="window.app.goToSessions('${v.id}')">
-                <h3>${v.name || 'Unnamed'}</h3>
-                <p><small>${v.path}</small></p>
-                <p><small>AI: ${v.ai || 'claude'}</small></p>
-              </div>
-            `
-              )
-              .join('')}
-          </div>
-        </section>
-        <section id="recent-sessions">
-          <h2>Recent Sessions</h2>
-          <div id="sessions-table-container"></div>
-        </section>
+        <h1>🏠 Dashboard</h1>
         <section id="quick-stats">
           <h2>Quick Stats</h2>
           <div class="grid">
+            <div>
+              <p><strong id="stat-vaults">0</strong></p>
+              <p><small>Registered Vaults</small></p>
+            </div>
             <div>
               <p><strong id="stat-total-sessions">0</strong></p>
               <p><small>Total Sessions</small></p>
@@ -163,14 +262,39 @@ class BozlyApp {
               <p><small>Successful</small></p>
             </div>
             <div>
+              <p><strong id="stat-success-rate">0%</strong></p>
+              <p><small>Success Rate</small></p>
+            </div>
+            <div>
               <p><strong id="stat-failed">0</strong></p>
               <p><small>Failed</small></p>
             </div>
             <div>
               <p><strong id="stat-providers">0</strong></p>
-              <p><small>Providers</small></p>
+              <p><small>AI Providers</small></p>
             </div>
           </div>
+        </section>
+        <section id="vaults-stats">
+          <h2>📦 Vaults</h2>
+          <div id="vaults-grid" class="grid">
+            ${this.vaults
+              .map(
+                (v) => `
+              <div class="vault-card" onclick="window.app.goToSessions('${v.id}')">
+                <h3>${v.name || 'Unnamed'}</h3>
+                <p><small>${v.path}</small></p>
+                <p><small>AI: ${v.ai || 'claude'}</small></p>
+                <p id="vault-session-count-${v.id}"><small>Sessions: <strong>—</strong></small></p>
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+        </section>
+        <section id="recent-sessions">
+          <h2>📅 Recent Sessions</h2>
+          <div id="sessions-table-container"></div>
         </section>
       </div>
     `;
@@ -192,10 +316,22 @@ class BozlyApp {
       sessions.forEach((s) => {
         if (s.provider) providers.add(s.provider);
       });
+
+      // Update per-vault session count
+      const vaultCountEl = document.getElementById(`vault-session-count-${vault.id}`);
+      if (vaultCountEl) {
+        vaultCountEl.innerHTML = `<small>Sessions: <strong>${sessions.length}</strong></small>`;
+      }
     }
 
+    // Calculate success rate
+    const successRate = totalSessions > 0 ? Math.round((totalSuccessful / totalSessions) * 100) : 0;
+
+    // Update all stats
+    document.getElementById('stat-vaults').textContent = this.vaults.length;
     document.getElementById('stat-total-sessions').textContent = totalSessions;
     document.getElementById('stat-successful').textContent = totalSuccessful;
+    document.getElementById('stat-success-rate').textContent = successRate + '%';
     document.getElementById('stat-failed').textContent = totalFailed;
     document.getElementById('stat-providers').textContent = providers.size;
 
@@ -442,6 +578,228 @@ class BozlyApp {
     }
   }
 
+  renderVaults() {
+    return `
+      <div class="vaults-container">
+        <h1>📁 Vaults</h1>
+        <div id="vaults-grid" class="grid">
+          ${this.vaults
+            .map(
+              (v) => `
+            <div class="vault-card" onclick="window.app.goToSessions('${v.id}')">
+              <h3>${v.name || 'Unnamed'}</h3>
+              <p><small>${v.path}</small></p>
+              <p><small>AI: ${v.ai || 'claude'}</small></p>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  async renderVaultsContent() {
+    // Vaults already rendered
+  }
+
+  renderMemory() {
+    return `
+      <div class="memory-container">
+        <h1>💾 Memory</h1>
+        <div class="search-box">
+          <input type="text" id="memory-search" placeholder="Search memories..." />
+        </div>
+        <div id="memories-list"></div>
+      </div>
+    `;
+  }
+
+  async renderMemoryContent() {
+    const container = document.getElementById('memories-list');
+    if (this.memories.length > 0) {
+      container.innerHTML = `
+        <div class="memories-grid">
+          ${this.memories
+            .map(
+              (m) => `
+            <div class="memory-card">
+              <h3>${m.title || 'Untitled'}</h3>
+              <p>${m.content?.substring(0, 100) || 'No content'}...</p>
+              <small>Tags: ${m.tags?.join(', ') || 'none'}</small>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+      `;
+    } else {
+      container.innerHTML = '<p><em>No memories found</em></p>';
+    }
+  }
+
+  renderWorkflows() {
+    return `
+      <div class="workflows-container">
+        <h1>⚙️ Workflows</h1>
+        <div id="workflows-list"></div>
+      </div>
+    `;
+  }
+
+  async renderWorkflowsContent() {
+    const container = document.getElementById('workflows-list');
+    if (this.workflows.length > 0) {
+      container.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Steps</th>
+              <th>Status</th>
+              <th>Last Run</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${this.workflows
+              .map(
+                (w) => `
+              <tr>
+                <td>${w.name || 'Untitled'}</td>
+                <td>${w.steps?.length || 0}</td>
+                <td><span class="status-badge status-${w.status || 'unknown'}">${w.status || 'unknown'}</span></td>
+                <td>${w.lastRun ? new Date(w.lastRun).toLocaleDateString() : '—'}</td>
+              </tr>
+            `
+              )
+              .join('')}
+          </tbody>
+        </table>
+      `;
+    } else {
+      container.innerHTML = '<p><em>No workflows found</em></p>';
+    }
+  }
+
+  renderConfig() {
+    return `
+      <div class="config-container">
+        <h1>⚙️ Configuration</h1>
+        <div id="config-tree"></div>
+      </div>
+    `;
+  }
+
+  async renderConfigContent() {
+    const container = document.getElementById('config-tree');
+    container.innerHTML = `
+      <pre>${this.escapeHtml(JSON.stringify(this.config, null, 2))}</pre>
+    `;
+  }
+
+  renderHealth() {
+    return `
+      <div class="health-container">
+        <h1>🏥 Health Monitor</h1>
+        <div id="health-metrics"></div>
+      </div>
+    `;
+  }
+
+  async renderHealthContent() {
+    const container = document.getElementById('health-metrics');
+    if (this.health && Object.keys(this.health).length > 0) {
+      const h = this.health;
+      container.innerHTML = `
+        <div class="health-grid">
+          <div><strong>Status:</strong> <span class="status-badge status-${h.status || 'unknown'}">${h.status || 'unknown'}</span></div>
+          <div><strong>Version:</strong> ${h.version || '—'}</div>
+          <div><strong>Uptime:</strong> ${h.uptime || '—'} seconds</div>
+          <div><strong>Memory:</strong> ${h.memory?.used || '—'} MB / ${h.memory?.total || '—'} MB</div>
+          <div><strong>Requests:</strong> ${h.requestCount || '0'}</div>
+          <div><strong>Errors:</strong> ${h.errorCount || '0'}</div>
+        </div>
+      `;
+    } else {
+      container.innerHTML = '<p><em>Health data unavailable</em></p>';
+    }
+  }
+
+  renderLogs() {
+    return `
+      <div class="logs-container">
+        <h1>📋 System Logs</h1>
+        <div class="logs-filters">
+          <button class="filter-btn ${this.logsFilter === 'ALL' ? 'active' : ''}" onclick="window.app.filterLogs('ALL')">All</button>
+          <button class="filter-btn ${this.logsFilter === 'INFO' ? 'active' : ''}" onclick="window.app.filterLogs('INFO')">Info</button>
+          <button class="filter-btn ${this.logsFilter === 'DEBUG' ? 'active' : ''}" onclick="window.app.filterLogs('DEBUG')">Debug</button>
+          <button class="filter-btn ${this.logsFilter === 'ERROR' ? 'active' : ''}" onclick="window.app.filterLogs('ERROR')">Error</button>
+        </div>
+        <div id="logs-list"></div>
+      </div>
+    `;
+  }
+
+  async renderLogsContent() {
+    const container = document.getElementById('logs-list');
+    if (this.logs.length > 0) {
+      container.innerHTML = `
+        <div class="logs-table">
+          ${this.logs
+            .map(
+              (l) => `
+            <div class="log-entry log-${l.level?.toLowerCase() || 'info'}">
+              <span class="log-timestamp">${l.timestamp || '—'}</span>
+              <span class="log-level">[${l.level || 'INFO'}]</span>
+              <span class="log-source">${l.source || 'Global'}</span>
+              <span class="log-message">${this.escapeHtml(l.message || '')}</span>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+      `;
+    } else {
+      container.innerHTML = '<p><em>No logs found</em></p>';
+    }
+  }
+
+  renderHelp() {
+    return `
+      <div class="help-container">
+        <h1>❓ Help & Documentation</h1>
+        <section>
+          <h2>Navigation</h2>
+          <ul>
+            <li><strong>Dashboard</strong> — Overview of your vaults and recent activity</li>
+            <li><strong>Vaults</strong> — Browse all registered vaults</li>
+            <li><strong>Sessions</strong> — View command execution history</li>
+            <li><strong>Commands</strong> — Browse available commands per vault</li>
+            <li><strong>Memory</strong> — View extracted knowledge from sessions</li>
+            <li><strong>Workflows</strong> — Manage multi-step automation</li>
+            <li><strong>Config</strong> — View and edit system settings</li>
+            <li><strong>Health</strong> — Monitor API server health and metrics</li>
+            <li><strong>Logs</strong> — View and filter system logs</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Tips</h2>
+          <ul>
+            <li>Click on vault cards to view sessions for that vault</li>
+            <li>Use search and filters to find specific sessions or commands</li>
+            <li>Check Health page to monitor API server status</li>
+            <li>View Logs to debug issues and monitor activity</li>
+          </ul>
+        </section>
+        <section>
+          <h2>About BOZLY</h2>
+          <p><strong>Build. Organize. Link. Yield.</strong></p>
+          <p>BOZLY is an AI-agnostic framework for deploying domain-specific workspaces.</p>
+        </section>
+      </div>
+    `;
+  }
+
   switchTab(tabName) {
     // Hide all tabs
     document.querySelectorAll('.tab-content').forEach((t) => {
@@ -456,6 +814,11 @@ class BozlyApp {
     const tabButton = document.querySelector(`[data-tab="${tabName}"]`);
     if (tabContent) tabContent.classList.add('active');
     if (tabButton) tabButton.classList.add('active');
+  }
+
+  filterLogs(level) {
+    this.logsFilter = level;
+    this.loadLogs().then(() => this.render());
   }
 
   // Navigation helpers
@@ -484,6 +847,48 @@ class BozlyApp {
     this.currentVault = vaultId;
     this.currentPage = 'commands';
     window.location.hash = `#/commands/${vaultId}`;
+    this.render();
+  }
+
+  goToVaults() {
+    this.currentPage = 'vaults';
+    window.location.hash = '#/vaults';
+    this.render();
+  }
+
+  goToMemory() {
+    this.currentPage = 'memory';
+    window.location.hash = '#/memory';
+    this.loadMemories().then(() => this.render());
+  }
+
+  goToWorkflows() {
+    this.currentPage = 'workflows';
+    window.location.hash = '#/workflows';
+    this.loadWorkflows().then(() => this.render());
+  }
+
+  goToConfig() {
+    this.currentPage = 'config';
+    window.location.hash = '#/config';
+    this.loadConfig().then(() => this.render());
+  }
+
+  goToHealth() {
+    this.currentPage = 'health';
+    window.location.hash = '#/health';
+    this.loadHealth().then(() => this.render());
+  }
+
+  goToLogs() {
+    this.currentPage = 'logs';
+    window.location.hash = '#/logs';
+    this.loadLogs().then(() => this.render());
+  }
+
+  goToHelp() {
+    this.currentPage = 'help';
+    window.location.hash = '#/help';
     this.render();
   }
 

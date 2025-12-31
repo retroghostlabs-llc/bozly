@@ -9,9 +9,10 @@ import { ConfigManager } from "../../core/config-manager.js";
 import { logger } from "../../core/logger.js";
 import { MemoryManager } from "../../core/memory-manager.js";
 import { getMetrics } from "../../core/metrics.js";
-import { readFile } from "fs/promises";
+import { readFile, readdir, access } from "fs/promises";
 import { fileURLToPath } from "url";
 import path from "path";
+import { homedir } from "os";
 
 export function registerApiRoutes(fastify: FastifyInstance): void {
   // GET /api/vaults - List all vaults
@@ -794,4 +795,235 @@ export function registerApiRoutes(fastify: FastifyInstance): void {
       };
     }
   });
+
+  // GET /api/logs - Get aggregated system logs with filtering
+  fastify.get<{
+    Querystring: { level?: string; limit?: string; offset?: string };
+  }>("/api/logs", async (request) => {
+    try {
+      const level = (request.query.level || "ALL").toUpperCase();
+      const limit = parseInt(request.query.limit ?? "100", 10);
+      const offset = parseInt(request.query.offset ?? "0", 10);
+
+      // Load logs from global and all vaults
+      const allLogs = await loadAllLogs();
+
+      // Filter by level
+      let filtered = allLogs;
+      if (level !== "ALL") {
+        filtered = allLogs.filter((log) => log.level === level);
+      }
+
+      // Sort by timestamp descending (most recent first)
+      filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+      // Apply pagination
+      const paginated = filtered.slice(offset, offset + limit);
+
+      return {
+        success: true,
+        data: paginated,
+        pagination: {
+          limit,
+          offset,
+          total: filtered.length,
+        },
+      };
+    } catch (error) {
+      void logger.error("Failed to load logs from API", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to load logs",
+      };
+    }
+  });
+}
+
+/**
+ * Helper function to load all logs from global and vault directories
+ */
+async function loadAllLogs(): Promise<
+  Array<{
+    timestamp: string;
+    level: string;
+    message: string;
+    context?: Record<string, unknown>;
+    error?: string;
+    file?: string;
+    function?: string;
+    line?: number;
+    source?: string;
+  }>
+> {
+  const logs: Array<{
+    timestamp: string;
+    level: string;
+    message: string;
+    context?: Record<string, unknown>;
+    error?: string;
+    file?: string;
+    function?: string;
+    line?: number;
+    source?: string;
+  }> = [];
+
+  // Load global logs
+  await loadLogsFromDirectory(path.join(homedir(), ".bozly", "logs"), "Global", logs);
+
+  // Load logs from all vaults
+  await loadVaultLogs(logs);
+
+  return logs;
+}
+
+/**
+ * Load logs from a specific directory
+ */
+async function loadLogsFromDirectory(
+  dir: string,
+  source: string,
+  logs: Array<{
+    timestamp: string;
+    level: string;
+    message: string;
+    context?: Record<string, unknown>;
+    error?: string;
+    file?: string;
+    function?: string;
+    line?: number;
+    source?: string;
+  }>
+): Promise<void> {
+  try {
+    // Check if directory exists
+    try {
+      await access(dir);
+    } catch {
+      return;
+    }
+
+    // Get all log files
+    const files = await readdir(dir);
+    const logFiles = files
+      .filter((f) => f.startsWith("bozly-") && f.endsWith(".log"))
+      .sort()
+      .reverse(); // Most recent first
+
+    // Load logs from ALL files
+    for (const file of logFiles) {
+      const filePath = path.join(dir, file);
+
+      try {
+        const content = await readFile(filePath, "utf-8");
+        parseLogsFromFile(content, source, logs);
+      } catch {
+        // Skip files that can't be read
+      }
+    }
+  } catch {
+    // Ignore errors for this directory
+  }
+}
+
+/**
+ * Parse log entries from file content (handles multi-line JSON)
+ */
+function parseLogsFromFile(
+  content: string,
+  source: string,
+  logs: Array<{
+    timestamp: string;
+    level: string;
+    message: string;
+    context?: Record<string, unknown>;
+    error?: string;
+    file?: string;
+    function?: string;
+    line?: number;
+    source?: string;
+  }>
+): void {
+  // Split by lines and reconstruct multi-line JSON objects
+  const lines = content.split("\n");
+  let currentObject = "";
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // Skip headers and empty lines
+    if (
+      !trimmed ||
+      trimmed.includes("BOZLY Session Log") ||
+      trimmed.includes("Started:") ||
+      trimmed.includes("═══════")
+    ) {
+      continue;
+    }
+
+    // Accumulate lines for JSON object
+    if (trimmed.startsWith("{")) {
+      currentObject = trimmed;
+    } else if (currentObject && trimmed.endsWith("}")) {
+      currentObject += trimmed;
+
+      // Try to parse the complete JSON object
+      try {
+        const entry = JSON.parse(currentObject) as {
+          timestamp: string;
+          level: string;
+          message: string;
+          context?: Record<string, unknown>;
+          error?: string;
+          file?: string;
+          function?: string;
+          line?: number;
+          source?: string;
+        };
+        entry.source = source;
+        logs.push(entry);
+      } catch {
+        // Skip invalid JSON
+      }
+
+      currentObject = "";
+    } else if (currentObject) {
+      currentObject += trimmed;
+    }
+  }
+}
+
+/**
+ * Load logs from all registered vaults
+ */
+async function loadVaultLogs(
+  logs: Array<{
+    timestamp: string;
+    level: string;
+    message: string;
+    context?: Record<string, unknown>;
+    error?: string;
+    file?: string;
+    function?: string;
+    line?: number;
+    source?: string;
+  }>
+): Promise<void> {
+  try {
+    const registryPath = path.join(homedir(), ".bozly", "bozly-registry.json");
+    const registryContent = await readFile(registryPath, "utf-8");
+    const registry = JSON.parse(registryContent) as {
+      nodes?: Array<{ name: string; path: string }>;
+    };
+
+    if (registry.nodes && Array.isArray(registry.nodes)) {
+      for (const node of registry.nodes) {
+        const vaultLogDir = path.join(node.path, ".bozly", "logs");
+        await loadLogsFromDirectory(vaultLogDir, node.name, logs);
+      }
+    }
+  } catch {
+    // Silently fail if registry doesn't exist or vaults have no logs
+  }
 }

@@ -479,6 +479,307 @@ button[type="submit"]:hover,
   border-color: var(--bozly-tan-light);
 }
 
+/* Memory Page Styles */
+.memory-container,
+.workflows-container,
+.config-container,
+.health-container,
+.logs-container,
+.help-container {
+  padding: 2rem 0;
+}
+
+.memory-container h1,
+.workflows-container h1,
+.config-container h1,
+.health-container h1,
+.logs-container h1,
+.help-container h1 {
+  margin-bottom: 2rem;
+  font-size: 2rem;
+  color: var(--bozly-tan);
+}
+
+/* Search Box */
+.search-box {
+  margin-bottom: 2rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.search-box input {
+  flex: 1;
+  max-width: 400px;
+  padding: 0.75rem 1rem;
+  background-color: var(--pico-form-element-background-color);
+  border: 1px solid var(--pico-border-color);
+  border-radius: var(--pico-border-radius);
+  color: var(--bozly-text-light);
+  font-size: 1rem;
+}
+
+.search-box input::placeholder {
+  color: var(--bozly-text-muted);
+}
+
+/* Memory Cards */
+.memories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.memory-card {
+  background-color: var(--pico-form-element-background-color);
+  border: 1px solid var(--bozly-dark-gray);
+  border-radius: var(--pico-border-radius);
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.memory-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 180, 216, 0.2);
+  border-color: var(--bozly-cyan);
+}
+
+.memory-card h3 {
+  color: var(--bozly-tan);
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+}
+
+.memory-card p {
+  margin: 0.5rem 0;
+  color: var(--bozly-text-light);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.memory-card small {
+  display: block;
+  color: var(--bozly-text-muted);
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+/* Workflows Table */
+.workflows-container table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.workflows-container table th {
+  background-color: var(--pico-form-element-background-color);
+  color: var(--bozly-tan);
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid var(--bozly-dark-gray);
+}
+
+.workflows-container table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--bozly-dark-gray);
+  color: var(--bozly-text-light);
+}
+
+.workflows-container table tr:hover {
+  background-color: var(--pico-form-element-background-color);
+}
+
+/* Config Display */
+.config-container pre {
+  background-color: #0f1117;
+  border-radius: var(--pico-border-radius);
+  padding: 1.5rem;
+  overflow-x: auto;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #7ee787;
+  border: 1px solid var(--bozly-dark-gray);
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+/* Health Metrics Grid */
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.health-grid > div {
+  background-color: var(--pico-form-element-background-color);
+  border: 1px solid var(--bozly-dark-gray);
+  border-radius: var(--pico-border-radius);
+  padding: 1.5rem;
+}
+
+.health-grid strong {
+  display: block;
+  color: var(--bozly-tan);
+  margin-bottom: 0.5rem;
+}
+
+.health-grid span {
+  color: var(--bozly-text-light);
+}
+
+/* Logs Filters */
+.logs-filters {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 0.5rem 1.5rem;
+  background-color: var(--pico-form-element-background-color);
+  border: 2px solid var(--bozly-dark-gray);
+  border-radius: var(--pico-border-radius);
+  color: var(--bozly-text-light);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  border-color: var(--bozly-cyan);
+  color: var(--bozly-cyan);
+}
+
+.filter-btn.active {
+  background-color: var(--bozly-cyan);
+  border-color: var(--bozly-cyan);
+  color: var(--bozly-background);
+  font-weight: 600;
+}
+
+/* Logs Table */
+.logs-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  max-height: 700px;
+  overflow-y: auto;
+  border-radius: var(--pico-border-radius);
+  border: 1px solid var(--bozly-dark-gray);
+}
+
+.log-entry {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--bozly-dark-gray);
+  background-color: var(--bozly-charcoal);
+  font-size: 0.9rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.log-entry:last-child {
+  border-bottom: none;
+}
+
+.log-timestamp {
+  color: var(--bozly-text-muted);
+  min-width: 150px;
+  flex-shrink: 0;
+}
+
+.log-level {
+  font-weight: 600;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.log-info .log-level {
+  color: #00b4d8;
+}
+
+.log-debug .log-level {
+  color: #a0a0a0;
+}
+
+.log-error .log-level {
+  color: #ff6b6b;
+}
+
+.log-source {
+  color: var(--bozly-tan);
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.log-message {
+  color: var(--bozly-text-light);
+  flex: 1;
+  word-break: break-word;
+}
+
+/* Help Page */
+.help-container section {
+  margin-bottom: 3rem;
+}
+
+.help-container section h2 {
+  color: var(--bozly-tan);
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.help-container ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.help-container li {
+  padding: 0.75rem 0;
+  color: var(--bozly-text-light);
+  border-bottom: 1px solid var(--bozly-dark-gray);
+}
+
+.help-container li:last-child {
+  border-bottom: none;
+}
+
+.help-container li strong {
+  color: var(--bozly-cyan);
+  font-weight: 600;
+}
+
+.help-container p {
+  color: var(--bozly-text-light);
+  line-height: 1.6;
+}
+
+/* Dashboard Container */
+.dashboard-container {
+  padding: 2rem 0;
+}
+
+.dashboard-container h1 {
+  color: var(--bozly-tan);
+  margin-bottom: 2rem;
+  font-size: 2rem;
+}
+
+.dashboard-container h2 {
+  color: var(--bozly-tan);
+  margin-top: 2.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  border-bottom: 1px solid var(--bozly-dark-gray);
+  padding-bottom: 0.75rem;
+}
+
 /* Responsive */
 @media (max-width: 576px) {
   .filters {
@@ -515,5 +816,40 @@ button[type="submit"]:hover,
 
   .hero-logo {
     max-width: 200px;
+  }
+
+  .memories-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .health-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .logs-filters {
+    flex-direction: column;
+  }
+
+  .filter-btn {
+    width: 100%;
+  }
+
+  .log-entry {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .log-timestamp,
+  .log-level,
+  .log-source {
+    min-width: auto;
+  }
+
+  .search-box {
+    flex-direction: column;
+  }
+
+  .search-box input {
+    max-width: 100%;
   }
 }
