@@ -43,6 +43,8 @@ import { providerDetectionCommand } from "./commands/provider-detection.js";
 import { workLogStartCommand } from "./commands/work-log-start.js";
 import { optimizeCommand } from "./commands/optimize.js";
 import { updateCommand } from "./commands/update.js";
+import { recoverCommand } from "./commands/recover.js";
+import { migrateCommand } from "./commands/migrate.js";
 
 // Import version from single source of truth
 import { FULL_VERSION } from "../core/version.js";
@@ -171,6 +173,8 @@ async function main(): Promise<void> {
   program.addCommand(workLogStartCommand);
   program.addCommand(optimizeCommand);
   program.addCommand(updateCommand);
+  program.addCommand(recoverCommand);
+  program.addCommand(migrateCommand);
 
   // Apply BozlyHelp to all commands and subcommands
   program.commands.forEach((cmd) => applyBozlyHelp(cmd));
