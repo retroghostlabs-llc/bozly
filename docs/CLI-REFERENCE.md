@@ -22,7 +22,7 @@ Complete reference for all 20 BOZLY commands.
 
 ## Command Overview
 
-### All 20 Commands
+### All 21 Commands
 
 | Command | Category | Purpose |
 |---------|----------|---------|
@@ -31,6 +31,7 @@ Complete reference for all 20 BOZLY commands.
 | `remove` | Setup | Remove a vault |
 | `list` | Query | List all vaults |
 | `status` | Query | Check vault status |
+| `diagnose` | Diagnostics | Health check & auto-fix |
 | `run` | Execution | Run a command |
 | `command` | Commands | Manage commands |
 | `template` | Templates | Create from templates |
@@ -279,6 +280,72 @@ Context: Updated 2025-12-27
 Commands: 5 vault + 3 global
 Workflows: 2 active
 ```
+
+---
+
+### bozly diagnose
+
+Framework and vault health check with auto-fix.
+
+**Syntax:**
+```bash
+bozly diagnose [OPTIONS]
+```
+
+**Options:**
+```
+--verbose                  Show detailed diagnostic information
+--fix                      Automatically fix detected issues
+```
+
+**Examples:**
+
+```bash
+# Quick health check
+bozly diagnose
+
+# Detailed diagnostics
+bozly diagnose --verbose
+
+# Auto-fix issues
+bozly diagnose --fix
+```
+
+**Output:**
+```
+═══════════════════════════════════════════════════════════
+  BOZLY FRAMEWORK DIAGNOSTICS
+═══════════════════════════════════════════════════════════
+
+Summary: 8/8 checks passed
+Version: 0.6.0-beta.1
+
+Checks:
+✓ framework-install: BOZLY framework is installed
+✓ global-config: Global config found
+✓ global-registry: Global registry found
+✓ current-vault: In vault: my-vault
+✓ vault-structure: Vault structure is valid
+✓ context-size: Context file size is good (12.5KB)
+✓ providers: Providers available: Claude, ChatGPT
+✓ vault-registry: Vault is registered
+
+═══════════════════════════════════════════════════════════
+
+✓ All checks passed! Framework is healthy.
+```
+
+**What Gets Checked:**
+- Framework installation
+- Global configuration
+- Global vault registry
+- Current vault presence
+- Vault directory structure
+- Context file size (<25KB)
+- AI provider installation
+- Vault registration status
+
+**Full Documentation:** [Diagnostics Guide](./DIAGNOSTICS.md)
 
 ---
 
