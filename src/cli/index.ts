@@ -38,6 +38,7 @@ import { stopCommand } from "./commands/stop.js";
 import { tuiCommand } from "./commands/tui.js";
 import { vaultCommand } from "./commands/vault.js";
 import { diagnoseCommand } from "./commands/diagnose.js";
+import { validateCommand } from "./commands/validate.js";
 
 // Import version from single source of truth
 import { FULL_VERSION } from "../core/version.js";
@@ -161,6 +162,7 @@ async function main(): Promise<void> {
   program.addCommand(tuiCommand);
   program.addCommand(vaultCommand);
   program.addCommand(diagnoseCommand);
+  program.addCommand(validateCommand);
 
   // Apply BozlyHelp to all commands and subcommands
   program.commands.forEach((cmd) => applyBozlyHelp(cmd));
