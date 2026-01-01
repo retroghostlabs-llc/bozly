@@ -66,3 +66,6 @@ local-vaults/
 secrets.json
 credentials.json
 api-keys.env
+
+# Claude Code private settings (workspace-only)
+.claude/
