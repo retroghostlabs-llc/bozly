@@ -16,6 +16,13 @@ import os from "os";
 import { MemoryIndexEntry, SessionMemory } from "./types.js";
 import { MemoryIndex } from "../memory/index.js";
 import { logger } from "./logger.js";
+import {
+  rankMemories,
+  loadTopMemories,
+  filterByQuality,
+  updateUsageTracking,
+  DEFAULT_QUALITY_CONFIG,
+} from "./memory-quality.js";
 
 /**
  * Memory Manager - Central hub for memory operations
@@ -317,6 +324,115 @@ export class MemoryManager {
     };
 
     return mapping[sectionName] || null;
+  }
+
+  /**
+   * Load memories ranked by quality and recency (Session 169)
+   *
+   * NEW: Uses quality-weighted algorithm to prefer high-quality memories
+   * Algorithm: Score = (recency * 0.4) + (quality * 0.6)
+   * This allows older high-quality memories to rank above recent low-quality ones
+   *
+   * @param nodeId - Node ID to load memories for
+   * @param limit - Maximum number of memories to return (default: 3)
+   * @param config - Quality scoring configuration
+   * @returns Top ranked memories
+   */
+  async loadTopMemoriesByQuality(
+    nodeId: string,
+    limit = 3,
+    config = DEFAULT_QUALITY_CONFIG
+  ): Promise<MemoryIndexEntry[]> {
+    try {
+      await this.ensureInitialized();
+
+      // Get all memories for this node
+      const allMemories = await this.memoryIndex.queryByNode(nodeId, 1000); // Get many for ranking
+
+      // Rank by quality and return top N
+      const topMemories = loadTopMemories(allMemories, limit, config);
+
+      logger.debug(`Loaded top ${topMemories.length} memories by quality for node ${nodeId}`);
+
+      return topMemories;
+    } catch (error) {
+      logger.error(`Failed to load top memories: ${String(error)}`);
+      return [];
+    }
+  }
+
+  /**
+   * Load memories ranked by quality, with usage tracking (Session 169)
+   *
+   * Same as loadTopMemoriesByQuality but updates usage tracking for each loaded memory
+   *
+   * @param nodeId - Node ID to load memories for
+   * @param limit - Maximum number of memories to return
+   * @param config - Quality scoring configuration
+   * @returns Top ranked memories with updated usage tracking
+   */
+  async loadTopMemoriesByQualityWithTracking(
+    nodeId: string,
+    limit = 3,
+    config = DEFAULT_QUALITY_CONFIG
+  ): Promise<MemoryIndexEntry[]> {
+    const memories = await this.loadTopMemoriesByQuality(nodeId, limit, config);
+
+    // Update usage tracking for each loaded memory
+    for (const memory of memories) {
+      if (memory.usage) {
+        memory.usage = updateUsageTracking(memory.usage);
+      } else {
+        memory.usage = updateUsageTracking(undefined);
+      }
+    }
+
+    return memories;
+  }
+
+  /**
+   * Rank all memories for a node by quality (Session 169)
+   *
+   * @param nodeId - Node ID to rank memories for
+   * @param config - Quality scoring configuration
+   * @returns All memories sorted by quality/recency score
+   */
+  async getRankedMemories(
+    nodeId: string,
+    config = DEFAULT_QUALITY_CONFIG
+  ): Promise<MemoryIndexEntry[]> {
+    try {
+      await this.ensureInitialized();
+
+      const allMemories = await this.memoryIndex.queryByNode(nodeId, 1000);
+      const ranked = rankMemories(allMemories, config);
+
+      return ranked;
+    } catch (error) {
+      logger.error(`Failed to get ranked memories: ${String(error)}`);
+      return [];
+    }
+  }
+
+  /**
+   * Filter memories by minimum quality threshold (Session 169)
+   *
+   * @param nodeId - Node ID to filter memories for
+   * @param minQuality - Minimum quality score (0-1)
+   * @returns Memories above quality threshold
+   */
+  async getHighQualityMemories(nodeId: string, minQuality = 0.5): Promise<MemoryIndexEntry[]> {
+    try {
+      await this.ensureInitialized();
+
+      const allMemories = await this.memoryIndex.queryByNode(nodeId, 1000);
+      const filtered = filterByQuality(allMemories, minQuality);
+
+      return filtered;
+    } catch (error) {
+      logger.error(`Failed to filter memories: ${String(error)}`);
+      return [];
+    }
   }
 
   /**

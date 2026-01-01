@@ -794,6 +794,10 @@ export interface SessionMemory {
   tags: string[]; // vault-type, domain, keywords
   relevantSessions?: string[]; // IDs of related previous sessions
   summary: string; // One-line summary
+
+  // NEW: Quality scoring (Session 169)
+  quality?: MemoryQualityScore; // Quality metrics for intelligent loading
+  usage?: MemoryUsageTracking; // Usage tracking for frequency-based ranking
 }
 
 /**
@@ -826,6 +830,25 @@ export type ExtractionTrigger =
   | "sessionEnd";
 
 /**
+ * Memory quality scoring metadata
+ */
+export interface MemoryQualityScore {
+  overall: number; // 0-1: Overall quality score
+  relevanceToCommand: number; // 0-1: How relevant to command type
+  completeness: number; // 0-1: How complete/detailed the memory is
+  accuracy: number; // 0-1: How accurate/reliable the memory is
+}
+
+/**
+ * Memory usage tracking
+ */
+export interface MemoryUsageTracking {
+  lastUsed?: ISODateTime; // When this memory was last loaded in a command
+  timesUsed: number; // How many times this memory has been loaded
+  accessTrend: "increasing" | "stable" | "decreasing"; // Usage trend
+}
+
+/**
  * Memory index entry for querying across sessions
  */
 export interface MemoryIndexEntry {
@@ -837,6 +860,10 @@ export interface MemoryIndexEntry {
   summary: string;
   tags: string[];
   filePath: string; // Path to memory.md file
+
+  // NEW: Quality scoring for intelligent loading (Session 169)
+  quality?: MemoryQualityScore; // Quality metrics
+  usage?: MemoryUsageTracking; // Usage tracking for frequency-based ranking
 }
 
 /**

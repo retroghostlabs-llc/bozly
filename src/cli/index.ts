@@ -40,6 +40,7 @@ import { vaultCommand } from "./commands/vault.js";
 import { diagnoseCommand } from "./commands/diagnose.js";
 import { validateCommand } from "./commands/validate.js";
 import { providerDetectionCommand } from "./commands/provider-detection.js";
+import { workLogStartCommand } from "./commands/work-log-start.js";
 
 // Import version from single source of truth
 import { FULL_VERSION } from "../core/version.js";
@@ -165,6 +166,7 @@ async function main(): Promise<void> {
   program.addCommand(diagnoseCommand);
   program.addCommand(validateCommand);
   program.addCommand(providerDetectionCommand);
+  program.addCommand(workLogStartCommand);
 
   // Apply BozlyHelp to all commands and subcommands
   program.commands.forEach((cmd) => applyBozlyHelp(cmd));
