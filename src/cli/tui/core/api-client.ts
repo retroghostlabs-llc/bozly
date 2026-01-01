@@ -270,6 +270,55 @@ export class APIClient {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async getMemoryDetail(sessionId: string, nodeId: string): Promise<string> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return this.fetch(`/memory/${sessionId}?nodeId=${nodeId}`, async () => {
+      const response = await this.client.get(`/memory/${sessionId}?nodeId=${nodeId}`);
+      const data = response.data.data || response.data;
+
+      // Build content from memory sections
+      let content = "";
+      if (data.title) {
+        content += `# ${data.title}\n\n`;
+      }
+      if (data.currentState) {
+        content += `## Current State\n${data.currentState}\n\n`;
+      }
+      if (data.taskSpec) {
+        content += `## Task Specification\n${data.taskSpec}\n\n`;
+      }
+      if (data.workflow) {
+        content += `## Workflow\n${data.workflow}\n\n`;
+      }
+      if (data.errors) {
+        content += `## Errors\n${data.errors}\n\n`;
+      }
+      if (data.learnings) {
+        content += `## Learnings\n${data.learnings}\n\n`;
+      }
+      if (data.keyResults) {
+        content += `## Key Results\n${data.keyResults}\n\n`;
+      }
+
+      // If no sections were found, include metadata
+      if (!content.trim()) {
+        content = `# Memory Details\n\n`;
+        content += `**Session:** ${data.sessionId}\n`;
+        content += `**Node:** ${data.nodeName} (${data.nodeId})\n`;
+        content += `**Command:** ${data.command}\n`;
+        content += `**Time:** ${new Date(data.timestamp).toLocaleString()}\n`;
+        content += `**Duration:** ${data.durationMinutes} minutes\n`;
+        if (data.tags?.length) {
+          content += `**Tags:** ${data.tags.join(", ")}\n`;
+        }
+        content += `\n(No detailed memory sections available)\n`;
+      }
+
+      return content;
+    });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async extractMemory(sessions: string[], vaultId?: string): Promise<any> {
     const response = await this.client.post("/memory/extract", { sessions, vaultId });
     this.invalidateCache("/memory");

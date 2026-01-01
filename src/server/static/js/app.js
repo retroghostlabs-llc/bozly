@@ -611,6 +611,7 @@ class BozlyApp {
           <input type="text" id="memory-search" placeholder="Search memories..." />
         </div>
         <div id="memories-list"></div>
+        <div id="memory-detail-modal" style="display: none;"></div>
       </div>
     `;
   }
@@ -622,11 +623,13 @@ class BozlyApp {
         <div class="memories-grid">
           ${this.memories
             .map(
-              (m) => `
-            <div class="memory-card">
-              <h3>${m.title || 'Untitled'}</h3>
-              <p>${m.content?.substring(0, 100) || 'No content'}...</p>
-              <small>Tags: ${m.tags?.join(', ') || 'none'}</small>
+              (m, idx) => `
+            <div class="memory-card" onclick="window.app.openMemoryDetail(${idx})" style="cursor: pointer;">
+              <h3>${m.summary || m.title || 'Untitled'}</h3>
+              <p><strong>${m.command || 'unknown'}</strong></p>
+              <p>${m.summary?.substring(100) || 'No summary'}...</p>
+              ${m.tags && m.tags.length > 0 ? `<small>Tags: ${m.tags.join(', ')}</small>` : ''}
+              <small style="color: #666;">Click to view full details</small>
             </div>
           `
             )
@@ -636,6 +639,43 @@ class BozlyApp {
     } else {
       container.innerHTML = '<p><em>No memories found</em></p>';
     }
+  }
+
+  openMemoryDetail(index) {
+    const memory = this.memories[index];
+    if (!memory) return;
+
+    const modal = document.getElementById('memory-detail-modal');
+    const timestamp = new Date(memory.timestamp).toLocaleString();
+
+    modal.innerHTML = `
+      <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000;" onclick="if(event.target === this) window.app.closeMemoryDetail()">
+        <div style="background-color: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); max-width: 90%; max-height: 90vh; overflow-y: auto; padding: 30px; position: relative;">
+          <button onclick="window.app.closeMemoryDetail()" style="position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+
+          <h2 style="margin-top: 0; color: #333;">${memory.summary || memory.title || 'Untitled'}</h2>
+
+          <div style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+            <p style="margin: 5px 0;"><strong>Command:</strong> ${memory.command || 'unknown'}</p>
+            <p style="margin: 5px 0;"><strong>Session ID:</strong> <code>${memory.sessionId}</code></p>
+            <p style="margin: 5px 0;"><strong>Vault:</strong> ${memory.nodeName || 'Unknown'}</p>
+            <p style="margin: 5px 0;"><strong>Time:</strong> ${timestamp}</p>
+            ${memory.tags && memory.tags.length > 0 ? `<p style="margin: 5px 0;"><strong>Tags:</strong> ${memory.tags.map(t => `<span style="background-color: #e0e0e0; padding: 2px 6px; border-radius: 3px; margin-right: 5px;">${t}</span>`).join('')}</p>` : ''}
+          </div>
+
+          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; word-break: break-word; max-height: 400px; overflow-y: auto;">
+            <p style="margin-top: 0; color: #666; font-family: sans-serif;">Full memory content not yet available. Visit the file directly:</p>
+            <p style="margin: 0; color: #007bff;">${memory.filePath || 'No file path'}</p>
+          </div>
+        </div>
+      </div>
+    `;
+    modal.style.display = 'block';
+  }
+
+  closeMemoryDetail() {
+    const modal = document.getElementById('memory-detail-modal');
+    modal.style.display = 'none';
   }
 
   renderWorkflows() {

@@ -305,4 +305,16 @@ export class MemoryIndex {
     const entries = this.index!.entries;
     return limit ? entries.slice(0, limit) : entries;
   }
+
+  /**
+   * Get a specific entry by sessionId and nodeId
+   */
+  async getEntry(sessionId: string, nodeId: string): Promise<MemoryIndexEntry | null> {
+    if (!this.index) {
+      await this.load();
+    }
+
+    const entry = this.index!.entries.find((e) => e.sessionId === sessionId && e.nodeId === nodeId);
+    return entry ?? null;
+  }
 }

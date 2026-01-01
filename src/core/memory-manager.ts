@@ -68,35 +68,39 @@ export class MemoryManager {
    */
   async loadMemory(sessionId: string, nodeId: string): Promise<SessionMemory | null> {
     try {
-      // We need to find the memory file - it's stored in:
-      // ~/.bozly/sessions/{nodeId}/{YYYY}/{MM}/{DD}/{sessionId}/memory.md
-      // But we don't know the date, so we search for it
+      await this.ensureInitialized();
 
-      const memoryPath = await this.findMemoryFile(sessionId, nodeId);
-      if (!memoryPath) {
+      // Get the memory entry from the index to find the file path
+      const indexEntry = await this.memoryIndex.getEntry(sessionId, nodeId);
+      logger.debug(
+        `getEntry result for ${sessionId}/${nodeId}: ${indexEntry ? "found" : "not found"}`
+      );
+      if (!indexEntry) {
+        logger.debug(`Memory entry not found in index: ${sessionId} / ${nodeId}`);
         return null;
       }
 
-      const content = await fs.readFile(memoryPath, "utf-8");
-      const metadata = await this.loadMemoryMetadata(sessionId, nodeId);
-
-      if (!metadata) {
+      // Try to read the memory file from the path stored in the index
+      let content: string;
+      try {
+        content = await fs.readFile(indexEntry.filePath, "utf-8");
+      } catch {
+        logger.debug(`Memory file not found at: ${indexEntry.filePath}`);
         return null;
       }
 
       // Parse the markdown content to extract sections
       const memory: SessionMemory = {
-        sessionId,
-        nodeId: metadata.nodeId,
-        nodeName: metadata.nodeName,
-        timestamp: metadata.timestamp,
-        durationMinutes: metadata.durationMinutes,
-        tokenCount: metadata.tokenCount,
-        aiProvider: metadata.aiProvider,
-        command: metadata.command,
-        title: metadata.summary,
-        summary: metadata.summary,
-        tags: metadata.tags,
+        sessionId: indexEntry.sessionId,
+        nodeId: indexEntry.nodeId,
+        nodeName: indexEntry.nodeName,
+        timestamp: indexEntry.timestamp,
+        durationMinutes: 0, // This isn't stored in the index entry
+        aiProvider: "unknown", // This isn't stored in the index entry
+        command: indexEntry.command,
+        title: indexEntry.summary,
+        summary: indexEntry.summary,
+        tags: indexEntry.tags,
       };
 
       // Extract sections from markdown content
@@ -253,90 +257,6 @@ export class MemoryManager {
       };
 
       return await findFile(nodePath);
-    } catch (error) {
-      return null;
-    }
-  }
-
-  /**
-   * Private helper: Load memory metadata
-   */
-  private async loadMemoryMetadata(
-    sessionId: string,
-    nodeId: string
-  ): Promise<{
-    sessionId: string;
-    nodeId: string;
-    nodeName: string;
-    timestamp: string;
-    durationMinutes: number;
-    tokenCount?: number;
-    aiProvider: string;
-    command: string;
-    tags: string[];
-    summary: string;
-  } | null> {
-    try {
-      const memoryPath = await this.findMemoryFile(sessionId, nodeId);
-      if (!memoryPath) {
-        return null;
-      }
-
-      // Look for a corresponding metadata.json file
-      const metadataPath = memoryPath.replace(/memory\.md$/, "memory-metadata.json");
-
-      try {
-        const metadataContent = await fs.readFile(metadataPath, "utf-8");
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return JSON.parse(metadataContent) as {
-          sessionId: string;
-          nodeId: string;
-          nodeName: string;
-          timestamp: string;
-          durationMinutes: number;
-          tokenCount?: number;
-          aiProvider: string;
-          command: string;
-          tags: string[];
-          summary: string;
-        };
-      } catch {
-        // If no metadata file, try to extract from the session
-        // Look for session.json in the same directory
-        const sessionDir = path.dirname(memoryPath);
-        const sessionJsonPath = path.join(sessionDir, "session.json");
-
-        try {
-          const sessionContent = await fs.readFile(sessionJsonPath, "utf-8");
-          const sessionData = JSON.parse(sessionContent);
-
-          return {
-            sessionId,
-            nodeId,
-            nodeName: "Unknown",
-            timestamp: sessionData.timestamp || new Date().toISOString(),
-            durationMinutes: sessionData.durationMinutes || 0,
-            tokenCount: sessionData.tokenCount,
-            aiProvider: sessionData.provider || "unknown",
-            command: sessionData.command || "unknown",
-            tags: sessionData.tags || [],
-            summary: sessionData.summary || "Session memory",
-          };
-        } catch {
-          // Fallback: minimal metadata
-          return {
-            sessionId,
-            nodeId,
-            nodeName: "Unknown",
-            timestamp: new Date().toISOString(),
-            durationMinutes: 0,
-            aiProvider: "unknown",
-            command: "unknown",
-            tags: [],
-            summary: "Session memory",
-          };
-        }
-      }
     } catch (error) {
       return null;
     }

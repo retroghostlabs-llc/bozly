@@ -23,6 +23,7 @@ export class MemoryScreen extends Screen {
   private listBox?: blessed.Widgets.ListElement;
   private contentBox?: blessed.Widgets.BoxElement;
   private selectedIndex = 0;
+  private detailModal?: blessed.Widgets.BoxElement;
 
   constructor(
     parent: blessed.Widgets.Screen,
@@ -120,7 +121,12 @@ export class MemoryScreen extends Screen {
           });
         }
 
-        this.updateContentBox(0);
+        // Preserve selected index across renders, but clamp to valid range
+        this.selectedIndex = Math.min(
+          Math.max(0, this.selectedIndex),
+          Math.max(0, this.memories.length - 1)
+        );
+        this.updateContentBox(this.selectedIndex);
         this.parent.render();
       }
     } catch (error) {
@@ -147,6 +153,8 @@ export class MemoryScreen extends Screen {
     } else if (keyRecord.name === "down" || ch === "j") {
       this.selectedIndex = Math.min(this.memories.length - 1, this.selectedIndex + 1);
       this.updateContentBox(this.selectedIndex);
+    } else if (keyRecord.name === "return") {
+      await this.openMemoryDetail(this.selectedIndex);
     }
   }
 
@@ -177,6 +185,95 @@ export class MemoryScreen extends Screen {
       (this.listBox as any).select(index);
     }
 
+    this.parent.render();
+  }
+
+  private async openMemoryDetail(index: number): Promise<void> {
+    const mem = this.memories[index];
+    if (!mem) {
+      return;
+    }
+
+    // Load full memory content
+    try {
+      const fullMemory = await this.apiClient.getMemoryDetail(mem.sessionId, mem.nodeId);
+
+      // Create modal
+      this.detailModal = blessed.box({
+        parent: this.parent,
+        top: 2,
+        left: 4,
+        right: 4,
+        height: "90%",
+        border: "line",
+        scrollable: true,
+        mouse: true,
+        keys: true,
+        vi: false,
+        tags: true,
+        style: {
+          border: {
+            fg: "green",
+          },
+          focus: {
+            border: {
+              fg: "cyan",
+            },
+          },
+        },
+      });
+
+      // Build content with full memory details
+      let content = `\n {green-fg}${mem.summary}{/}\n`;
+      content += `{gray-fg}${" ".repeat(mem.summary.length)}{/}\n\n`;
+      content += `{cyan-fg}Command:{/} ${mem.command}\n`;
+      content += `{cyan-fg}Session ID:{/} ${mem.sessionId}\n`;
+      content += `{cyan-fg}Node:{/} ${mem.nodeName} (${mem.nodeId})\n`;
+      content += `{cyan-fg}Time:{/} ${new Date(mem.timestamp).toLocaleString()}\n`;
+
+      if (mem.tags.length > 0) {
+        content += `{cyan-fg}Tags:{/} ${mem.tags.join(", ")}\n`;
+      }
+
+      content += "\n{green-fg}=== Memory Content ==={/}\n\n";
+
+      // Add full memory content from API response
+      if (fullMemory) {
+        content += `${fullMemory}\n`;
+      } else {
+        content += "(No detailed content available)\n";
+      }
+
+      content += "\n{gray-fg}(Press 'q' or 'ESC' to close){/}";
+
+      this.detailModal.setContent(content);
+      this.detailModal.focus();
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (this.detailModal as any).key(["q", "escape"], () => {
+        this.closeMemoryDetail();
+      });
+
+      this.parent.render();
+    } catch (error) {
+      this.showError(
+        `Failed to load memory details: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  private closeMemoryDetail(): void {
+    if (this.detailModal) {
+      try {
+        this.detailModal.destroy();
+      } catch {
+        // Ignore
+      }
+      this.detailModal = undefined;
+    }
+    if (this.listBox) {
+      this.listBox.focus();
+    }
     this.parent.render();
   }
 
