@@ -11,6 +11,14 @@ interface MemoryEntry {
   summary: string;
   tags: string[];
   filePath: string;
+  fileSizeBytes?: number;
+  lastAccessedTime?: string;
+  isArchived?: boolean;
+  archiveMetadata?: {
+    archivedAt: string;
+    archivedFromNode: string;
+    monthKey: string;
+  };
 }
 
 /**
@@ -31,6 +39,66 @@ export class MemoryScreen extends Screen {
     private apiClient: APIClient
   ) {
     super(parent, config);
+  }
+
+  /**
+   * Format bytes to human-readable size
+   */
+  private formatSize(bytes: number): string {
+    if (bytes === 0) {
+      return "0 B";
+    }
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
+  }
+
+  /**
+   * Format memory entry for list display with size and archive info
+   */
+  private formatMemoryLabel(mem: MemoryEntry): string {
+    let label = `[${mem.command}] ${mem.summary?.substring(0, 30) ?? "No summary"}...`;
+
+    // Add size if available
+    if (mem.fileSizeBytes !== undefined) {
+      label += ` (${this.formatSize(mem.fileSizeBytes)})`;
+    }
+
+    // Add archive indicator if archived
+    if (mem.isArchived) {
+      label += " [ARCHIVED]";
+    }
+
+    return label;
+  }
+
+  /**
+   * Format last-accessed time relative to now
+   */
+  private formatAccessTime(isoTime?: string): string {
+    if (!isoTime) {
+      return "Unknown";
+    }
+
+    const lastAccessed = new Date(isoTime);
+    const now = new Date();
+    const diffMs = now.getTime() - lastAccessed.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return "Today";
+    }
+    if (diffDays === 1) {
+      return "Yesterday";
+    }
+    if (diffDays < 7) {
+      return `${diffDays} days ago`;
+    }
+    if (diffDays < 30) {
+      return `${Math.floor(diffDays / 7)} weeks ago`;
+    }
+    return lastAccessed.toLocaleDateString();
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
@@ -115,8 +183,7 @@ export class MemoryScreen extends Screen {
           this.listBox.addItem("No memory entries");
         } else {
           this.memories.forEach((mem) => {
-            const summary = mem.summary?.substring(0, 35) ?? "No summary";
-            const label = `[${mem.command}] ${summary}...`;
+            const label = this.formatMemoryLabel(mem);
             this.listBox?.addItem(label);
           });
         }
@@ -172,6 +239,22 @@ export class MemoryScreen extends Screen {
     content += `  Session ID:   ${mem.sessionId}\n`;
     content += `  Node:         ${mem.nodeName} (${mem.nodeId})\n`;
     content += `  Time:         ${new Date(mem.timestamp).toLocaleString()}\n`;
+
+    // Add file size if available
+    if (mem.fileSizeBytes !== undefined) {
+      content += `  File Size:    ${this.formatSize(mem.fileSizeBytes)}\n`;
+    }
+
+    // Add last-accessed time if available
+    if (mem.lastAccessedTime) {
+      content += `  Last Accessed: ${this.formatAccessTime(mem.lastAccessedTime)}\n`;
+    }
+
+    // Add archive status if archived
+    if (mem.isArchived && mem.archiveMetadata) {
+      content += `  {yellow-fg}Status:       ARCHIVED (${mem.archiveMetadata.monthKey}){/}\n`;
+    }
+
     if (mem.tags.length > 0) {
       content += `  Tags:         ${mem.tags.join(", ")}\n`;
     }

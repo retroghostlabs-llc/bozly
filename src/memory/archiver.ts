@@ -60,13 +60,10 @@ export interface ArchiveFile {
 }
 
 export class MemoryArchiver {
-  private bozlyHome: string;
   private sessionsPath: string;
-  private archiveThresholdMB = 5;
   private unusedThresholdDays = 90;
 
   constructor(bozlyHome: string) {
-    this.bozlyHome = bozlyHome;
     this.sessionsPath = path.join(bozlyHome, "sessions");
   }
 
@@ -313,7 +310,7 @@ export class MemoryArchiver {
               entry.summary,
               entry.title,
               entry.content,
-              (entry.tags || []).join(" "),
+              (entry.tags ?? []).join(" "),
             ]
               .join(" ")
               .toLowerCase();
@@ -550,9 +547,9 @@ export class MemoryArchiver {
       const entry: ArchivedMemoryEntry = {
         sessionId: memory.sessionId,
         nodeId: memory.nodeId,
-        title: memory.metadata.title,
-        summary: memory.metadata.summary,
-        tags: memory.metadata.tags,
+        title: memory.metadata.title as string,
+        summary: memory.metadata.summary as string | undefined,
+        tags: memory.metadata.tags as string[] | undefined,
         archivedAt: new Date().toISOString(),
         content: memory.memoryContent,
         metadata: memory.metadata,

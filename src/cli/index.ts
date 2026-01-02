@@ -45,6 +45,7 @@ import { optimizeCommand } from "./commands/optimize.js";
 import { updateCommand } from "./commands/update.js";
 import { recoverCommand } from "./commands/recover.js";
 import { migrateCommand } from "./commands/migrate.js";
+import { restoreCommand } from "./commands/restore.js";
 
 // Import version from single source of truth
 import { FULL_VERSION } from "../core/version.js";
@@ -175,6 +176,7 @@ async function main(): Promise<void> {
   program.addCommand(updateCommand);
   program.addCommand(recoverCommand);
   program.addCommand(migrateCommand);
+  program.addCommand(restoreCommand);
 
   // Apply BozlyHelp to all commands and subcommands
   program.commands.forEach((cmd) => applyBozlyHelp(cmd));

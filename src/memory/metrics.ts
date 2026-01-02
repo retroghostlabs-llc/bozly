@@ -119,12 +119,10 @@ export function calculateArchiveScore(metric: {
 }
 
 export class MemoryMetricsRecorder {
-  private bozlyHome: string;
   private metricsPath: string;
   private metrics: MemoryMetricsLog = { entries: [], lastCalculated: "" };
 
   constructor(bozlyHome: string) {
-    this.bozlyHome = bozlyHome;
     this.metricsPath = path.join(bozlyHome, "memory-metrics.json");
   }
 
