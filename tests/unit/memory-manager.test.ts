@@ -114,25 +114,19 @@ describe("Memory Manager", () => {
   });
 
   describe("loadMemory", () => {
-    it("should load memory with full metadata from memory.md", async () => {
+    it("should load memory when entry exists in index", async () => {
       const manager = MemoryManager.getInstance();
       const nodeId = "test-vault";
       const sessionId = "test-session-1";
-
-      // Mock findMemoryFile and loadMemoryMetadata
       const memoryPath = "/fake/path/memory.md";
-      vi.spyOn(manager as any, "findMemoryFile").mockResolvedValue(memoryPath);
-      vi.spyOn(manager as any, "loadMemoryMetadata").mockResolvedValue({
+
+      // Mock memoryIndex.getEntry to return a valid entry
+      vi.spyOn((manager as any).memoryIndex, "getEntry").mockResolvedValue({
         sessionId,
         nodeId,
-        nodeName: "Test Vault",
+        filePath: memoryPath,
         timestamp: "2025-12-31T10:00:00Z",
-        durationMinutes: 30,
-        tokenCount: 1500,
-        aiProvider: "claude",
-        command: "daily",
         tags: ["memory", "testing"],
-        summary: "Test memory",
       });
 
       // Mock fs.readFile
@@ -150,78 +144,41 @@ Working on memory manager implementation
       expect(result).toBeDefined();
       expect(result?.sessionId).toBe(sessionId);
       expect(result?.nodeId).toBe(nodeId);
-      expect(result?.nodeName).toBe("Test Vault");
       expect(result?.tags).toEqual(["memory", "testing"]);
-      expect(result?.currentState).toContain("Working on memory manager");
     });
 
-    it("should fallback to session.json if metadata.json missing", async () => {
+    it("should return null when entry not found in index", async () => {
       const manager = MemoryManager.getInstance();
-      const nodeId = "test-vault";
-      const sessionId = "test-session-2";
 
-      // Mock findMemoryFile
-      const memoryPath = "/fake/path/memory.md";
-      vi.spyOn(manager as any, "findMemoryFile").mockResolvedValue(memoryPath);
+      // Mock memoryIndex.getEntry to return null
+      vi.spyOn((manager as any).memoryIndex, "getEntry").mockResolvedValue(null);
 
-      // Mock loadMemoryMetadata to return metadata from session.json fallback
-      vi.spyOn(manager as any, "loadMemoryMetadata").mockResolvedValue({
-        sessionId,
-        nodeId,
-        nodeName: "Unknown",
-        timestamp: "2025-12-31T10:00:00Z",
-        durationMinutes: 25,
-        aiProvider: "gpt",
-        command: "review",
-        tags: ["fallback"],
-        summary: "Fallback test",
-      });
+      const result = await manager.loadMemory("nonexistent-session", "nonexistent-vault");
 
-      // Mock fs.readFile
-      vi.spyOn(fs, "readFile").mockResolvedValue("# Memory content");
-
-      const result = await manager.loadMemory(sessionId, nodeId);
-
-      expect(result).toBeDefined();
-      expect(result?.nodeId).toBe(nodeId);
-      expect(result?.aiProvider).toBe("gpt");
-      expect(result?.command).toBe("review");
-      expect(result?.tags).toEqual(["fallback"]);
+      expect(result).toBeNull();
     });
 
-    it("should use default values when no metadata available", async () => {
+    it("should handle file read errors gracefully", async () => {
       const manager = MemoryManager.getInstance();
       const nodeId = "test-vault";
       const sessionId = "test-session-3";
-
-      // Mock findMemoryFile
       const memoryPath = "/fake/path/memory.md";
-      vi.spyOn(manager as any, "findMemoryFile").mockResolvedValue(memoryPath);
 
-      // Mock loadMemoryMetadata to return default values
-      vi.spyOn(manager as any, "loadMemoryMetadata").mockResolvedValue({
+      // Mock memoryIndex.getEntry to return a valid entry
+      vi.spyOn((manager as any).memoryIndex, "getEntry").mockResolvedValue({
         sessionId,
         nodeId,
-        nodeName: "Unknown",
-        timestamp: new Date().toISOString(),
-        durationMinutes: 0,
-        aiProvider: "unknown",
-        command: "unknown",
+        filePath: memoryPath,
+        timestamp: "2025-12-31T10:00:00Z",
         tags: [],
-        summary: "Session memory",
       });
 
-      // Mock fs.readFile
-      vi.spyOn(fs, "readFile").mockResolvedValue("# Memory content");
+      // Mock fs.readFile to throw an error
+      vi.spyOn(fs, "readFile").mockRejectedValue(new Error("File not found"));
 
       const result = await manager.loadMemory(sessionId, nodeId);
 
-      expect(result).toBeDefined();
-      expect(result?.nodeName).toBe("Unknown");
-      expect(result?.aiProvider).toBe("unknown");
-      expect(result?.command).toBe("unknown");
-      expect(result?.durationMinutes).toBe(0);
-      expect(result?.tags).toEqual([]);
+      expect(result).toBeNull();
     });
 
     it("should return null if memory file not found", async () => {
