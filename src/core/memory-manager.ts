@@ -15,6 +15,7 @@ import path from "path";
 import os from "os";
 import { MemoryIndexEntry, SessionMemory } from "./types.js";
 import { MemoryIndex } from "../memory/index.js";
+import { MemoryArchiver } from "../memory/archiver.js";
 import { logger } from "./logger.js";
 import {
   rankMemories,
@@ -30,15 +31,19 @@ import {
 export class MemoryManager {
   private static instance: MemoryManager;
   private memoryIndex: MemoryIndex;
+  private memoryArchiver: MemoryArchiver;
   private indexPath: string;
   private memoryBasePath: string;
+  private bozlyHome: string;
   private initialized = false;
+  private cacheThresholdMB = 5;
 
   private constructor() {
-    const bozlyHome = path.join(os.homedir(), ".bozly");
-    this.indexPath = path.join(bozlyHome, "memory-index.json");
-    this.memoryBasePath = path.join(bozlyHome, "sessions");
+    this.bozlyHome = path.join(os.homedir(), ".bozly");
+    this.indexPath = path.join(this.bozlyHome, "memory-index.json");
+    this.memoryBasePath = path.join(this.bozlyHome, "sessions");
     this.memoryIndex = new MemoryIndex(this.indexPath);
+    this.memoryArchiver = new MemoryArchiver(this.bozlyHome);
   }
 
   /**
@@ -432,6 +437,92 @@ export class MemoryManager {
     } catch (error) {
       logger.error(`Failed to filter memories: ${String(error)}`);
       return [];
+    }
+  }
+
+  /**
+   * Check and perform automatic archival if cache exceeds threshold
+   * Called during session initialization to maintain cache size
+   */
+  async checkAndArchiveIfNeeded(): Promise<void> {
+    try {
+      await this.ensureInitialized();
+      const result = await this.memoryArchiver.checkAndArchiveIfNeeded(this.cacheThresholdMB);
+
+      if (result.triggered) {
+        logger.info(
+          `Memory archival triggered: archived ${result.archived} memories, cache reduced to ${result.finalCacheSizeMB}MB`
+        );
+      }
+    } catch (error) {
+      logger.warn(`Memory archival check failed: ${String(error)}`);
+      // Don't throw - archival failure shouldn't block operations
+    }
+  }
+
+  /**
+   * Archive old unused memories
+   * @param unusedDays - Archive memories unused for this many days (default: 90)
+   */
+  async archiveOldMemories(unusedDays = 90): Promise<{
+    archived: number;
+    totalArchivedMB: number;
+  }> {
+    try {
+      await this.ensureInitialized();
+      const result = await this.memoryArchiver.archiveOldMemories(unusedDays);
+      logger.info(
+        `Archived ${result.archived} memories (${result.totalArchivedMB}MB) from ${unusedDays}-day threshold`
+      );
+      return { archived: result.archived, totalArchivedMB: result.totalArchivedMB };
+    } catch (error) {
+      logger.error(`Failed to archive old memories: ${String(error)}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Get current memory cache size
+   */
+  async getCacheSize(): Promise<{ totalSizeMB: number; byVault: Record<string, number> }> {
+    try {
+      const size = await this.memoryArchiver.detectCacheSize();
+      return { totalSizeMB: size.totalSizeMB, byVault: size.byVault };
+    } catch (error) {
+      logger.error(`Failed to get cache size: ${String(error)}`);
+      return { totalSizeMB: 0, byVault: {} };
+    }
+  }
+
+  /**
+   * Search archived memories by query
+   */
+  async searchArchivedMemories(
+    query: string,
+    vaultId?: string
+  ): Promise<Array<{ sessionId: string; summary?: string; tags?: string[] }>> {
+    try {
+      const results = await this.memoryArchiver.searchArchives(query, vaultId);
+      return results.map((entry) => ({
+        sessionId: entry.sessionId,
+        summary: entry.summary,
+        tags: entry.tags,
+      }));
+    } catch (error) {
+      logger.warn(`Failed to search archives: ${String(error)}`);
+      return [];
+    }
+  }
+
+  /**
+   * Load an archived memory by session ID
+   */
+  async loadArchivedMemory(vaultId: string, sessionId: string): Promise<string | null> {
+    try {
+      return await this.memoryArchiver.loadArchivedMemory(vaultId, sessionId);
+    } catch (error) {
+      logger.warn(`Failed to load archived memory: ${String(error)}`);
+      return null;
     }
   }
 
