@@ -19,6 +19,12 @@ class BozlyApp {
     this.health = {};
     this.logs = [];
     this.logsFilter = 'ALL'; // ALL, INFO, DEBUG, ERROR
+    // Memory management data
+    this.cacheStats = null;
+    this.archiveStats = null;
+    this.archivedMemories = [];
+    this.memoryView = 'dashboard'; // 'dashboard' or 'archive'
+    this.restoreMode = 'all';
   }
 
   async init() {
@@ -90,6 +96,52 @@ class BozlyApp {
     } catch (error) {
       console.error('Failed to load memories:', error);
       this.memories = [];
+    }
+  }
+
+  async loadCacheStats() {
+    try {
+      const response = await fetch('/api/memory/cache-stats');
+      const result = await response.json();
+      if (result.success) {
+        this.cacheStats = result.data;
+      }
+    } catch (error) {
+      console.error('Failed to load cache stats:', error);
+      this.cacheStats = null;
+    }
+  }
+
+  async loadArchiveStats() {
+    try {
+      const response = await fetch('/api/memory/archive-stats');
+      const result = await response.json();
+      if (result.success) {
+        this.archiveStats = result.data;
+      }
+    } catch (error) {
+      console.error('Failed to load archive stats:', error);
+      this.archiveStats = null;
+    }
+  }
+
+  async loadArchivedMemories(searchQuery = '') {
+    try {
+      const params = new URLSearchParams({
+        archived: 'true',
+        limit: '100',
+      });
+      if (searchQuery) {
+        params.append('search', searchQuery);
+      }
+      const response = await fetch(`/api/memory?${params}`);
+      const result = await response.json();
+      if (result.success) {
+        this.archivedMemories = result.data || [];
+      }
+    } catch (error) {
+      console.error('Failed to load archived memories:', error);
+      this.archivedMemories = [];
     }
   }
 
@@ -606,30 +658,180 @@ class BozlyApp {
   renderMemory() {
     return `
       <div class="memory-container">
-        <h1>💾 Memory</h1>
-        <div class="search-box">
-          <input type="text" id="memory-search" placeholder="Search memories..." />
+        <h1>💾 Memory Management</h1>
+
+        <div style="margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
+          <button class="contrast" onclick="window.app.setMemoryView('dashboard')" style="margin-right: 10px;">📊 Dashboard</button>
+          <button class="contrast" onclick="window.app.setMemoryView('archive')" style="margin-right: 10px;">📦 Archive Browser</button>
+          <button class="contrast" onclick="window.app.openRestoreModal()">↩️ Restore</button>
         </div>
-        <div id="memories-list"></div>
+
+        <div id="memory-dashboard" style="display: ${this.memoryView === 'dashboard' ? 'block' : 'none'};">
+          <!-- Cache Stats Section -->
+          <section style="margin-bottom: 30px;">
+            <h2>📈 Cache Statistics</h2>
+            <div class="grid">
+              <div style="padding: 15px; border: 1px solid #ddd; border-radius: 4px;">
+                <h4 id="cache-size-value">—</h4>
+                <p><small>Total Cache Size</small></p>
+              </div>
+              <div style="padding: 15px; border: 1px solid #ddd; border-radius: 4px;">
+                <h4 id="cache-files-value">—</h4>
+                <p><small>Cache Files</small></p>
+              </div>
+              <div style="padding: 15px; border: 1px solid #ddd; border-radius: 4px;">
+                <h4 id="cache-health" style="color: #666;">—</h4>
+                <p><small>Cache Health</small></p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Archive Stats Section -->
+          <section style="margin-bottom: 30px;">
+            <h2>🗂️ Archive Statistics</h2>
+            <div class="grid">
+              <div style="padding: 15px; border: 1px solid #ddd; border-radius: 4px;">
+                <h4 id="archive-count-value">—</h4>
+                <p><small>Archived Memories</small></p>
+              </div>
+              <div style="padding: 15px; border: 1px solid #ddd; border-radius: 4px;">
+                <h4 id="archive-size-value">—</h4>
+                <p><small>Archive Size</small></p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Vault Breakdown -->
+          <section style="margin-bottom: 30px;">
+            <h2>📁 Archive Breakdown by Vault</h2>
+            <div id="vault-breakdown-table"></div>
+          </section>
+        </div>
+
+        <div id="memory-archive" style="display: ${this.memoryView === 'archive' ? 'block' : 'none'};">
+          <h2>Archive Browser</h2>
+          <div style="margin-bottom: 15px;">
+            <input type="text" id="archive-search" placeholder="Search archived memories..." style="width: 100%; padding: 10px;" />
+          </div>
+          <button onclick="window.app.searchArchivedMemories()">Search</button>
+          <div id="archived-memories-list" style="margin-top: 20px;"></div>
+        </div>
+
         <div id="memory-detail-modal" style="display: none;"></div>
+        <div id="restore-modal" style="display: none;"></div>
       </div>
     `;
   }
 
   async renderMemoryContent() {
-    const container = document.getElementById('memories-list');
-    if (this.memories.length > 0) {
+    // Load all memory data
+    await this.loadCacheStats();
+    await this.loadArchiveStats();
+    await this.loadArchivedMemories();
+
+    // Render dashboard stats
+    if (this.cacheStats) {
+      document.getElementById('cache-size-value').textContent = this.cacheStats.totalCacheMB.toFixed(1) + ' MB';
+      document.getElementById('cache-files-value').textContent = (this.cacheStats.cacheFileCount || Object.keys(this.cacheStats.byVault).length) + ' files';
+
+      // Calculate health
+      const health = this.calculateCacheHealth(this.cacheStats.totalCacheMB);
+      const healthEl = document.getElementById('cache-health');
+      if (healthEl) {
+        healthEl.textContent = health.status;
+        healthEl.style.color = health.color;
+      }
+    }
+
+    if (this.archiveStats) {
+      document.getElementById('archive-count-value').textContent = this.archiveStats.totalArchivedCount + ' memories';
+      document.getElementById('archive-size-value').textContent = this.archiveStats.totalArchivedMB.toFixed(1) + ' MB';
+
+      // Render vault breakdown
+      const breakdownTable = document.getElementById('vault-breakdown-table');
+      if (breakdownTable && Object.keys(this.archiveStats.byVault).length > 0) {
+        const rows = Object.entries(this.archiveStats.byVault)
+          .map(
+            ([vault, stats]) => `
+          <tr>
+            <td><strong>${vault}</strong></td>
+            <td>${stats.count}</td>
+            <td>${stats.sizeMB.toFixed(1)} MB</td>
+          </tr>
+        `
+          )
+          .join('');
+
+        breakdownTable.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Vault</th>
+                <th>Archived Memories</th>
+                <th>Size</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+
+    // Setup archive search
+    const searchInput = document.getElementById('archive-search');
+    if (searchInput) {
+      searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          window.app.searchArchivedMemories();
+        }
+      });
+    }
+  }
+
+  calculateCacheHealth(cacheSizeMB) {
+    const thresholdMB = 5; // Default threshold
+    const percentage = (cacheSizeMB / thresholdMB) * 100;
+
+    if (percentage < 50) {
+      return { status: '✅ Healthy', color: '#28a745' };
+    } else if (percentage < 80) {
+      return { status: '⚠️ Warning', color: '#ffc107' };
+    } else {
+      return { status: '❌ Critical', color: '#dc3545' };
+    }
+  }
+
+  setMemoryView(view) {
+    this.memoryView = view;
+    const dashEl = document.getElementById('memory-dashboard');
+    const archEl = document.getElementById('memory-archive');
+    if (dashEl && archEl) {
+      dashEl.style.display = view === 'dashboard' ? 'block' : 'none';
+      archEl.style.display = view === 'archive' ? 'block' : 'none';
+    }
+  }
+
+  async searchArchivedMemories() {
+    const searchInput = document.getElementById('archive-search');
+    const query = searchInput ? searchInput.value : '';
+    await this.loadArchivedMemories(query);
+
+    const container = document.getElementById('archived-memories-list');
+    if (!container) return;
+
+    if (this.archivedMemories.length > 0) {
       container.innerHTML = `
-        <div class="memories-grid">
-          ${this.memories
+        <div style="display: grid; gap: 15px;">
+          ${this.archivedMemories
             .map(
               (m, idx) => `
-            <div class="memory-card" onclick="window.app.openMemoryDetail(${idx})" style="cursor: pointer;">
-              <h3>${m.summary || m.title || 'Untitled'}</h3>
-              <p><strong>${m.command || 'unknown'}</strong></p>
-              <p>${m.summary?.substring(100) || 'No summary'}...</p>
-              ${m.tags && m.tags.length > 0 ? `<small>Tags: ${m.tags.join(', ')}</small>` : ''}
-              <small style="color: #666;">Click to view full details</small>
+            <div style="padding: 15px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;" onclick="window.app.openArchivedMemoryDetail(${idx})">
+              <h4>${m.summary || m.title || 'Untitled'}</h4>
+              <p><small><strong>${m.command || 'unknown'}</strong> | ${new Date(m.timestamp).toLocaleString()}</small></p>
+              <p><small>${m.summary?.substring(150) || 'No summary'}...</small></p>
+              <small style="color: #666;">Click to restore</small>
             </div>
           `
             )
@@ -637,8 +839,39 @@ class BozlyApp {
         </div>
       `;
     } else {
-      container.innerHTML = '<p><em>No memories found</em></p>';
+      container.innerHTML = '<p><em>No archived memories found</em></p>';
     }
+  }
+
+  openArchivedMemoryDetail(index) {
+    const memory = this.archivedMemories[index];
+    if (!memory) return;
+
+    const modal = document.getElementById('memory-detail-modal');
+    const timestamp = new Date(memory.timestamp).toLocaleString();
+
+    modal.innerHTML = `
+      <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000;" onclick="if(event.target === this) window.app.closeMemoryDetail()">
+        <div style="background-color: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); max-width: 90%; max-height: 90vh; overflow-y: auto; padding: 30px; position: relative;">
+          <button onclick="window.app.closeMemoryDetail()" style="position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+
+          <h2 style="margin-top: 0; color: #333;">${memory.summary || memory.title || 'Untitled'}</h2>
+
+          <div style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+            <p style="margin: 5px 0;"><strong>Command:</strong> ${memory.command || 'unknown'}</p>
+            <p style="margin: 5px 0;"><strong>Vault:</strong> ${memory.vaultId || 'Unknown'}</p>
+            <p style="margin: 5px 0;"><strong>Archived:</strong> ${timestamp}</p>
+          </div>
+
+          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 4px; margin-bottom: 20px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;">
+            ${memory.preview || 'No content available'}
+          </div>
+
+          <button class="contrast" onclick="window.app.restoreFromModal('${memory.sessionId}')">↩️ Restore This Memory</button>
+        </div>
+      </div>
+    `;
+    modal.style.display = 'block';
   }
 
   openMemoryDetail(index) {
@@ -675,6 +908,175 @@ class BozlyApp {
 
   closeMemoryDetail() {
     const modal = document.getElementById('memory-detail-modal');
+    modal.style.display = 'none';
+  }
+
+  openRestoreModal() {
+    const modal = document.getElementById('restore-modal');
+    modal.innerHTML = `
+      <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000;" onclick="if(event.target === this) window.app.closeRestoreModal()">
+        <div style="background-color: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); max-width: 90%; max-height: 90vh; overflow-y: auto; padding: 30px; position: relative; min-width: 400px;">
+          <button onclick="window.app.closeRestoreModal()" style="position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+
+          <h2 style="margin-top: 0; color: #333;">↩️ Restore Memories</h2>
+
+          <p style="margin-bottom: 20px; color: #666;">Select which memories to restore from the archive:</p>
+
+          <div style="margin-bottom: 20px;">
+            <label style="display: flex; margin-bottom: 10px; cursor: pointer;">
+              <input type="radio" name="restore-mode" value="all" ${this.restoreMode === 'all' ? 'checked' : ''} style="margin-right: 10px;" onchange="window.app.restoreMode = 'all'" />
+              <span><strong>Restore All Archived Memories</strong><br/><small>Restore all ${this.archiveStats?.totalArchivedCount || 0} archived memories</small></span>
+            </label>
+
+            <label style="display: flex; margin-bottom: 10px; cursor: pointer;">
+              <input type="radio" name="restore-mode" value="date" ${this.restoreMode === 'date' ? 'checked' : ''} style="margin-right: 10px;" onchange="window.app.restoreMode = 'date'" />
+              <span><strong>Restore by Date Range</strong><br/><small>Choose a specific date range</small></span>
+            </label>
+
+            <label style="display: flex; cursor: pointer;">
+              <input type="radio" name="restore-mode" value="search" ${this.restoreMode === 'search' ? 'checked' : ''} style="margin-right: 10px;" onchange="window.app.restoreMode = 'search'" />
+              <span><strong>Restore by Search</strong><br/><small>Search for specific memories</small></span>
+            </label>
+          </div>
+
+          <div id="restore-options" style="margin: 20px 0; padding: 15px; background-color: #f5f5f5; border-radius: 4px;"></div>
+
+          <div id="restore-progress" style="display: none; margin: 20px 0;">
+            <p><strong>Restoring memories...</strong></p>
+            <div style="background-color: #ddd; height: 20px; border-radius: 4px; overflow: hidden;">
+              <div id="progress-bar" style="background-color: #007bff; height: 100%; width: 0%; transition: width 0.3s;"></div>
+            </div>
+            <p id="progress-text" style="margin-top: 10px; font-size: 14px;">0 / 0</p>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="contrast" onclick="window.app.executeRestore()">↩️ Restore</button>
+            <button class="secondary" onclick="window.app.closeRestoreModal()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Render options based on mode
+    this.updateRestoreOptions();
+    modal.style.display = 'block';
+  }
+
+  updateRestoreOptions() {
+    const container = document.getElementById('restore-options');
+    if (!container) return;
+
+    if (this.restoreMode === 'date') {
+      container.innerHTML = `
+        <div>
+          <label>Start Date: <input type="date" id="restore-start-date" /></label>
+          <label style="margin-top: 10px; display: block;">End Date: <input type="date" id="restore-end-date" /></label>
+        </div>
+      `;
+    } else if (this.restoreMode === 'search') {
+      container.innerHTML = `
+        <input type="text" id="restore-search" placeholder="Search for memories..." style="width: 100%; padding: 10px;" />
+      `;
+    } else {
+      container.innerHTML = `
+        <p><strong>Ready to restore ${this.archiveStats?.totalArchivedCount || 0} archived memories.</strong></p>
+      `;
+    }
+  }
+
+  async executeRestore() {
+    const progressDiv = document.getElementById('restore-progress');
+    if (progressDiv) progressDiv.style.display = 'block';
+
+    try {
+      const request = {
+        mode: this.restoreMode,
+      };
+
+      if (this.restoreMode === 'date') {
+        const startDate = document.getElementById('restore-start-date')?.value;
+        const endDate = document.getElementById('restore-end-date')?.value;
+        if (startDate) request.startDate = startDate;
+        if (endDate) request.endDate = endDate;
+      } else if (this.restoreMode === 'search') {
+        const searchQuery = document.getElementById('restore-search')?.value;
+        if (searchQuery) request.searchQuery = searchQuery;
+      }
+
+      // Simulate progress (real implementation would stream from server)
+      const progressBar = document.getElementById('progress-bar');
+      const progressText = document.getElementById('progress-text');
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        progress += Math.random() * 30;
+        if (progress > 95) progress = 95;
+        if (progressBar) progressBar.style.width = progress + '%';
+      }, 300);
+
+      const response = await fetch('/api/memory/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request),
+      });
+
+      clearInterval(progressInterval);
+      if (progressBar) progressBar.style.width = '100%';
+
+      const result = await response.json();
+      if (result.success) {
+        const data = result.data;
+        if (progressText) {
+          progressText.textContent = `✅ Restored ${data.restored} memories${data.failed > 0 ? ` (${data.failed} failed)` : ''}`;
+        }
+
+        // Refresh data
+        setTimeout(() => {
+          this.loadArchiveStats();
+          this.loadCacheStats();
+        }, 1500);
+      } else {
+        throw new Error(result.error || 'Restore failed');
+      }
+    } catch (error) {
+      console.error('Restore error:', error);
+      const progressDiv = document.getElementById('restore-progress');
+      if (progressDiv) {
+        progressDiv.innerHTML = `<p style="color: #dc3545;">❌ Restore failed: ${error.message}</p>`;
+      }
+    }
+  }
+
+  restoreFromModal(sessionId) {
+    this.restoreMode = 'session';
+    this.executeRestore = async () => {
+      try {
+        const response = await fetch('/api/memory/restore', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'session',
+            sessionIds: [sessionId],
+          }),
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          alert(`✅ Memory restored successfully`);
+          this.closeMemoryDetail();
+          this.loadArchiveStats();
+          this.loadCacheStats();
+        } else {
+          alert(`❌ Restore failed: ${result.error}`);
+        }
+      } catch (error) {
+        alert(`❌ Restore error: ${error.message}`);
+      }
+    };
+    this.executeRestore();
+  }
+
+  closeRestoreModal() {
+    const modal = document.getElementById('restore-modal');
     modal.style.display = 'none';
   }
 
